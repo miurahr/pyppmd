@@ -1,0 +1,9 @@
+.eggs
+.hyposesis
+.idea
+.tox
+build
+cmake-build-debug
+dist
+*.egg-info
+__pycache__

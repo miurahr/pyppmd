@@ -1,0 +1,10 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.0.1"]
+build-backend = "setuptools.build_meta"
+
+[tools.setuptools_scm]
+local_scheme = "no-local-version"
+
+[tool.black]
+line-length = 125
+target-version = ['py38']
