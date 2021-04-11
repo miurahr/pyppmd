@@ -1,21 +1,13 @@
-/* pyppmd module for Python 3.6+ */
+/* pyppmd module for Python 3.6+
+   ---
+   Borrows BlocksOutputBuffer, unused data buffer functions
+   from pyzstd module - BSD-3 licensed by animalize
+   https://github.com/animalize/pyzstd
+ */
+
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "Ppmd7.h"
-
-typedef struct {
-    /* Inherits from IByteOut */
-    void (*Write)(void *p, Byte b);
-    PPMD_outBuffer *buf;
-} BufferWriter;
-
-typedef struct {
-    /* Inherits from IByteIn */
-    Byte (*Read)(void *p);
-    PPMD_inBuffer *buf;
-} BufferReader;
-
-
 
 /* ----------------------------
      BlocksOutputBuffer code
@@ -28,6 +20,19 @@ typedef struct {
     /* Max length of the buffer, negative number for unlimited length. */
     Py_ssize_t max_length;
 } BlocksOutputBuffer;
+
+typedef struct {
+    /* Inherits from IByteOut */
+    void (*Write)(void *p, Byte b);
+    BlocksOutputBuffer * buffer;
+    PPMD_outBuffer *outBuffer;
+} BufferWriter;
+
+typedef struct {
+    /* Inherits from IByteIn */
+    Byte (*Read)(void *p);
+    PPMD_inBuffer *inBuffer;
+} BufferReader;
 
 static const char unable_allocate_msg[] = "Unable to allocate output buffer.";
 
@@ -288,24 +293,31 @@ OutputBuffer_OnError(BlocksOutputBuffer *buffer)
 
 
 static void Write(void *p, Byte b) {
-    BufferWriter *bwriter = (BufferWriter *) p;
-    PPMD_outBuffer *obuf = bwriter->buf;
-    size_t rest = obuf->size - obuf->pos;
-    if (rest > 0) {
-        char *buf = obuf->dst;
-        buf += obuf->pos;
-        obuf->pos++;
-        *buf = b;
+    BufferWriter *bufferWriter = (BufferWriter *) p;
+    BlocksOutputBuffer *buffer = bufferWriter->buffer;
+    PPMD_outBuffer *outBuffer = bufferWriter->outBuffer;
+    if (outBuffer->size == outBuffer->pos) {
+        if (OutputBuffer_Grow(buffer, outBuffer) < 0) {
+            goto error;
+        } else {
+            bufferWriter->outBuffer = outBuffer;
+        }
     }
+    char *buf = outBuffer->dst;
+    buf += outBuffer->pos;
+    outBuffer->pos++;
+    *buf = b;
+    return;
+error:
+    return;
 }
 
-Byte src_read(void *p) {
-    BufferReader *breader = (BufferReader *) p;
-    PPMD_inBuffer *ibuf = breader->buf;
-    size_t rest = ibuf->size - ibuf->pos;
-    if (rest > 0) {
-        const char *buf = ibuf->src;
-        return buf[ibuf->pos++];
+Byte Reader(void *p) {
+    BufferReader *bufferReader = (BufferReader *) p;
+    PPMD_inBuffer *inBuffer = bufferReader->inBuffer;
+    if (inBuffer->size > inBuffer->pos) {
+        const char *buf = inBuffer->src;
+        return buf[inBuffer->pos++];
     }
     return (Byte)-1;
 }
@@ -342,19 +354,15 @@ typedef struct {
     /* Thread lock for decompressing */
     PyThread_type_lock lock;
 
-    /* Unused data */
-    PyObject *unused_data;
-
-    /* 0 if decompressor has (or may has) unconsumed input data, 0 or 1. */
-    char needs_input;
-
-    char eof;
-
     /* Ppmd7 context */
     CPpmd7 *cPpmd7;
 
+    /* Range Decoder */
+    CPpmd7z_RangeDec *rangeDec;
+
     /* __init__ has been called, 0 or 1. */
     char inited;
+    char inited2;
 } Ppmd7Decoder;
 
 typedef struct {
@@ -395,12 +403,372 @@ static _ppmd_state static_state;
 
 static const char init_twice_msg[] = "__init__ method is called twice.";
 
-typedef enum {
-    ERR_DECOMPRESS,
-    ERR_COMPRESS,
-    ERR_SET_LEVEL,
-    ERR_SET_MEM_SIZE,
-} error_type;
+static inline void
+clamp_max_order(unsigned long *max_order) {
+    if (*max_order < 2) {
+        *max_order = 2;
+    } else if (*max_order > 64) {
+        *max_order = 64;
+    }
+}
+
+static inline void
+clamp_memory_size(unsigned long *memorySize) {
+    if (*memorySize < 1 << 11) {
+        *memorySize = 1 << 11;
+    } else if (*memorySize > 0xFFFFFFFF - 12 * 3) {
+        *memorySize = 0xFFFFFFFF - 12 * 3;
+    }
+}
+
+/* -----------------------
+     Ppmd7Decoder code
+   ------------------------ */
+static PyObject *
+Ppmd7Decoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+    Ppmd7Decoder *self;
+    self = (Ppmd7Decoder*)type->tp_alloc(type, 0);
+    if (self == NULL) {
+        goto error;
+    }
+    assert(self->inited == 0);
+    assert(self->inited2 == 0);
+
+    /* Thread lock */
+    self->lock = PyThread_allocate_lock();
+    if (self->lock == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+    return (PyObject*)self;
+
+error:
+    Py_XDECREF(self);
+    return NULL;
+}
+
+static void
+Ppmd7Decoder_dealloc(Ppmd7Decoder *self)
+{
+    if (self->lock) {
+        PyThread_free_lock(self->lock);
+    }
+    Ppmd7_Free(self->cPpmd7, &allocator);
+    PyTypeObject *tp = Py_TYPE(self);
+    tp->tp_free((PyObject*)self);
+    Py_DECREF(tp);
+}
+
+PyDoc_STRVAR(Ppmd7Decoder_doc, "A PPMd compression algorithm decoder.\n\n"
+                                 "Ppmd7Decoder.__init__(self, max_order, mem_size)\n"
+                                 "----\n"
+                                 "Initialize a Ppmd7Decoder object.\n\n"
+                                 "Arguments\n"
+                                 "max_order: max order for the PPM modelling ranging from 2 to 64,\n"
+                                 "           higher values produce better compression ratios but are slower.\n"
+                                 "           Default is 6.\n"
+                                 "mem_size:  max memory size in bytes the compressor is able to use, bigger values improve compression,\n"
+                                 "           raging from 10kB to physical memory size.\n"
+                                 "           Default size is 16MB.\n"
+                                 );
+
+static int
+Ppmd7Decoder_init(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = {"max_order", "mem_size", NULL};
+    PyObject *max_order = Py_None;
+    PyObject *mem_size = Py_None;
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                                     "|OO:Ppmd7Decoder.__init__", kwlist,
+                                     &max_order, &mem_size)) {
+        PyErr_SetString(PyExc_RuntimeError, "__init__ parameter error");
+        return -1;
+    }
+
+    /* Only called once */
+    if (self->inited) {
+        PyErr_SetString(PyExc_RuntimeError, init_twice_msg);
+        return -1;
+    }
+    self->inited = 1;
+
+    unsigned long maximum_order = 6;
+
+    /* Set Compression level */
+    if (max_order != Py_None) {
+        if (PyLong_Check(max_order)) {
+            maximum_order = PyLong_AsUnsignedLong(max_order);
+            if (maximum_order == (unsigned long)-1 && PyErr_Occurred()) {
+                PyErr_SetString(PyExc_ValueError,
+                                "Max_order should be signed int value ranging from 2 to 16.");
+                return -1;
+            }
+        }
+        /* Clamp compression level */
+        clamp_max_order(&maximum_order);
+    }
+
+    unsigned long memory_size = 16 << 20;
+
+    /* Check memory size and alloc buffer memory */
+    if (mem_size != Py_None) {
+        if (PyLong_Check(mem_size)) {
+            memory_size = PyLong_AsUnsignedLong(mem_size);
+            if (memory_size == (unsigned long)-1 && PyErr_Occurred()) {
+                PyErr_SetString(PyExc_ValueError,
+                                "Memory size should be unsigned long value.");
+                return -1;
+            }
+        }
+        /* Clamp memory size */
+        clamp_memory_size(&memory_size);
+    }
+
+    self->cPpmd7 =  PyMem_Malloc(sizeof(CPpmd7));
+    Ppmd7_Construct(self->cPpmd7);
+    if (Ppmd7_Alloc(self->cPpmd7, memory_size, &allocator)) {
+        Ppmd7_Init(self->cPpmd7, (int)maximum_order);
+        self->rangeDec = PyMem_Malloc(sizeof(CPpmd7z_RangeDec));
+        return 0;
+    }
+
+     return -1;
+}
+
+PyDoc_STRVAR(Ppmd7Decoder_decode_doc, "decode()\n"
+             "----\n"
+             "A PPMd compression decode.");
+
+static PyObject *
+Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
+    static char *kwlist[] = {"data", "length", NULL};
+    BlocksOutputBuffer buffer;
+    Py_buffer data;
+    int length;
+    PPMD_inBuffer in;
+    PPMD_outBuffer out;
+    CPpmd7 *ppmd = self->cPpmd7;
+    CPpmd7z_RangeDec *rc = self->rangeDec;
+    PyObject *ret = NULL;
+    char use_input_buffer;
+    BufferReader reader;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                                     "y*i:Ppmd7Decoder.decode", kwlist,
+                                     &data, &length)) {
+        PyErr_SetString(PyExc_ValueError, "Error parsing data argument.");
+        return NULL;
+    }
+
+    if (OutputBuffer_InitAndGrow(&buffer, &out, -1) < 0) {
+        PyErr_SetString(PyExc_ValueError, "No Memory.");
+        return NULL;
+    }
+
+    if (self->inited2 == 0 && data.len < 5) {
+       PyErr_SetString(PyExc_ValueError,
+                       "Not enough data for starting decompression.");
+       return NULL;
+    }
+
+    ACQUIRE_LOCK(self);
+
+    /* Prepare input buffer w/wo unconsumed data */
+    if (self->in_begin == self->in_end) {
+        /* No unconsumed data */
+        use_input_buffer = 0;
+
+        in.src = data.buf;
+        in.size = data.len;
+        in.pos = 0;
+    } else if (data.len == 0) {
+        /* Has unconsumed data, fast path for b'' */
+        assert(self->in_begin < self->in_end);
+
+        use_input_buffer = 1;
+
+        in.src = self->input_buffer + self->in_begin;
+        in.size = self->in_end - self->in_begin;
+        in.pos = 0;
+    } else {
+        /* Has unconsumed data */
+        use_input_buffer = 1;
+
+        /* Unconsumed data size in input_buffer */
+        const size_t used_now = self->in_end - self->in_begin;
+        assert(self->in_end > self->in_begin);
+
+        /* Number of bytes we can append to input buffer */
+        const size_t avail_now = self->input_buffer_size - self->in_end;
+        assert(self->input_buffer_size >= self->in_end);
+
+        /* Number of bytes we can append if we move existing contents to
+           beginning of buffer */
+        const size_t avail_total = self->input_buffer_size - used_now;
+        assert(self->input_buffer_size >= used_now);
+
+        if (avail_total < (size_t) data.len) {
+            char *tmp;
+            const size_t new_size = used_now + data.len;
+
+            /* Allocate with new size */
+            tmp = PyMem_Malloc(new_size);
+            if (tmp == NULL) {
+                PyErr_NoMemory();
+                goto error;
+            }
+
+            /* Copy unconsumed data to the beginning of new buffer */
+            memcpy(tmp,
+                   self->input_buffer + self->in_begin,
+                   used_now);
+
+            /* Switch to new buffer */
+            PyMem_Free(self->input_buffer);
+            self->input_buffer = tmp;
+            self->input_buffer_size = new_size;
+
+            /* Set begin & end position */
+            self->in_begin = 0;
+            self->in_end = used_now;
+        } else if (avail_now < (size_t) data.len) {
+            /* Move unconsumed data to the beginning.
+               dst < src, so using memcpy() is safe. */
+            memcpy(self->input_buffer,
+                   self->input_buffer + self->in_begin,
+                   used_now);
+
+            /* Set begin & end position */
+            self->in_begin = 0;
+            self->in_end = used_now;
+        }
+
+        /* Copy data to input buffer */
+        memcpy(self->input_buffer + self->in_end, data.buf, data.len);
+        self->in_end += data.len;
+        in.src = self->input_buffer + self->in_begin;
+        in.size = used_now + data.len;
+        in.pos = 0;
+    }
+    assert(in.pos == 0);
+
+    reader.Read = Reader;
+    reader.inBuffer = &in;
+    rc->Stream = (IByteIn *) &reader;
+
+    if (self->inited2 == 0) {
+        // first time initialized.
+        assert(use_input_buffer == 0);
+        Ppmd7z_RangeDec_Init(self->rangeDec);
+        self->inited2 = 1;
+    }
+    assert(self->inited2 == 1);
+
+    if (data.len  == 0) { /* Flush data */
+        for (int i=0; i < length; i++) {
+            if (out.pos == out.size) {
+                if (OutputBuffer_Grow(&buffer, &out) < 0) {
+                    PyErr_SetString(PyExc_ValueError, "L607: Unknown status");
+                    goto error;
+                }
+            }
+            *(char *)(out.dst + out.pos++) = Ppmd7_DecodeSymbol(ppmd, rc);
+        }
+    } else {
+        for (int i=0; i < length; i++) {
+            if (in.pos == in.size) {
+                break;
+            }
+            if (out.pos == out.size) {
+                if (OutputBuffer_Grow(&buffer, &out) < 0) {
+                    PyErr_SetString(PyExc_ValueError, "L616: Unknown status");
+                    goto error;
+                }
+            }
+            *(char *)(out.dst + out.pos++) = Ppmd7_DecodeSymbol(ppmd, rc);
+        }
+    }
+    if (rc->Code != 0) {
+        // ToDo: here is unknown state
+        // implement me.
+    }
+    ret = OutputBuffer_Finish(&buffer, &out);
+
+    /* Unconsumed input data */
+    if (in.pos == in.size) {
+        if (use_input_buffer) {
+            /* Clear input_buffer */
+            self->in_begin = 0;
+            self->in_end = 0;
+        }
+    } else {
+        const size_t data_size = in.size - in.pos;
+
+        if (!use_input_buffer) {
+            /* Discard buffer if it's too small
+               (resizing it may needlessly copy the current contents) */
+            if (self->input_buffer != NULL &&
+                self->input_buffer_size < data_size) {
+                PyMem_Free(self->input_buffer);
+                self->input_buffer = NULL;
+                self->input_buffer_size = 0;
+            }
+
+            /* Allocate if necessary */
+            if (self->input_buffer == NULL) {
+                self->input_buffer = PyMem_Malloc(data_size);
+                if (self->input_buffer == NULL) {
+                    PyErr_NoMemory();
+                    goto error;
+                }
+                self->input_buffer_size = data_size;
+            }
+
+            /* Copy unconsumed data */
+            memcpy(self->input_buffer, (char*)in.src + in.pos, data_size);
+            self->in_begin = 0;
+            self->in_end = data_size;
+        } else {
+            /* Use input buffer */
+            self->in_begin += in.pos;
+        }
+    }
+    goto success;
+
+error:
+    /* Reset variables */
+    self->in_begin = 0;
+    self->in_end = 0;
+    Py_CLEAR(ret);
+
+success:
+    RELEASE_LOCK(self);
+    PyBuffer_Release(&data);
+    return ret;
+}
+
+static PyMethodDef Ppmd7Decoder_methods[] = {
+        {"decode", (PyCFunction)Ppmd7Decoder_decode,
+                     METH_VARARGS|METH_KEYWORDS, Ppmd7Decoder_decode_doc},
+        {NULL, NULL, 0, NULL}
+};
+
+static PyType_Slot Ppmd7Decoder_slots[] = {
+    {Py_tp_new, Ppmd7Decoder_new},
+    {Py_tp_dealloc, Ppmd7Decoder_dealloc},
+    {Py_tp_init, Ppmd7Decoder_init},
+    {Py_tp_methods, Ppmd7Decoder_methods},
+    {Py_tp_doc, Ppmd7Decoder_doc},
+    {0, 0}
+};
+
+static PyType_Spec Ppmd7Decoder_type_spec = {
+        .name = "_ppmd.Ppmd7Decoder",
+        .basicsize = sizeof(Ppmd7Decoder),
+        .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+        .slots = Ppmd7Decoder_slots,
+};
 
 /* -----------------------
      Ppmd7Encoder code
@@ -421,7 +789,6 @@ Ppmd7Encoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         PyErr_NoMemory();
         goto error;
     }
-
     return (PyObject*)self;
 
 error:
@@ -439,24 +806,6 @@ Ppmd7Encoder_dealloc(Ppmd7Encoder *self)
     PyTypeObject *tp = Py_TYPE(self);
     tp->tp_free((PyObject*)self);
     Py_DECREF(tp);
-}
-
-static inline void
-clamp_max_order(unsigned long *max_order) {
-    if (*max_order < 2) {
-        *max_order = 2;
-    } else if (*max_order > 64) {
-        *max_order = 64;
-    }
-}
-
-static inline void
-clamp_memory_size(unsigned long *memorySize) {
-    if (*memorySize < 1 << 11) {
-        *memorySize = 1 << 11;
-    } else if (*memorySize > 0xFFFFFFFF - 12 * 3) {
-        *memorySize = 0xFFFFFFFF - 12 * 3;
-    }
 }
 
 PyDoc_STRVAR(Ppmd7Encoder_doc, "A PPMd compression algorithm.\n\n"
@@ -532,6 +881,7 @@ Ppmd7Encoder_init(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
     Ppmd7_Init(self->cPpmd7, (int)maximum_order);
     CPpmd7z_RangeEnc *rc = PyMem_Malloc(sizeof(CPpmd7z_RangeEnc));
     Ppmd7z_RangeEnc_Init(rc);
+    self->rangeEnc = rc;
     return 0;
 }
 
@@ -548,6 +898,7 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
     PPMD_outBuffer out;
     CPpmd7 *ppmd = self->cPpmd7;
     CPpmd7z_RangeEnc *rc = self->rangeEnc;
+    BufferWriter writer;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "y*|i:Ppmd7Encoder.encode", kwlist,
@@ -559,19 +910,25 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
         goto error;
     }
 
-    BufferWriter *writer = PyMem_Malloc(sizeof(BufferWriter));
-    writer->Write = Write;
-    writer->buf = &out;
-    rc->Stream = (IByteOut *) writer;
+    writer.Write = Write;
+    writer.outBuffer = &out;
+    rc->Stream = (IByteOut *) &writer;
 
     ACQUIRE_LOCK(self);
     for (UInt32 i = 0; i < data.len; i++){
         Ppmd7_EncodeSymbol(ppmd, rc, *(char *)(data.buf + i));
+        if (out.size == out.pos) {
+            if (OutputBuffer_Grow(&buffer, &out) < 0) {
+                RELEASE_LOCK(self);
+                goto error;
+            } else {
+                writer.outBuffer = &out;
+            }
+        }
     }
     RELEASE_LOCK(self);
 
     ret = OutputBuffer_Finish(&buffer, &out);
-    PyMem_Free(writer);
     return ret;
 error:
     OutputBuffer_OnError(&buffer);
@@ -595,7 +952,7 @@ Ppmd7Encoder_flush(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs)
 
     BufferWriter *writer = PyMem_Malloc(sizeof(BufferWriter));
     writer->Write = Write;
-    writer->buf = &out;
+    writer->outBuffer = &out;
     rc->Stream = (IByteOut *) writer;
 
     ACQUIRE_LOCK(self);
@@ -660,6 +1017,7 @@ reduce_cannot_pickle(PyObject *self)
     return NULL;
 }
 
+
 static PyMethodDef Ppmd7Encoder_methods[] = {
         {"encode", (PyCFunction)Ppmd7Encoder_encode,
                      METH_VARARGS|METH_KEYWORDS, Ppmd7Encoder_encode_doc},
@@ -716,6 +1074,12 @@ PyInit__ppmd(void) {
                            "Ppmd7Encoder",
                            &Ppmd7Encoder_type_spec,
                            &static_state.Ppmd7Encoder_type) < 0) {
+        goto error;
+    }
+    if (add_type_to_module(module,
+                           "Ppmd7Decoder",
+                           &Ppmd7Decoder_type_spec,
+                           &static_state.Ppmd7Decoder_type) < 0) {
         goto error;
     }
     return module;

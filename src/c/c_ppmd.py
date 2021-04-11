@@ -1,6 +1,6 @@
 from ._ppmd import *
 
-__all__ = ("compress", "decompress", "Ppmd7Encoder", "PpmdError")
+__all__ = ("compress", "decompress", "Ppmd7Encoder", "Ppmd7Decoder", "PpmdError")
 
 
 class PpmdError(Exception):
@@ -21,13 +21,14 @@ def compress(data, max_order: int = 6, mem_size: int = 16 << 20) -> bytes:
     return result + comp.flush()
 
 
-def decompress(data, max_order: int = 6, mem_size: int = 16 << 20) -> bytes:
+def decompress(data, length, max_order: int = 6, mem_size: int = 16 << 20) -> bytes:
     """Decompress a PPMd data, return a bytes object.
 
     Arguments
     data:      A bytes-like object, compressed data.
+    length:    A size of uncompressed data.
     max_order: An integer object represent max order of PPMd.
     mem_size:  An integer object represent memory size to use.
     """
     decomp = Ppmd7Decoder(max_order, mem_size)
-    return decomp.decompress(data)
+    return decomp.decompress(data, length)
