@@ -7,12 +7,12 @@ PPMd is the implementation by Dmitry Shkarin.
 
 The API is similar to Python's bz2/lzma/zlib module.
 
-A part of th codes are derived from `p7zip`, `pyzstd` and `ppmd-cffi`.
+A part of th codes are derived from ``p7zip``, ``pyzstd`` and ``ppmd-cffi``.
 
 Development status
 ------------------
 
-A development status is considered as `Pre-alpha` state.
+A development status is considered as ``Pre-alpha`` state.
 
 
 Copyright
