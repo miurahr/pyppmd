@@ -1,35 +1,12 @@
 cmake_minimum_required(VERSION 3.19)
-project(pyppmd C)
+project(pyppmd C CXX)
 
 set(CMAKE_C_STANDARD 11)
-
-# Developer may want to specify some variable to find proper version.
-# ~~~
-# Priority is as same order as follows:
-#   1. `Python_LOOKUP_VERSION`: specify minimum version to find.
-#   2. 'Python_FIND_VIRTUALENV': specify 'ONLY' to use virtualenv activated.
-#   3. `Python_ROOT`: specify installed location.
-#   4. If nothing specified, use default behavior.
-#
-# for example
-#   $ cmake -DPython_LOOKUP_VERSION=3.6 ..
-#   $ cmake -DPython_FIND_VIRTUALENV=ONLY ..
-#   $ cmake -DPython_ROOT=C:\Python36 ..
-# ~~~
-#
-set(Python_LOOKUP_VERSION 3.8)
-
-if (Python_LOOKUP_VERSION)
-  set(Python_FIND_STRATEGY VERSION)
-  find_package(Python ${Python_LOOKUP_VERSION} COMPONENTS Interpreter Development)
-else ()
-  set(Python_FIND_STRATEGY LOCATION)
-  find_package(Python COMPONENTS Interpreter Development)
-endif ()
+set(CMAKE_CXX_STANDARD 11)
+find_package(Python 3.8 COMPONENTS Interpreter Development)
 
 include_directories(lib)
-
-set(pyppmd_sources
+add_library(pyppmd
              lib/Arch.h
              lib/Interface.h
              lib/Ppmd.h
@@ -41,8 +18,6 @@ set(pyppmd_sources
              lib/Ppmd8.h
              lib/Ppmd8Dec.c
              lib/Ppmd8Enc.c
-             lib/PpmdBuffer.c
-             lib/PpmdBuffer.h
              src/ext/_ppmdmodule.c)
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_ext.py "import sysconfig\nprint(sysconfig.get_config_var('EXT_SUFFIX'))\n")
@@ -57,3 +32,36 @@ add_custom_command(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     SOURCES ${pyppmd_sources}
 )
+
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp
+"
+#include <string>
+#include <Python.h>
+int main(int argc, char **argv) {
+    std::string args;
+    if ( argc > 1) {
+        args.append(\"[\");
+        for (int i = 1; i < argc; i++) {
+            if (i > 2)
+                args.append(\",\");
+            args.append(\"\\\"\");
+            args.append(argv[i]);
+            args.append(\"\\\"\");
+        }
+        args.append(\"]\");
+    }
+    std::string pycode = \"import pytest\\npytest.main(\" + args + \")\\n\";
+    wchar_t * program_name = Py_DecodeLocale(argv[0], NULL);
+    Py_SetProgramName(program_name);
+    Py_Initialize();
+    PyRun_SimpleString(&*pycode.begin());
+    Py_Finalize();
+    return 0;
+}")
+add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
+target_link_libraries(pytest_runner PUBLIC pyppmd)
+target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
+target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
+
+target_include_directories(pyppmd PRIVATE ${Python_INCLUDE_DIRS})
+target_link_libraries(pyppmd PRIVATE ${Python_LIBRARIES})
