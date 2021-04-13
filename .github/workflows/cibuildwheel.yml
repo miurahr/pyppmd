@@ -1,0 +1,134 @@
+# Automatically build binary wheels and source packages.
+name: cibuildwheel
+
+on:
+  push:
+    branches:
+      - main
+      - releases/*
+    tags:
+      - v*
+
+env:
+  CIBW_BUILD: "cp36-* cp37-* cp38-* cp39-* pp36-* pp37-*"
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.platform }}
+    runs-on: ${{ matrix.platform }}
+
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+
+    env:
+      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+      CIBW_MANYLINUX_I686_IMAGE: manylinux2014
+      CIBW_ARCHS_LINUX: "auto aarch64"
+      CIBW_ARCHS_MACOS: "x86_64 arm64"
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 20
+      - name: Fetch release tags
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: arm64
+
+      - name: Install cibuildwheel & build wheels
+        run: |
+          python -m pip install -U pip
+          python -m pip install -U cibuildwheel
+          python -m cibuildwheel --output-dir wheelhouse
+
+      # Should upload:
+      #  cp*manylinux2014_x86_64
+      #  cp*manylinux1_i686
+      #  pp*manylinux1_x86_64
+      - name: Upload wheels
+        uses: actions/upload-artifact@v2
+        with:
+          name: ppmd-files
+          path: |
+            wheelhouse/*.whl
+            !wheelhouse/*-cp*manylinux2014_i686*
+            !wheelhouse/*-pp*manylinux2010_x86_64*
+
+
+  # Build source distribution & manylinux1_x86_64
+  build_in_manylinux2010:
+    name: Build in manylinux2010 environment
+    runs-on: ubuntu-latest
+
+    env:
+      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
+      CIBW_ARCHS_LINUX: x86_64
+      CIBW_SKIP: pp*
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 20
+      - name: Fetch release tags
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v2
+      - name: Build source distribution & wheels
+        run: |
+          python setup.py sdist --formats=gztar
+          python -m pip install -U pip
+          python -m pip install -U cibuildwheel
+          python -m cibuildwheel --output-dir wheelhouse
+
+      - name: Upload source distribution
+        uses: actions/upload-artifact@v2
+        with:
+          name: ppmd-files
+          path: dist/*.tar.gz
+
+      - name: Upload manylinux1_x86_64
+        uses: actions/upload-artifact@v2
+        with:
+          name: ppmd-files
+          path: |
+            wheelhouse/*.whl
+            !wheelhouse/*manylinux2010_x86_64*
+
+  # Upload to PyPI
+  upload_pypi:
+    name: Publish to PyPI
+    needs: [build_wheels, build_in_manylinux2010]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: ppmd-files
+          path: dist
+      - name: Publish distribution 📦 to Test PyPI
+        if: startsWith(github.event.ref, 'refs/heads/main')
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.testpypi_password }}
+          repository_url: https://test.pypi.org/legacy/
+          skip_existing: true
+          verbose: true
+      - name: Publish distribution 📦 to PyPI
+        if: startsWith(github.event.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.pypi_password }}
+          skip_existing: true
+          verbose: true
