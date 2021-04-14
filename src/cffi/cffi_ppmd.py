@@ -248,18 +248,19 @@ class Ppmd7Decoder:
             raise ValueError("Mem_size exceed to platform limit.")
         if _PPMD7_MIN_ORDER <= max_order <= _PPMD7_MAX_ORDER and _PPMD7_MIN_MEM_SIZE <= mem_size <= _PPMD7_MAX_MEM_SIZE:
             self.lock = Lock()
-            self.lock.acquire()
             self.ppmd = ffi.new("CPpmd7 *")
             self._allocator = ffi.new("ISzAlloc *")
             self._allocator.Alloc = lib.raw_alloc
             self._allocator.Free = lib.raw_free
             lib.ppmd_state_init(self.ppmd, max_order, mem_size, self._allocator)
             self.rc = ffi.new("CPpmd7z_RangeDec *")
-            self.inBuffer = ffi.new("PPMD_inBuffer *")
             self.reader = ffi.new("BufferReader *")
             self.closed = False
             self.inited = False
-            self.lock.release()
+            self._input_buffer = ffi.NULL
+            self._input_buffer_size = 0
+            self._in_begin = 0
+            self._in_end = 0
         else:
             raise ValueError("PPMd wrong parameters.")
 
@@ -268,13 +269,79 @@ class Ppmd7Decoder:
 
         # Input buffer
         in_buf = _new_nonzero("PPMD_inBuffer *")
-        if in_buf == ffi.NULL:
-            raise MemoryError
-        in_buf.src = ffi.from_buffer(data)
-        in_buf.size = len(data)
-        in_buf.pos = 0
 
-        self.reader.inBuffer = in_buf;
+        # Prepare input buffer w/wo unconsumed data
+        if self._in_begin == self._in_end:
+            # No unconsumed data
+            use_input_buffer = False
+
+            in_buf.src = ffi.from_buffer(data)
+            in_buf.size = len(data)
+            in_buf.pos = 0
+        elif len(data) == 0:
+            # Has unconsumed data, fast path for b"".
+            assert self._in_begin < self._in_end
+            use_input_buffer = True
+
+            in_buf.src = self._input_buffer + self._in_begin
+            in_buf.size = self._in_end - self._in_begin
+            in_buf.pos = 0
+        else:
+            # Has unconsumed data
+            use_input_buffer = True
+
+            # Unconsumed data size in input_buffer
+            used_now = self._in_end - self._in_begin
+            # Number of bytes we can append to input buffer
+            avail_now = self._input_buffer_size - self._in_end
+            # Number of bytes we can append if we move existing
+            # contents to beginning of buffer
+            avail_total = self._input_buffer_size - used_now
+
+            assert (used_now > 0
+                    and avail_now >= 0
+                    and avail_total >= 0)
+
+            if avail_total < len(data):
+                new_size = used_now + len(data)
+                # Allocate with new size
+                tmp = _new_nonzero("char[]", new_size)
+                if tmp == ffi.NULL:
+                    raise MemoryError
+
+                # Copy unconsumed data to the beginning of new buffer
+                ffi.memmove(tmp,
+                            self._input_buffer+self._in_begin,
+                            used_now)
+
+                # Switch to new buffer
+                self._input_buffer = tmp
+                self._input_buffer_size = new_size
+
+                # Set begin & end position
+                self._in_begin = 0
+                self._in_end = used_now
+            elif avail_now < len(data):
+                # Move unconsumed data to the beginning
+                ffi.memmove(self._input_buffer,
+                            self._input_buffer+self._in_begin,
+                            used_now)
+
+                # Set begin & end position
+                self._in_begin = 0
+                self._in_end = used_now
+
+            # Copy data to input buffer
+            ffi.memmove(self._input_buffer+self._in_end,
+                        ffi.from_buffer(data), len(data))
+            self._in_end += len(data)
+
+            in_buf.src = self._input_buffer + self._in_begin
+            in_buf.size = used_now + len(data)
+            in_buf.pos = 0
+        # Now in_buf.pos == 0
+
+        self.reader.inBuffer = in_buf
 
         if not self.inited:
             lib.ppmd_decompress_init(self.rc, self.reader)
@@ -297,6 +364,34 @@ class Ppmd7Decoder:
             size = min(out_buf.size, remaining)
             lib.ppmd_decompress(self.ppmd, self.rc, out_buf, in_buf, size)
             remaining = remaining - size
+
+        # Unconsumed input data
+        if in_buf.pos == in_buf.size:
+            if use_input_buffer:
+                # Clear input_buffer
+                self._in_begin = 0
+                self._in_end = 0
+        else:
+            data_size = in_buf.size - in_buf.pos
+            if not use_input_buffer:
+                # Discard buffer if it's too small
+                if (self._input_buffer == ffi.NULL
+                      or self._input_buffer_size < data_size):
+                    # Create new buffer
+                    self._input_buffer = _new_nonzero("char[]", data_size)
+                    if self._input_buffer == ffi.NULL:
+                        self._input_buffer_size = 0
+                        raise MemoryError
+                    # Set buffer size
+                    self._input_buffer_size = data_size
+
+                # Copy unconsumed data
+                ffi.memmove(self._input_buffer, in_buf.src+in_buf.pos, data_size)
+                self._in_begin = 0
+                self._in_end = data_size
+            else:
+                # Use input buffer
+                self._in_begin += in_buf.pos
 
         if self.rc.Code != 0:
             pass  # FIXME
