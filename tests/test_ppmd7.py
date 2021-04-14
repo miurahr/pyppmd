@@ -6,7 +6,7 @@ import pyppmd
 
 testdata_path = pathlib.Path(os.path.dirname(__file__)).joinpath('data')
 data = b'This file is located in a folder.This file is located in the root.'
-READ_BLOCKSIZE = 1048576
+READ_BLOCKSIZE = 16384
 
 
 def test_ppmd_encoder():
@@ -58,18 +58,18 @@ def test_ppmd_encode_decode(tmp_path):
             target.write(enc.flush())
     shash = m.digest()
     m2 = hashlib.sha256()
+    assert(length == 1237262)
+    remaining = length
     with tmp_path.joinpath('target.ppmd').open('rb') as target:
         with tmp_path.joinpath('target.csv').open('wb') as out:
             dec = pyppmd.Ppmd7Decoder(6, 16 << 20)
-            remaining = length
             while remaining > 0:
                 data = target.read(READ_BLOCKSIZE)
-                length = min(remaining, READ_BLOCKSIZE)
-                res = dec.decode(data, length)
+                size = min(remaining, READ_BLOCKSIZE)
+                res = dec.decode(data, size)
                 remaining -= len(res)
                 m2.update(res)
                 out.write(res)
-            m2.update(res)
-            out.write(res)
+    assert(remaining == 0)
     thash = m2.digest()
     assert thash == shash
