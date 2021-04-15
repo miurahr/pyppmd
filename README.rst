@@ -12,7 +12,7 @@ A part of th codes are derived from ``p7zip``, ``pyzstd`` and ``ppmd-cffi``.
 Development status
 ------------------
 
-A development status is considered as ``Pre-alpha`` state.
+A development status is considered as ``Alpha``.
 
 
 Copyright
