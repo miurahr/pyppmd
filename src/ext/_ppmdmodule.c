@@ -1,7 +1,7 @@
 /* pyppmd module for Python 3.6+
    ---
    Borrows BlocksOutputBuffer, unused data buffer functions
-   from pyzstd module - BSD-3 licensed by animalize
+   from pyzstd module - BSD-3 licensed by Ma Lin.
    https://github.com/animalize/pyzstd
  */
 
@@ -294,19 +294,16 @@ OutputBuffer_OnError(BlocksOutputBuffer *buffer)
 
 static void Write(void *p, Byte b) {
     BufferWriter *bufferWriter = (BufferWriter *) p;
-    BlocksOutputBuffer *buffer = bufferWriter->buffer;
-    PPMD_outBuffer *outBuffer = bufferWriter->outBuffer;
-    if (outBuffer->size == outBuffer->pos) {
-        if (OutputBuffer_Grow(buffer, outBuffer) < 0) {
+
+    // Grow output buffer size when buffer is full
+    if (bufferWriter->outBuffer->size == bufferWriter->outBuffer->pos) {
+        if (OutputBuffer_Grow(bufferWriter->buffer, bufferWriter->outBuffer) < 0) {
+            // FIXME: propagate memory error to upstream
             goto error;
-        } else {
-            bufferWriter->outBuffer = outBuffer;
         }
     }
-    char *buf = outBuffer->dst;
-    buf += outBuffer->pos;
-    outBuffer->pos++;
-    *buf = b;
+
+    *((unsigned char *)bufferWriter->outBuffer->dst + bufferWriter->outBuffer->pos++) = b;
     return;
 error:
     return;
@@ -315,11 +312,7 @@ error:
 Byte Reader(void *p) {
     BufferReader *bufferReader = (BufferReader *) p;
     PPMD_inBuffer *inBuffer = bufferReader->inBuffer;
-    if (inBuffer->size > inBuffer->pos) {
-        const char *buf = inBuffer->src;
-        return buf[inBuffer->pos++];
-    }
-    return (Byte)-1;
+    return *((const unsigned char *)inBuffer->src + inBuffer->pos++);
 }
 
 static ISzAlloc allocator = {
@@ -480,7 +473,7 @@ Ppmd7Decoder_init(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs)
     PyObject *max_order = Py_None;
     PyObject *mem_size = Py_None;
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                                     "|OO:Ppmd7Decoder.__init__", kwlist,
+                                     "OO:Ppmd7Decoder.__init__", kwlist,
                                      &max_order, &mem_size)) {
         PyErr_SetString(PyExc_RuntimeError, "__init__ parameter error");
         return -1;
@@ -494,8 +487,8 @@ Ppmd7Decoder_init(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs)
     self->inited = 1;
 
     unsigned long maximum_order = 6;
+    unsigned long memory_size = 16 << 20;
 
-    /* Set Compression level */
     if (max_order != Py_None) {
         if (PyLong_Check(max_order)) {
             maximum_order = PyLong_AsUnsignedLong(max_order);
@@ -505,13 +498,9 @@ Ppmd7Decoder_init(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs)
                 return -1;
             }
         }
-        /* Clamp compression level */
         clamp_max_order(&maximum_order);
     }
 
-    unsigned long memory_size = 16 << 20;
-
-    /* Check memory size and alloc buffer memory */
     if (mem_size != Py_None) {
         if (PyLong_Check(mem_size)) {
             memory_size = PyLong_AsUnsignedLong(mem_size);
@@ -521,7 +510,6 @@ Ppmd7Decoder_init(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs)
                 return -1;
             }
         }
-        /* Clamp memory size */
         clamp_memory_size(&memory_size);
     }
 
@@ -555,7 +543,6 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "y*i:Ppmd7Decoder.decode", kwlist,
                                      &data, &length)) {
-        PyErr_SetString(PyExc_ValueError, "Error parsing data argument.");
         return NULL;
     }
 
@@ -746,9 +733,23 @@ success:
     return ret;
 }
 
+PyDoc_STRVAR(reduce_cannot_pickle_doc,
+"Intentionally not supporting pickle.");
+
+static PyObject *
+reduce_cannot_pickle(PyObject *self)
+{
+    PyErr_Format(PyExc_TypeError,
+                 "Cannot pickle %s object.",
+                 Py_TYPE(self)->tp_name);
+    return NULL;
+}
+
 static PyMethodDef Ppmd7Decoder_methods[] = {
         {"decode", (PyCFunction)Ppmd7Decoder_decode,
                      METH_VARARGS|METH_KEYWORDS, Ppmd7Decoder_decode_doc},
+        {"__reduce__", (PyCFunction)reduce_cannot_pickle,
+                     METH_NOARGS, reduce_cannot_pickle_doc},
         {NULL, NULL, 0, NULL}
 };
 
@@ -825,9 +826,8 @@ Ppmd7Encoder_init(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
     PyObject *max_order = Py_None;
     PyObject *mem_size = Py_None;
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                                     "|OO:Ppmd7Encoder.__init__", kwlist,
+                                     "OO:Ppmd7Encoder.__init__", kwlist,
                                      &max_order, &mem_size)) {
-        PyErr_SetString(PyExc_ValueError, "Error parsing data argument.");
         return -1;
     }
 
@@ -839,8 +839,8 @@ Ppmd7Encoder_init(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
     self->inited = 1;
 
     unsigned long maximum_order = 6;
+    unsigned long memory_size = 16 << 20;
 
-    /* Set Compression level */
     if (max_order != Py_None) {
         if (PyLong_Check(max_order)) {
             maximum_order = PyLong_AsUnsignedLong(max_order);
@@ -850,15 +850,9 @@ Ppmd7Encoder_init(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
                 return -1;
             }
         }
-        /* Clamp compression level */
         clamp_max_order(&maximum_order);
-    } else {
-        maximum_order = 6;
     }
 
-    unsigned long memory_size = 16 << 20;
-
-    /* Check memory size and alloc buffer memory */
     if (mem_size != Py_None) {
         if (PyLong_Check(mem_size)) {
             memory_size = PyLong_AsUnsignedLong(mem_size);
@@ -868,10 +862,7 @@ Ppmd7Encoder_init(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
                 return -1;
             }
         }
-        /* Clamp memory size */
         clamp_memory_size(&memory_size);
-    } else {
-        memory_size = 16 << 20;
     }
 
     self->cPpmd7 =  PyMem_Malloc(sizeof(CPpmd7));
@@ -895,14 +886,11 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
     Py_buffer data;
     PyObject *ret;
     PPMD_outBuffer out;
-    CPpmd7 *ppmd = self->cPpmd7;
-    CPpmd7z_RangeEnc *rc = self->rangeEnc;
     BufferWriter writer;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "y*:Ppmd7Encoder.encode", kwlist,
                                      &data)) {
-        PyErr_SetString(PyExc_ValueError, "Error parsing data argument.");
         return NULL;
     }
 
@@ -914,10 +902,10 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
 
     writer.Write = Write;
     writer.outBuffer = &out;
-    rc->Stream = (IByteOut *) &writer;
+    self->rangeEnc->Stream = (IByteOut *) &writer;
 
     for (UInt32 i = 0; i < data.len; i++){
-        Ppmd7_EncodeSymbol(ppmd, rc, *(char *)(data.buf + i));
+        Ppmd7_EncodeSymbol(self->cPpmd7, self->rangeEnc, *(unsigned char *)(data.buf + i));
         if (out.size == out.pos) {
             if (OutputBuffer_Grow(&buffer, &out) < 0) {
                 PyErr_SetString(PyExc_ValueError, "No memory.");
@@ -951,16 +939,16 @@ Ppmd7Encoder_flush(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
     BlocksOutputBuffer buffer;
     BufferWriter writer;
 
-    writer.Write = Write;
-    writer.outBuffer = &out;
-    rc->Stream = (IByteOut *) &writer;
-
     ACQUIRE_LOCK(self);
 
     if (OutputBuffer_InitAndGrow(&buffer, &out, -1) < 0) {
         PyErr_SetString(PyExc_ValueError, "No memory.");
         goto error;
     }
+
+    writer.Write = Write;
+    writer.outBuffer = &out;
+    rc->Stream = (IByteOut *) &writer;
 
     Ppmd7z_RangeEnc_FlushData(rc);
 
@@ -1013,18 +1001,6 @@ static PyModuleDef _ppmdmodule = {
     .m_clear = _ppmd_clear,
     .m_free = _ppmd_free
 };
-
-PyDoc_STRVAR(reduce_cannot_pickle_doc,
-"Intentionally not supporting pickle.");
-
-static PyObject *
-reduce_cannot_pickle(PyObject *self)
-{
-    PyErr_Format(PyExc_TypeError,
-                 "Cannot pickle %s object.",
-                 Py_TYPE(self)->tp_name);
-    return NULL;
-}
 
 
 static PyMethodDef Ppmd7Encoder_methods[] = {
