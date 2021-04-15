@@ -7,7 +7,12 @@
 
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
+#include "pythread.h"   /* For Python 3.6 */
 #include "Ppmd7.h"
+
+#ifndef Py_UNREACHABLE
+    #define Py_UNREACHABLE() assert(0)
+#endif
 
 /* ----------------------------
      BlocksOutputBuffer code
