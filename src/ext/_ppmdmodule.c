@@ -666,7 +666,7 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
     assert(self->inited2 == 1);
 
     if (data.len  == 0) { /* Flush data */
-        for (int i=0; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             if (out.pos == out.size) {
                 if (OutputBuffer_Grow(&buffer, &out) < 0) {
                     PyErr_SetString(PyExc_ValueError, "L607: Unknown status");
@@ -680,10 +680,7 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
             goto error;
         }
     } else {
-        for (int i=0; i < length; i++) {
-            if (in.pos == in.size) {
-                break;
-            }
+        for (int i = 0; i < length; i++) {
             if (out.pos == out.size) {
                 if (OutputBuffer_Grow(&buffer, &out) < 0) {
                     PyErr_SetString(PyExc_ValueError, "L616: Unknown status");
@@ -830,6 +827,7 @@ Ppmd7Encoder_init(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "|OO:Ppmd7Encoder.__init__", kwlist,
                                      &max_order, &mem_size)) {
+        PyErr_SetString(PyExc_ValueError, "Error parsing data argument.");
         return -1;
     }
 
@@ -902,13 +900,15 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
     BufferWriter writer;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                                     "y*|i:Ppmd7Encoder.encode", kwlist,
+                                     "y*:Ppmd7Encoder.encode", kwlist,
                                      &data)) {
+        PyErr_SetString(PyExc_ValueError, "Error parsing data argument.");
         return NULL;
     }
 
     ACQUIRE_LOCK(self);
     if (OutputBuffer_InitAndGrow(&buffer, &out, -1) < 0) {
+        PyErr_SetString(PyExc_ValueError, "No memory.");
         goto error;
     }
 
@@ -920,6 +920,7 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
         Ppmd7_EncodeSymbol(ppmd, rc, *(char *)(data.buf + i));
         if (out.size == out.pos) {
             if (OutputBuffer_Grow(&buffer, &out) < 0) {
+                PyErr_SetString(PyExc_ValueError, "No memory.");
                 goto error;
             } else {
                 writer.outBuffer = &out;
@@ -942,29 +943,35 @@ PyDoc_STRVAR(Ppmd7Encoder_flush_doc, "flush()\n"
 "Flush any remaining data in internal buffer.");
 
 static PyObject *
-Ppmd7Encoder_flush(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs)
+Ppmd7Encoder_flush(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *ret;
     CPpmd7z_RangeEnc *rc = self->rangeEnc;
     PPMD_outBuffer out;
     BlocksOutputBuffer buffer;
+    BufferWriter writer;
+
+    writer.Write = Write;
+    writer.outBuffer = &out;
+    rc->Stream = (IByteOut *) &writer;
+
+    ACQUIRE_LOCK(self);
+
     if (OutputBuffer_InitAndGrow(&buffer, &out, -1) < 0) {
+        PyErr_SetString(PyExc_ValueError, "No memory.");
         goto error;
     }
 
-    BufferWriter *writer = PyMem_Malloc(sizeof(BufferWriter));
-    writer->Write = Write;
-    writer->outBuffer = &out;
-    rc->Stream = (IByteOut *) writer;
-
-    ACQUIRE_LOCK(self);
     Ppmd7z_RangeEnc_FlushData(rc);
-    RELEASE_LOCK(self);
+
     ret = OutputBuffer_Finish(&buffer, &out);
-    PyMem_Free(writer);
+
+    RELEASE_LOCK(self);
     return ret;
+
 error:
     OutputBuffer_OnError(&buffer);
+    RELEASE_LOCK(self);
     return NULL;
 }
 
