@@ -910,7 +910,7 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
     self->rangeEnc->Stream = (IByteOut *) &writer;
 
     for (UInt32 i = 0; i < data.len; i++){
-        Ppmd7_EncodeSymbol(self->cPpmd7, self->rangeEnc, *(Byte *)(data.buf + i));
+        Ppmd7_EncodeSymbol(self->cPpmd7, self->rangeEnc, *((Byte *)data.buf + i));
         if (out.size == out.pos) {
             if (OutputBuffer_Grow(&buffer, &out) < 0) {
                 PyErr_SetString(PyExc_ValueError, "No memory.");
