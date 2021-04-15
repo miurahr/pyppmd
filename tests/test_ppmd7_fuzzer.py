@@ -1,6 +1,7 @@
 import sys
 
 import psutil
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
@@ -10,6 +11,8 @@ vmem = psutil.virtual_memory()
 MAX_SIZE = min(0xFFFFFFFF - 12 * 3, sys.maxsize, vmem.available)
 
 
+@pytest.mark.skipif(sys.platform.startswith("win") and sys.version_info < (3, 7),
+                    reason="hypothesis on python3.6 on windows fails.")
 @given(
     obj=st.binary(min_size=5),
     max_order=st.integers(min_value=2, max_value=64),
