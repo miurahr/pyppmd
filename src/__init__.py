@@ -1,5 +1,5 @@
 try:
-    from .c.c_ppmd import *
+    from .c.c_ppmd import *  # noqa
 except ImportError:
     try:
         from .cffi.cffi_ppmd import *  # noqa

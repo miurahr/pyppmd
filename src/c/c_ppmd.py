@@ -1,4 +1,4 @@
-from ._ppmd import *
+from ._ppmd import Ppmd7Decoder, Ppmd7Encoder
 
 __all__ = ("compress", "decompress", "Ppmd7Encoder", "Ppmd7Decoder", "PpmdError")
 
