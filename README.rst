@@ -1,3 +1,17 @@
+
+.. image:: https://readthedocs.org/projects/pyppmd/badge/?version=latest
+  :target: https://pyppmd.readthedocs.io/en/latest/?badge=latest
+
+.. image:: https://badge.fury.io/py/pyppmd.svg
+  :target: https://badge.fury.io/py/pyppmd
+
+.. image:: https://github.com/miurahr/pyppmd/workflows/Run%20Tox%20tests/badge.svg
+  :target: https://github.com/miurahr/pyppmd/actions
+
+.. image:: https://coveralls.io/repos/github/miurahr/pyppmd/badge.svg?branch=master
+  :target: https://coveralls.io/github/miurahr/pyppmd?branch=master
+
+
 Introduction
 ------------
 
