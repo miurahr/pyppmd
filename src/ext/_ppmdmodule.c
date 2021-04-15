@@ -428,6 +428,7 @@ Ppmd7Decoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     Ppmd7Decoder *self;
     self = (Ppmd7Decoder*)type->tp_alloc(type, 0);
     if (self == NULL) {
+        PyErr_NoMemory();
         goto error;
     }
     assert(self->inited == 0);
@@ -480,14 +481,13 @@ Ppmd7Decoder_init(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs)
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "OO:Ppmd7Decoder.__init__", kwlist,
                                      &max_order, &mem_size)) {
-        PyErr_SetString(PyExc_RuntimeError, "__init__ parameter error");
         return -1;
     }
 
     /* Only called once */
     if (self->inited) {
         PyErr_SetString(PyExc_RuntimeError, init_twice_msg);
-        return -1;
+        goto error;
     }
     self->inited = 1;
 
@@ -500,7 +500,7 @@ Ppmd7Decoder_init(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs)
             if (maximum_order == (unsigned long)-1 && PyErr_Occurred()) {
                 PyErr_SetString(PyExc_ValueError,
                                 "Max_order should be signed int value ranging from 2 to 16.");
-                return -1;
+                goto error;
             }
         }
         clamp_max_order(&maximum_order);
@@ -512,21 +512,28 @@ Ppmd7Decoder_init(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs)
             if (memory_size == (unsigned long)-1 && PyErr_Occurred()) {
                 PyErr_SetString(PyExc_ValueError,
                                 "Memory size should be unsigned long value.");
-                return -1;
+                goto error;
             }
         }
         clamp_memory_size(&memory_size);
     }
 
-    self->cPpmd7 =  PyMem_Malloc(sizeof(CPpmd7));
-    Ppmd7_Construct(self->cPpmd7);
-    if (Ppmd7_Alloc(self->cPpmd7, memory_size, &allocator)) {
-        Ppmd7_Init(self->cPpmd7, (int)maximum_order);
-        self->rangeDec = PyMem_Malloc(sizeof(CPpmd7z_RangeDec));
-        return 0;
+    if ((self->cPpmd7 =  PyMem_Malloc(sizeof(CPpmd7))) != NULL) {
+        Ppmd7_Construct(self->cPpmd7);
+        if (Ppmd7_Alloc(self->cPpmd7, (UInt32)memory_size, &allocator)) {
+            Ppmd7_Init(self->cPpmd7, (unsigned int)maximum_order);
+            if ((self->rangeDec = PyMem_Malloc(sizeof(CPpmd7z_RangeDec))) != NULL) {
+                goto success;
+            }
+        }
+        PyMem_Free(self->cPpmd7);
     }
 
-     return -1;
+error:
+    return -1;
+
+success:
+    return 0;
 }
 
 PyDoc_STRVAR(Ppmd7Decoder_decode_doc, "decode()\n"
@@ -785,22 +792,15 @@ static PyObject *
 Ppmd7Encoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     Ppmd7Encoder *self;
-    self = (Ppmd7Encoder*)type->tp_alloc(type, 0);
-    if (self == NULL) {
-        goto error;
+    if ((self = (Ppmd7Encoder*)type->tp_alloc(type, 0)) != NULL) {
+        assert(self->inited == 0);
+        /* Thread lock */
+        if ((self->lock = PyThread_allocate_lock()) != NULL) {
+            return (PyObject*)self;
+        }
+        Py_XDECREF(self);
     }
-    assert(self->inited == 0);
-
-    /* Thread lock */
-    self->lock = PyThread_allocate_lock();
-    if (self->lock == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-    return (PyObject*)self;
-
-error:
-    Py_XDECREF(self);
+    PyErr_NoMemory();
     return NULL;
 }
 
@@ -837,13 +837,13 @@ Ppmd7Encoder_init(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "OO:Ppmd7Encoder.__init__", kwlist,
                                      &max_order, &mem_size)) {
-        return -1;
+        goto error;
     }
 
     /* Only called once */
     if (self->inited) {
         PyErr_SetString(PyExc_RuntimeError, init_twice_msg);
-        return -1;
+        goto error;
     }
     self->inited = 1;
 
@@ -856,7 +856,7 @@ Ppmd7Encoder_init(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
             if (maximum_order == (unsigned long)-1 && PyErr_Occurred()) {
                 PyErr_SetString(PyExc_ValueError,
                                 "Max_order should be signed int value ranging from 2 to 16.");
-                return -1;
+                goto error;
             }
         }
         clamp_max_order(&maximum_order);
@@ -868,19 +868,28 @@ Ppmd7Encoder_init(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
             if (memory_size == (unsigned long)-1 && PyErr_Occurred()) {
                 PyErr_SetString(PyExc_ValueError,
                                 "Memory size should be unsigned long value.");
-                return -1;
+                goto error;
             }
         }
         clamp_memory_size(&memory_size);
     }
 
-    self->cPpmd7 =  PyMem_Malloc(sizeof(CPpmd7));
-    Ppmd7_Construct(self->cPpmd7);
-    Ppmd7_Alloc(self->cPpmd7, memory_size, &allocator);
-    Ppmd7_Init(self->cPpmd7, (int)maximum_order);
-    CPpmd7z_RangeEnc *rc = PyMem_Malloc(sizeof(CPpmd7z_RangeEnc));
-    Ppmd7z_RangeEnc_Init(rc);
-    self->rangeEnc = rc;
+    if ((self->cPpmd7 =  PyMem_Malloc(sizeof(CPpmd7))) != NULL) {
+        Ppmd7_Construct(self->cPpmd7);
+        if (Ppmd7_Alloc(self->cPpmd7, (UInt32)memory_size, &allocator)) {
+            Ppmd7_Init(self->cPpmd7, (unsigned int)maximum_order);
+            if ((self->rangeEnc = PyMem_Malloc(sizeof(CPpmd7z_RangeEnc))) != NULL ) {
+                Ppmd7z_RangeEnc_Init(self->rangeEnc);
+                goto success;
+            }
+        }
+        PyMem_Free(self->cPpmd7);
+    }
+
+error:
+    return -1;
+
+success:
     return 0;
 }
 
