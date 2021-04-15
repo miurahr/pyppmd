@@ -548,8 +548,6 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
     int length;
     PPMD_inBuffer in;
     PPMD_outBuffer out;
-    CPpmd7 *ppmd = self->cPpmd7;
-    CPpmd7z_RangeDec *rc = self->rangeDec;
     PyObject *ret = NULL;
     char use_input_buffer;
     BufferReader reader;
@@ -558,11 +556,6 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
                                      "y*i:Ppmd7Decoder.decode", kwlist,
                                      &data, &length)) {
         PyErr_SetString(PyExc_ValueError, "Error parsing data argument.");
-        return NULL;
-    }
-
-    if (OutputBuffer_InitAndGrow(&buffer, &out, -1) < 0) {
-        PyErr_SetString(PyExc_ValueError, "No Memory.");
         return NULL;
     }
 
@@ -616,7 +609,8 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
             tmp = PyMem_Malloc(new_size);
             if (tmp == NULL) {
                 PyErr_NoMemory();
-                goto error;
+                RELEASE_LOCK(self);
+                return NULL;
             }
 
             /* Copy unconsumed data to the beginning of new buffer */
@@ -655,7 +649,13 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
 
     reader.Read = Reader;
     reader.inBuffer = &in;
-    rc->Stream = (IByteIn *) &reader;
+    self->rangeDec->Stream = (IByteIn *) &reader;
+
+    if (OutputBuffer_InitAndGrow(&buffer, &out, -1) < 0) {
+        PyErr_SetString(PyExc_ValueError, "No Memory.");
+        RELEASE_LOCK(self);
+        return NULL;
+    }
 
     if (self->inited2 == 0) {
         // first time initialized.
@@ -673,7 +673,7 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
                     goto error;
                 }
             }
-            *(char *)(out.dst + out.pos++) = Ppmd7_DecodeSymbol(ppmd, rc);
+            *(char *)(out.dst + out.pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
         }
     } else {
         for (int i=0; i < length; i++) {
@@ -686,12 +686,12 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
                     goto error;
                 }
             }
-            *(char *)(out.dst + out.pos++) = Ppmd7_DecodeSymbol(ppmd, rc);
+            *(char *)(out.dst + out.pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
         }
     }
-    if (rc->Code != 0) {
-        // ToDo: here is unknown state
-        // implement me.
+    if (self->rangeDec->Code != 0) {
+        PyErr_SetString(PyExc_ValueError, "Decompression failed.");
+        goto error;
     }
     ret = OutputBuffer_Finish(&buffer, &out);
 
@@ -906,6 +906,7 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
         return NULL;
     }
 
+    ACQUIRE_LOCK(self);
     if (OutputBuffer_InitAndGrow(&buffer, &out, -1) < 0) {
         goto error;
     }
@@ -914,24 +915,24 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
     writer.outBuffer = &out;
     rc->Stream = (IByteOut *) &writer;
 
-    ACQUIRE_LOCK(self);
     for (UInt32 i = 0; i < data.len; i++){
         Ppmd7_EncodeSymbol(ppmd, rc, *(char *)(data.buf + i));
         if (out.size == out.pos) {
             if (OutputBuffer_Grow(&buffer, &out) < 0) {
-                RELEASE_LOCK(self);
                 goto error;
             } else {
                 writer.outBuffer = &out;
             }
         }
     }
-    RELEASE_LOCK(self);
 
     ret = OutputBuffer_Finish(&buffer, &out);
+    RELEASE_LOCK(self);
     return ret;
+
 error:
     OutputBuffer_OnError(&buffer);
+    RELEASE_LOCK(self);
     return NULL;
 }
 
