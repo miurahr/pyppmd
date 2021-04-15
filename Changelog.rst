@@ -25,10 +25,24 @@ Removed
 Security
 --------
 
+`v0.11.0`_
+==========
+
+Fixed
+-----
+* Better error handling for memory management.
+
+Changed
+-------
+* Skip hypothesis tests on windows
+* Limit hypothesis tests parameter under available memory.
+
+
 v0.10.0
 =======
 
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.10.0...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.11.0...HEAD
+.. _v0.11.0: https://github.com/miurahr/py7zr/compare/v0.10.0...v0.11.0
