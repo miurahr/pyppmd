@@ -652,8 +652,12 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
     if (self->inited2 == 0) {
         // first time initialized.
         assert(use_input_buffer == 0);
-        Ppmd7z_RangeDec_Init(self->rangeDec);
-        self->inited2 = 1;
+        if (!Ppmd7z_RangeDec_Init(self->rangeDec)) {
+            RELEASE_LOCK(self);
+            return NULL;
+        } else {
+            self->inited2 = 1;
+        }
     }
     assert(self->inited2 == 1);
 
@@ -667,7 +671,7 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
             }
             *((Byte *)out.dst + out.pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
         }
-        if (self->rangeDec->Code != 0) {
+        if (!Ppmd7z_RangeDec_IsFinishedOK(self->rangeDec)) {
             PyErr_SetString(PyExc_ValueError, "Decompression failed.");
             goto error;
         }
