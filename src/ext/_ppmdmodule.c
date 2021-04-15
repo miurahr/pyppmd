@@ -675,6 +675,10 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
             }
             *(char *)(out.dst + out.pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
         }
+        if (self->rangeDec->Code != 0) {
+            PyErr_SetString(PyExc_ValueError, "Decompression failed.");
+            goto error;
+        }
     } else {
         for (int i=0; i < length; i++) {
             if (in.pos == in.size) {
@@ -689,10 +693,7 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
             *(char *)(out.dst + out.pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
         }
     }
-    if (self->rangeDec->Code != 0) {
-        PyErr_SetString(PyExc_ValueError, "Decompression failed.");
-        goto error;
-    }
+
     ret = OutputBuffer_Finish(&buffer, &out);
 
     /* Unconsumed input data */
