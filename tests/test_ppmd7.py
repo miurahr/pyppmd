@@ -65,11 +65,14 @@ def test_ppmd_encode_decode(tmp_path):
             dec = pyppmd.Ppmd7Decoder(6, 16 << 20)
             while remaining > 0:
                 data = target.read(READ_BLOCKSIZE)
-                size = min(remaining, READ_BLOCKSIZE)
-                res = dec.decode(data, size)
+                if len(data) == 0:
+                    assert (data == b'')
+                    res = dec.decode(b'', remaining)
+                else:
+                    res = dec.decode(data, min(remaining, READ_BLOCKSIZE))
                 remaining -= len(res)
                 m2.update(res)
                 out.write(res)
-    assert(remaining == 0)
-    thash = m2.digest()
+            assert(remaining == 0)
+        thash = m2.digest()
     assert thash == shash
