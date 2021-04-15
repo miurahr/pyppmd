@@ -308,7 +308,7 @@ static void Write(void *p, Byte b) {
         }
     }
 
-    *((unsigned char *)bufferWriter->outBuffer->dst + bufferWriter->outBuffer->pos++) = b;
+    *((Byte *)bufferWriter->outBuffer->dst + bufferWriter->outBuffer->pos++) = b;
     return;
 error:
     return;
@@ -317,7 +317,7 @@ error:
 Byte Reader(void *p) {
     BufferReader *bufferReader = (BufferReader *) p;
     PPMD_inBuffer *inBuffer = bufferReader->inBuffer;
-    return *((const unsigned char *)inBuffer->src + inBuffer->pos++);
+    return *((const Byte *)inBuffer->src + inBuffer->pos++);
 }
 
 static ISzAlloc allocator = {
@@ -665,7 +665,7 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
                     goto error;
                 }
             }
-            *(char *)(out.dst + out.pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
+            *((Byte *)out.dst + out.pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
         }
         if (self->rangeDec->Code != 0) {
             PyErr_SetString(PyExc_ValueError, "Decompression failed.");
@@ -679,7 +679,7 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
                     goto error;
                 }
             }
-            *(char *)(out.dst + out.pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
+            *((Byte *)out.dst + out.pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
         }
     }
 
@@ -910,7 +910,7 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
     self->rangeEnc->Stream = (IByteOut *) &writer;
 
     for (UInt32 i = 0; i < data.len; i++){
-        Ppmd7_EncodeSymbol(self->cPpmd7, self->rangeEnc, *(unsigned char *)(data.buf + i));
+        Ppmd7_EncodeSymbol(self->cPpmd7, self->rangeEnc, *(Byte *)(data.buf + i));
         if (out.size == out.pos) {
             if (OutputBuffer_Grow(&buffer, &out) < 0) {
                 PyErr_SetString(PyExc_ValueError, "No memory.");
