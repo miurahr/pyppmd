@@ -428,6 +428,7 @@ Ppmd7Decoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     Ppmd7Decoder *self;
     self = (Ppmd7Decoder*)type->tp_alloc(type, 0);
     if (self == NULL) {
+        PyErr_NoMemory();
         goto error;
     }
     assert(self->inited == 0);
@@ -791,22 +792,15 @@ static PyObject *
 Ppmd7Encoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     Ppmd7Encoder *self;
-    self = (Ppmd7Encoder*)type->tp_alloc(type, 0);
-    if (self == NULL) {
-        goto error;
+    if ((self = (Ppmd7Encoder*)type->tp_alloc(type, 0)) != NULL) {
+        assert(self->inited == 0);
+        /* Thread lock */
+        if ((self->lock = PyThread_allocate_lock()) != NULL) {
+            return (PyObject*)self;
+        }
+        Py_XDECREF(self);
     }
-    assert(self->inited == 0);
-
-    /* Thread lock */
-    self->lock = PyThread_allocate_lock();
-    if (self->lock == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-    return (PyObject*)self;
-
-error:
-    Py_XDECREF(self);
+    PyErr_NoMemory();
     return NULL;
 }
 
