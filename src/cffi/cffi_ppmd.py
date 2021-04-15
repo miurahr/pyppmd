@@ -43,9 +43,24 @@ class _BlocksOutputBuffer:
     KB = 1024
     MB = 1024 * 1024
     BUFFER_BLOCK_SIZE = (
-        32*KB, 64*KB, 256*KB, 1*MB, 4*MB, 8*MB, 16*MB, 16*MB,
-        32*MB, 32*MB, 32*MB, 32*MB, 64*MB, 64*MB, 128*MB, 128*MB,
-        256*MB )
+        32 * KB,
+        64 * KB,
+        256 * KB,
+        1 * MB,
+        4 * MB,
+        8 * MB,
+        16 * MB,
+        16 * MB,
+        32 * MB,
+        32 * MB,
+        32 * MB,
+        32 * MB,
+        64 * MB,
+        64 * MB,
+        128 * MB,
+        128 * MB,
+        256 * MB,
+    )
     MEM_ERR_MSG = "Unable to allocate output buffer."
 
     def initAndGrow(self, out, max_length):
@@ -127,12 +142,11 @@ class _BlocksOutputBuffer:
 
     def finish(self, out):
         # Fast path for single block
-        if (len(self.list) == 1 and out.pos == out.size) or \
-           (len(self.list) == 2 and out.pos == 0):
+        if (len(self.list) == 1 and out.pos == out.size) or (len(self.list) == 2 and out.pos == 0):
             return bytes(ffi.buffer(self.list[0]))
 
         # Final bytes object
-        data_size = self.allocated - (out.size-out.pos)
+        data_size = self.allocated - (out.size - out.pos)
         final = _new_nonzero("char[]", data_size)
         if final == ffi.NULL:
             raise MemoryError(self.MEM_ERR_MSG)
@@ -141,15 +155,16 @@ class _BlocksOutputBuffer:
         # Blocks except the last one
         posi = 0
         for block in self.list[:-1]:
-            ffi.memmove(final+posi, block, len(block))
+            ffi.memmove(final + posi, block, len(block))
             posi += len(block)
         # The last block
-        ffi.memmove(final+posi, self.list[-1], out.pos)
+        ffi.memmove(final + posi, self.list[-1], out.pos)
 
         return bytes(ffi.buffer(final))
 
+
 class Ppmd7Encoder:
-    def __init__(self,  max_order: int, mem_size: int):
+    def __init__(self, max_order: int, mem_size: int):
         self.lock = Lock()
         if mem_size > sys.maxsize:
             raise ValueError("Mem_size exceed to platform limit.")
@@ -200,7 +215,6 @@ class Ppmd7Encoder:
             # Output buffer should be exhausted, grow the buffer.
             if out_buf.pos == out_buf.size:
                 out.grow(out_buf)
-
 
     def flush(self) -> bytes:
         if self.flushed:
@@ -298,9 +312,7 @@ class Ppmd7Decoder:
             # contents to beginning of buffer
             avail_total = self._input_buffer_size - used_now
 
-            assert (used_now > 0
-                    and avail_now >= 0
-                    and avail_total >= 0)
+            assert used_now > 0 and avail_now >= 0 and avail_total >= 0
 
             if avail_total < len(data):
                 new_size = used_now + len(data)
@@ -310,9 +322,7 @@ class Ppmd7Decoder:
                     raise MemoryError
 
                 # Copy unconsumed data to the beginning of new buffer
-                ffi.memmove(tmp,
-                            self._input_buffer+self._in_begin,
-                            used_now)
+                ffi.memmove(tmp, self._input_buffer + self._in_begin, used_now)
 
                 # Switch to new buffer
                 self._input_buffer = tmp
@@ -323,17 +333,14 @@ class Ppmd7Decoder:
                 self._in_end = used_now
             elif avail_now < len(data):
                 # Move unconsumed data to the beginning
-                ffi.memmove(self._input_buffer,
-                            self._input_buffer+self._in_begin,
-                            used_now)
+                ffi.memmove(self._input_buffer, self._input_buffer + self._in_begin, used_now)
 
                 # Set begin & end position
                 self._in_begin = 0
                 self._in_end = used_now
 
             # Copy data to input buffer
-            ffi.memmove(self._input_buffer+self._in_end,
-                        ffi.from_buffer(data), len(data))
+            ffi.memmove(self._input_buffer + self._in_end, ffi.from_buffer(data), len(data))
             self._in_end += len(data)
 
             in_buf.src = self._input_buffer + self._in_begin
@@ -375,8 +382,7 @@ class Ppmd7Decoder:
             data_size = in_buf.size - in_buf.pos
             if not use_input_buffer:
                 # Discard buffer if it's too small
-                if (self._input_buffer == ffi.NULL
-                      or self._input_buffer_size < data_size):
+                if self._input_buffer == ffi.NULL or self._input_buffer_size < data_size:
                     # Create new buffer
                     self._input_buffer = _new_nonzero("char[]", data_size)
                     if self._input_buffer == ffi.NULL:
@@ -386,7 +392,7 @@ class Ppmd7Decoder:
                     self._input_buffer_size = data_size
 
                 # Copy unconsumed data
-                ffi.memmove(self._input_buffer, in_buf.src+in_buf.pos, data_size)
+                ffi.memmove(self._input_buffer, in_buf.src + in_buf.pos, data_size)
                 self._in_begin = 0
                 self._in_end = data_size
             else:
@@ -396,7 +402,7 @@ class Ppmd7Decoder:
         if self.rc.Code != 0:
             pass  # FIXME
         self.lock.release()
-        return out.finish(out_buf);
+        return out.finish(out_buf)
 
     def close(self):
         if self.closed:
