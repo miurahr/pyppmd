@@ -17,5 +17,5 @@ jobs:
         run: |
           python -m build --sdist .
           twine check dist/*
-      #- name: Build sphinx docs
-      #  run: sphinx-build -b html docs html
+      - name: Build sphinx docs
+        run: sphinx-build -b html docs html
