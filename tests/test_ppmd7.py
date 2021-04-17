@@ -32,6 +32,7 @@ def test_ppmd_decoder():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
     with testdata_path.joinpath("ppmd7.dat").open("rb") as f:
         result = decoder.decode(f.read(41), 66)
+        result += decoder.flush(66 - len(result))
         assert result == data
 
 
@@ -39,7 +40,8 @@ def test_ppmd_decoder2():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
     with testdata_path.joinpath("ppmd7.dat").open("rb") as f:
         result = decoder.decode(f.read(33), 33)
-        result += decoder.decode(f.read(8), 33)
+        result += decoder.decode(f.read(8), 28)
+        result += decoder.flush(66 - len(result))
         assert result == data
 
 
@@ -66,8 +68,7 @@ def test_ppmd_encode_decode(tmp_path):
             while remaining > 0:
                 data = target.read(READ_BLOCKSIZE)
                 if len(data) == 0:
-                    assert data == b""
-                    res = dec.decode(b"", remaining)
+                    res = dec.flush(remaining)
                 else:
                     res = dec.decode(data, min(remaining, READ_BLOCKSIZE))
                 remaining -= len(res)
