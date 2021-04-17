@@ -24,6 +24,7 @@ def test_ppmd7_fuzzer(obj, max_order, mem_size):
     compressed += enc.flush()
     dec = pyppmd.Ppmd7Decoder(max_order=max_order, mem_size=mem_size)
     result = dec.decode(compressed, length)
+    result += dec.flush(length - len(result))
     assert result == obj
 
 

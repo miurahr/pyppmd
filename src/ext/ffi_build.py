@@ -147,13 +147,15 @@ typedef struct {
     PPMD_inBuffer *inBuffer;
 } BufferReader;
 
-void ppmd_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize, ISzAlloc *allocator);
-void ppmd_state_close(CPpmd7 *ppmd, ISzAlloc *allocator);
-int ppmd_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader);
-void ppmd_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *write);
+void ppmd7_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize, ISzAlloc *allocator);
+void ppmd7_state_close(CPpmd7 *ppmd, ISzAlloc *allocator);
+int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader);
+void ppmd7_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *write);
 
-int ppmd_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf);
-void ppmd_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length);
+int ppmd7_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf);
+void ppmd7_compress_flush(CPpmd7z_RangeEnc *rc);
+void ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length);
+void ppmd7_decompress_flush(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length);
 
 void Ppmd7_Construct(CPpmd7 *p);
 void Ppmd7_Init(CPpmd7 *p, unsigned maxOrder);
@@ -210,26 +212,26 @@ static Byte Read(void *p)
     return (Byte) b;
 }
 
-void ppmd_state_init(CPpmd7 *p, unsigned int maxOrder, unsigned int memSize, ISzAlloc *allocator)
+void ppmd7_state_init(CPpmd7 *p, unsigned int maxOrder, unsigned int memSize, ISzAlloc *allocator)
 {
     Ppmd7_Construct(p);
     Ppmd7_Alloc(p, memSize, allocator);
     Ppmd7_Init(p, maxOrder);
 }
 
-void ppmd_state_close(CPpmd7 *ppmd, ISzAlloc *allocator)
+void ppmd7_state_close(CPpmd7 *ppmd, ISzAlloc *allocator)
 {
     Ppmd7_Free(ppmd, allocator);
 }
 
-void ppmd_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *writer)
+void ppmd7_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *writer)
 {
     writer->Write = Write;
     rc->Stream = (IByteOut *) writer;
     Ppmd7z_RangeEnc_Init(rc);
 }
 
-int ppmd_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader)
+int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader)
 {
     reader->Read = Read;
     rc->Stream = (IByteIn *) reader;
@@ -237,7 +239,7 @@ int ppmd_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader)
     return res;
 }
 
-int ppmd_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf) {
+int ppmd7_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf) {
     Byte* c = (Byte *) in_buf->src + in_buf->pos;
     const Byte* in_end = (Byte *)in_buf->src + in_buf->size;
     while (c < in_end) {
@@ -250,7 +252,23 @@ int ppmd_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, PPMD_outBuffer *out_buf, PPMD
     return in_buf->size - in_buf->pos;
 }
 
-void ppmd_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length) {
+void ppmd7_compress_flush(CPpmd7z_RangeEnc *rc){
+    Ppmd7z_RangeEnc_FlushData(rc);
+}
+
+void ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length) {
+    Byte* c = (Byte *) out_buf->dst + out_buf->pos;
+    const Byte* out_end = (Byte *)out_buf->dst + length;
+    while (c < out_end) {
+        *c++ = Ppmd7_DecodeSymbol(p, rc);
+        if (in_buf->pos == in_buf->size) {
+            break;
+        }
+    }
+    out_buf->pos = c - (Byte *)out_buf->dst;
+}
+
+void ppmd7_decompress_flush(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length) {
     Byte* c = (Byte *) out_buf->dst + out_buf->pos;
     const Byte* out_end = (Byte *)out_buf->dst + length;
     while (c < out_end) {

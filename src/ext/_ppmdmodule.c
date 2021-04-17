@@ -339,6 +339,8 @@ typedef struct {
 
     /* __init__ has been called, 0 or 1. */
     char inited;
+    /* flush() has been called, 0 or 1. */
+    char flushed;
 } Ppmd7Encoder;
 
 typedef struct {
@@ -360,7 +362,10 @@ typedef struct {
 
     /* __init__ has been called, 0 or 1. */
     char inited;
+    /* decode has been called with some data*/
     char inited2;
+    /* flush has been called, 0 or 1 */
+    char flushed;
 } Ppmd7Decoder;
 
 typedef struct {
@@ -400,6 +405,7 @@ static _ppmd_state static_state;
 #endif
 
 static const char init_twice_msg[] = "__init__ method is called twice.";
+static const char flush_twice_msg[] = "flush method is called twice.";
 
 static inline void
 clamp_max_order(unsigned long *max_order) {
@@ -536,6 +542,99 @@ success:
     return 0;
 }
 
+PyDoc_STRVAR(Ppmd7Decoder_flush_doc, "flush()\n"
+             "----\n"
+             "A PPMd Ver.H decoder flush.");
+
+static PyObject *
+Ppmd7Decoder_flush(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs) {
+    static char *kwlist[] = {"length", NULL};
+    BlocksOutputBuffer buffer;
+    int length;
+    PPMD_inBuffer in;
+    PPMD_outBuffer out;
+    PyObject *ret = NULL;
+    BufferReader reader;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                                     "i:Ppmd7Decoder.decode", kwlist,
+                                     &length)) {
+        return NULL;
+    }
+
+    /* Only called once */
+    if (self->flushed) {
+        PyErr_SetString(PyExc_RuntimeError, flush_twice_msg);
+        goto error;
+    }
+    self->flushed = 1;
+
+    if (self->inited2 == 0) {
+       PyErr_SetString(PyExc_RuntimeError,
+                       "Call flush() before calling decode()");
+       return NULL;
+    }
+
+    ACQUIRE_LOCK(self);
+
+    /* Prepare input buffer w/wo unconsumed data */
+    if (self->in_begin == self->in_end) {
+        /* No unconsumed data */
+        char *tmp = PyMem_Malloc(0);
+        if (tmp == NULL) {
+            PyErr_NoMemory();
+            RELEASE_LOCK(self);
+            return NULL;
+        }
+
+        in.src = tmp;
+        in.size = 0;
+        in.pos = 0;
+    } else {
+        /* Has unconsumed data */
+        assert(self->in_begin < self->in_end);
+        in.src = self->input_buffer + self->in_begin;
+        in.size = self->in_end - self->in_begin;
+        in.pos = 0;
+    }
+
+    reader.Read = Reader;
+    reader.inBuffer = &in;
+    self->rangeDec->Stream = (IByteIn *) &reader;
+
+    if (OutputBuffer_InitAndGrow(&buffer, &out, -1) < 0) {
+        PyErr_SetString(PyExc_ValueError, "No Memory.");
+        RELEASE_LOCK(self);
+        return NULL;
+    }
+
+    for (int i = 0; i < length; i++) {
+        if (out.pos == out.size) {
+            if (OutputBuffer_Grow(&buffer, &out) < 0) {
+                PyErr_SetString(PyExc_ValueError, "L603: Unknown status");
+                goto error;
+            }
+        }
+        *((Byte *)out.dst + out.pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
+    }
+    if (!Ppmd7z_RangeDec_IsFinishedOK(self->rangeDec)) {
+        PyErr_SetString(PyExc_ValueError, "Decompression failed.");
+        goto error;
+    }
+    ret = OutputBuffer_Finish(&buffer, &out);
+    goto success;
+
+error:
+    Py_CLEAR(ret);
+
+success:
+    /* Clear input_buffer */
+    self->in_begin = 0;
+    self->in_end = 0;
+    RELEASE_LOCK(self);
+    return ret;
+}
+
 PyDoc_STRVAR(Ppmd7Decoder_decode_doc, "decode()\n"
              "----\n"
              "A PPMd compression decode.");
@@ -668,22 +767,11 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
     }
     assert(self->inited2 == 1);
 
-    if (data.len  == 0) { /* Flush data */
+    if (data.len  > 0) {
         for (int i = 0; i < length; i++) {
-            if (out.pos == out.size) {
-                if (OutputBuffer_Grow(&buffer, &out) < 0) {
-                    PyErr_SetString(PyExc_ValueError, "L607: Unknown status");
-                    goto error;
-                }
+            if (in.pos == in.size) {
+                break;
             }
-            *((Byte *)out.dst + out.pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
-        }
-        if (!Ppmd7z_RangeDec_IsFinishedOK(self->rangeDec)) {
-            PyErr_SetString(PyExc_ValueError, "Decompression failed.");
-            goto error;
-        }
-    } else {
-        for (int i = 0; i < length; i++) {
             if (out.pos == out.size) {
                 if (OutputBuffer_Grow(&buffer, &out) < 0) {
                     PyErr_SetString(PyExc_ValueError, "L616: Unknown status");
@@ -764,6 +852,8 @@ reduce_cannot_pickle(PyObject *self)
 static PyMethodDef Ppmd7Decoder_methods[] = {
         {"decode", (PyCFunction)Ppmd7Decoder_decode,
                      METH_VARARGS|METH_KEYWORDS, Ppmd7Decoder_decode_doc},
+        {"flush", (PyCFunction)Ppmd7Decoder_flush,
+                     METH_VARARGS|METH_KEYWORDS, Ppmd7Decoder_flush_doc},
         {"__reduce__", (PyCFunction)reduce_cannot_pickle,
                      METH_NOARGS, reduce_cannot_pickle_doc},
         {NULL, NULL, 0, NULL}

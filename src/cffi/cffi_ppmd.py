@@ -1,5 +1,6 @@
 import sys
 from threading import Lock
+from typing import Union
 
 from ._cffi_ppmd import ffi, lib
 
@@ -177,8 +178,8 @@ class Ppmd7Encoder:
             self._allocator = ffi.new("ISzAlloc *")
             self._allocator.Alloc = lib.raw_alloc
             self._allocator.Free = lib.raw_free
-            lib.ppmd_state_init(self.ppmd, max_order, mem_size, self._allocator)
-            lib.ppmd_compress_init(self.rc, self.writer)
+            lib.ppmd7_state_init(self.ppmd, max_order, mem_size, self._allocator)
+            lib.ppmd7_compress_init(self.rc, self.writer)
         else:
             raise ValueError("PPMd wrong parameters.")
 
@@ -205,7 +206,7 @@ class Ppmd7Encoder:
 
         while True:
             # Compress
-            ret = lib.ppmd_compress(self.ppmd, self.rc, out_buf, in_buf)
+            ret = lib.ppmd7_compress(self.ppmd, self.rc, out_buf, in_buf)
 
             # Finished
             if ret == 0:
@@ -232,7 +233,7 @@ class Ppmd7Encoder:
         # Initialize output buffer
         out.initAndGrow(out_buf, -1)
 
-        lib.Ppmd7z_RangeEnc_FlushData(self.rc)
+        lib.ppmd7_compress_flush(self.rc)
         self.lock.release()
         return out.finish(out_buf)
 
@@ -241,7 +242,7 @@ class Ppmd7Encoder:
             return
         self.lock.acquire()
         self.closed = True
-        lib.ppmd_state_close(self.ppmd, self._allocator)
+        lib.ppmd7_state_close(self.ppmd, self._allocator)
         ffi.release(self.ppmd)
         ffi.release(self.writer)
         ffi.release(self.rc)
@@ -266,7 +267,7 @@ class Ppmd7Decoder:
             self._allocator = ffi.new("ISzAlloc *")
             self._allocator.Alloc = lib.raw_alloc
             self._allocator.Free = lib.raw_free
-            lib.ppmd_state_init(self.ppmd, max_order, mem_size, self._allocator)
+            lib.ppmd7_state_init(self.ppmd, max_order, mem_size, self._allocator)
             self.rc = ffi.new("CPpmd7z_RangeDec *")
             self.reader = ffi.new("BufferReader *")
             self.closed = False
@@ -278,7 +279,13 @@ class Ppmd7Decoder:
         else:
             raise ValueError("PPMd wrong parameters.")
 
-    def decode(self, data, length) -> bytes:
+    def decode(self, data: Union[bytes, bytearray, memoryview], length: int) -> bytes:
+        return self._decode_impl(data, length, False)
+
+    def flush(self, length: int) -> bytes:
+        return self._decode_impl(b'', length, True)
+
+    def _decode_impl(self, data, length, flush: bool) -> bytes:
         self.lock.acquire()
 
         # Input buffer
@@ -351,7 +358,7 @@ class Ppmd7Decoder:
         self.reader.inBuffer = in_buf
 
         if not self.inited:
-            lib.ppmd_decompress_init(self.rc, self.reader)
+            lib.ppmd7_decompress_init(self.rc, self.reader)
             self.inited = True
 
         # Output buffer
@@ -365,12 +372,20 @@ class Ppmd7Decoder:
 
         remaining: int = length
 
-        while remaining > 0:
-            if out_buf.pos == out_buf.size:
-                out.grow(out_buf)
-            size = min(out_buf.size, remaining)
-            lib.ppmd_decompress(self.ppmd, self.rc, out_buf, in_buf, size)
-            remaining = remaining - size
+        if flush:
+            while remaining > 0:
+                if out_buf.pos == out_buf.size:
+                    out.grow(out_buf)
+                size = min(out_buf.size, remaining)
+                lib.ppmd7_decompress_flush(self.ppmd, self.rc, out_buf, in_buf, size)
+                remaining = remaining - size
+        else:
+            while remaining > 0:
+                if out_buf.pos == out_buf.size:
+                    out.grow(out_buf)
+                size = min(out_buf.size, remaining)
+                lib.ppmd7_decompress(self.ppmd, self.rc, out_buf, in_buf, size)
+                remaining = remaining - size
 
         # Unconsumed input data
         if in_buf.pos == in_buf.size:
@@ -408,7 +423,7 @@ class Ppmd7Decoder:
         if self.closed:
             return
         self.lock.acquire()
-        lib.ppmd_state_close(self.ppmd, self._allocator)
+        lib.ppmd7_state_close(self.ppmd, self._allocator)
         ffi.release(self.ppmd)
         ffi.release(self.reader)
         ffi.release(self.rc)
