@@ -283,7 +283,7 @@ class Ppmd7Decoder:
         return self._decode_impl(data, length, False)
 
     def flush(self, length: int) -> bytes:
-        return self._decode_impl(b'', length, True)
+        return self._decode_impl(b"", length, True)
 
     def _decode_impl(self, data, length, flush: bool) -> bytes:
         self.lock.acquire()
