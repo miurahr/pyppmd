@@ -31,4 +31,5 @@ def decompress(data, length, max_order: int = 6, mem_size: int = 16 << 20) -> by
     mem_size:  An integer object represent memory size to use.
     """
     decomp = Ppmd7Decoder(max_order, mem_size)
-    return decomp.decompress(data, length)
+    res = decomp.decompress(data, length)
+    return res + decomp.flush(length - len(res))
