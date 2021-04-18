@@ -37,10 +37,10 @@ Public domain/GNU Lesser General Public License
 Some C code under lib folder which originating from p7zip are
 released into the public domain that is re-licensed under LGPL.
 
-2017-04-03 : Igor Pavlov : Public domain
-PPMd var.H (2001): Dmitry Shkarin : Public domain
-PPMd var.I (2002): Dmitry Shkarin : Public domain
-Carryless rangecoder (1999): Dmitry Subbotin : Public domain
+- 2017-04-03 : Igor Pavlov : Public domain
+- PPMd var.H (2001): Dmitry Shkarin : Public domain
+- PPMd var.I (2002): Dmitry Shkarin : Public domain
+- Carryless rangecoder (1999): Dmitry Subbotin : Public domain
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -60,11 +60,11 @@ BSD license
 ===========
 
 A part of C extension code is a derived work of pyzstd which is licensed
-under BSD 3-Clause license by Ma Lin.
+under BSD 3-Clause license.
 
 BSD 3-Clause License
 
-Copyright (c) 2020-2021, Ma Lin
+Copyright (c) 2020-2021, Ma Lin,
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
