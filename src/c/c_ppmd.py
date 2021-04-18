@@ -1,6 +1,6 @@
-from ._ppmd import Ppmd7Decoder, Ppmd7Encoder
+from ._ppmd import Ppmd7Decoder, Ppmd7Encoder, Ppmd8Decoder, Ppmd8Encoder
 
-__all__ = ("compress", "decompress", "Ppmd7Encoder", "Ppmd7Decoder", "PpmdError")
+__all__ = ("compress", "decompress", "Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder", "PpmdError")
 
 
 class PpmdError(Exception):
