@@ -1,6 +1,6 @@
 //
 // Created by miurahr on 2021/04/07.
-// Based on 7zTypes.h - 2017-07-17 : Igor Pavlov : Public domain
+// Based on CpuArch.h - 2017-07-17 : Igor Pavlov : Public domain
 //
 
 #ifndef PPMD_ARCH_H

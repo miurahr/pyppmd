@@ -21,7 +21,7 @@ PPMd is the implementation by Dmitry Shkarin.
 
 The API is similar to Python's bz2/lzma/zlib module.
 
-Some parts of th codes are derived from ``p7zip``, ``pyzstd`` and ``ppmd-cffi``.
+Some parts of th codes are derived from ``7-zip``, ``pyzstd`` and ``ppmd-cffi``.
 
 Development status
 ------------------
@@ -36,15 +36,17 @@ Some part of this library uses codes from following software.
 
 * ppmd-cffi Copyright (C) 2020-2021 Hiroshi Miura
 * pyzstd    Copyright (C) 2020-2021 Ma Lin
-* p7zip     Copyright (C) 1999-2017 Igor Pavlov
-* 7-Zip     Copyright (C) 1999-2010 Igor Pavlov
-* LZMA SDK  Copyright (C) 1999-2010 Igor Pavlov
+* 7-Zip     Copyright (C) 1999-2017 Igor Pavlov
 
 
 License
 -------
 
-Copyright (C) 2021, Hiroshi Miura
+Copyright (C) 2020-2021 Hiroshi Miura
+
+Copyright (C) 2020-2021 Ma Lin
+
+Copyright (C) 1999-2017 Igor Pavlov
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public

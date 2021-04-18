@@ -32,15 +32,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 Public domain/GNU Lesser General Public License
 ===============================================
 
-7-zip, Copyright (C) 1999-2017, Igor Pavlov.
-
-Some C code under lib folder which originating from p7zip are
-released into the public domain that is re-licensed under LGPL.
+C code under lib folder which originating from 7-zip are
+released under LGPL, and each sources are noted as follows.
 
 - 2017-04-03 : Igor Pavlov : Public domain
 - PPMd var.H (2001): Dmitry Shkarin : Public domain
 - PPMd var.I (2002): Dmitry Shkarin : Public domain
 - Carryless rangecoder (1999): Dmitry Subbotin : Public domain
+
+
+7-zip, Copyright (C) 1999-2017, Igor Pavlov.
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
