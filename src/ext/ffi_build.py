@@ -129,6 +129,58 @@ typedef struct
 """
 )
 
+# Ppmd8.h
+if is_64bit():
+    ffibuilder.cdef("typedef UInt32 CPpmd8_Context_Ref;")
+else:
+    ffibuilder.cdef("typedef struct CPpmd8_Context_ * CPpmd8_Context_Ref;")
+
+ffibuilder.cdef(
+    r"""
+typedef struct CPpmd8_Context_
+{
+  Byte NumStats;
+  Byte Flags;
+  UInt16 SummFreq;
+  CPpmd_State_Ref Stats;
+  CPpmd8_Context_Ref Suffix;
+} CPpmd8_Context;
+
+typedef struct
+{
+  CPpmd8_Context *MinContext, *MaxContext;
+  CPpmd_State *FoundState;
+  unsigned OrderFall, InitEsc, PrevSuccess, MaxOrder;
+  Int32 RunLength, InitRL; /* must be 32-bit at least */
+
+  UInt32 Size;
+  UInt32 GlueCount;
+  Byte *Base, *LoUnit, *HiUnit, *Text, *UnitsStart;
+  UInt32 AlignOffset;
+  unsigned RestoreMethod;
+
+  /* Range Coder */
+  UInt32 Range;
+  UInt32 Code;
+  UInt32 Low;
+  union
+  {
+    IByteIn *In;
+    IByteOut *Out;
+  } Stream;
+
+  Byte Indx2Units[38];
+  Byte Units2Indx[128];
+  CPpmd_Void_Ref FreeList[38];
+  UInt32 Stamps[38];
+
+  Byte NS2BSIndx[256], NS2Indx[260];
+  CPpmd_See DummySee, See[24][32];
+  UInt16 BinSumm[25][64];
+} CPpmd8;
+"""
+)
+
 # ----------- python binding API ---------------------
 ffibuilder.cdef(
     r"""
@@ -164,11 +216,28 @@ int Ppmd7_DecodeSymbol(CPpmd7 *p, CPpmd7z_RangeDec *rc);
 void Ppmd7z_RangeEnc_Init(CPpmd7z_RangeEnc *p);
 void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
 void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
+
+void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer);
+int ppmd8_compress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf);
+void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader);
+void ppmd8_decompress(CPpmd8 *p, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length);
+void ppmd8_decompress_flush(CPpmd8 *p, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length);
+
+void Ppmd8_Construct(CPpmd8 *ppmd);
+Bool Ppmd8_Alloc(CPpmd8 *p, UInt32 size, ISzAlloc *alloc);
+void Ppmd8_Free(CPpmd8 *p, ISzAlloc *alloc);
+void Ppmd8_Init(CPpmd8 *ppmd, unsigned maxOrder, unsigned restoreMethod);
+void Ppmd8_EncodeSymbol(CPpmd8 *ppmd, int symbol);
+void Ppmd8_RangeEnc_Init(CPpmd8 *ppmd);
+void Ppmd8_RangeEnc_FlushData(CPpmd8 *ppmd);
+Bool Ppmd8_RangeDec_Init(CPpmd8 *ppmd);
+int Ppmd8_DecodeSymbol(CPpmd8 *ppmd);
 """
 )
 
 source = r"""
 #include "Ppmd7.h"
+#include "Ppmd8.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -273,6 +342,52 @@ void ppmd7_decompress_flush(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_
     const Byte* out_end = (Byte *)out_buf->dst + length;
     while (c < out_end) {
         *c++ = Ppmd7_DecodeSymbol(p, rc);
+    }
+    out_buf->pos = c - (Byte *)out_buf->dst;
+}
+
+void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer)
+{
+    writer->Write = Write;
+    ppmd->Stream.Out = (IByteOut *) writer;
+}
+
+int ppmd8_compress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf) {
+    Byte* c = (Byte *) in_buf->src + in_buf->pos;
+    const Byte* in_end = (Byte *)in_buf->src + in_buf->size;
+    while (c < in_end) {
+        Ppmd8_EncodeSymbol(ppmd, *c++);
+        if (out_buf->pos >= out_buf->size) {
+            break;
+        }
+    }
+    in_buf->pos = c - (Byte *)in_buf->src;
+    return in_buf->size - in_buf->pos;
+}
+
+void ppmd8_decompress_init(CPpmd8 *ppmd,  BufferReader *reader)
+{
+    reader->Read = Read;
+    ppmd->Stream.In = (IByteIn *) reader;
+}
+
+void ppmd8_decompress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length) {
+    Byte* c = (Byte *) out_buf->dst + out_buf->pos;
+    const Byte* out_end = (Byte *)out_buf->dst + length;
+    while (c < out_end) {
+        *c++ = Ppmd8_DecodeSymbol(ppmd);
+        if (in_buf->pos == in_buf->size) {
+            break;
+        }
+    }
+    out_buf->pos = c - (Byte *)out_buf->dst;
+}
+
+void ppmd8_decompress_flush(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length) {
+    Byte* c = (Byte *) out_buf->dst + out_buf->pos;
+    const Byte* out_end = (Byte *)out_buf->dst + length;
+    while (c < out_end) {
+        *c++ = Ppmd8_DecodeSymbol(ppmd);
     }
     out_buf->pos = c - (Byte *)out_buf->dst;
 }

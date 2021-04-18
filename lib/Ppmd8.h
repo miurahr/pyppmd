@@ -126,7 +126,7 @@ int Ppmd8_DecodeSymbol(CPpmd8 *p); /* returns: -1 as EndMarker, -2 as DataError 
 
 /* ---------- Encode ---------- */
 
-#define Ppmd8_RangeEnc_Init(p) { (p)->Low = 0; (p)->Range = 0xFFFFFFFF; }
+void Ppmd8_RangeEnc_Init(CPpmd8 *p);
 void Ppmd8_RangeEnc_FlushData(CPpmd8 *p);
 void Ppmd8_EncodeSymbol(CPpmd8 *p, int symbol); /* symbol = -1 means EndMarker */
 

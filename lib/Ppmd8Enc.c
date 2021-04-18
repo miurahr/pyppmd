@@ -9,6 +9,12 @@ This code is based on:
 #define kTop (1 << 24)
 #define kBot (1 << 15)
 
+inline void Ppmd8_RangeEnc_Init(CPpmd8 *p)
+{
+    p->Low = 0;
+    p->Range = 0xFFFFFFFF;
+}
+
 void Ppmd8_RangeEnc_FlushData(CPpmd8 *p)
 {
   unsigned i;
