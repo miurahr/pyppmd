@@ -296,6 +296,9 @@ OutputBuffer_OnError(BlocksOutputBuffer *buffer)
     Py_XDECREF(buffer->list);
 }
 
+/* ------------------------------
+   End of BlocksOutputBuffer code
+   ------------------------------ */
 
 static void Write(void *p, Byte b) {
     BufferWriter *bufferWriter = (BufferWriter *) p;
@@ -383,26 +386,6 @@ static _ppmd_state static_state;
         Py_END_ALLOW_THREADS                      \
     } } while (0)
 #define RELEASE_LOCK(obj) PyThread_release_lock((obj)->lock)
-
-/* Force inlining */
-#if defined(__GNUC__) || defined(__ICCARM__)
-#  define FORCE_INLINE static inline __attribute__((always_inline))
-#elif defined(_MSC_VER)
-#  define FORCE_INLINE static inline __forceinline
-#else
-#  define FORCE_INLINE static inline
-#endif
-
-/* Force no inlining */
-#ifdef _MSC_VER
-#  define FORCE_NO_INLINE static __declspec(noinline)
-#else
-#  if defined(__GNUC__) || defined(__ICCARM__)
-#    define FORCE_NO_INLINE static __attribute__((__noinline__))
-#  else
-#    define FORCE_NO_INLINE static
-#  endif
-#endif
 
 static const char init_twice_msg[] = "__init__ method is called twice.";
 static const char flush_twice_msg[] = "flush method is called twice.";
