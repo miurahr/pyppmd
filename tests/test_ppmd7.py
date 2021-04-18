@@ -9,7 +9,7 @@ data = b"This file is located in a folder.This file is located in the root."
 READ_BLOCKSIZE = 16384
 
 
-def test_ppmd_encoder():
+def test_ppmd7_encoder():
     encoder = pyppmd.Ppmd7Encoder(6, 16 << 20)
     result = encoder.encode(data)
     result += encoder.flush()
@@ -18,7 +18,7 @@ def test_ppmd_encoder():
         assert bytes(result) == f.read()
 
 
-def test_ppmd_encoder2():
+def test_ppmd7_encoder2():
     encoder = pyppmd.Ppmd7Encoder(6, 16 << 20)
     result = encoder.encode(data[:33])
     result += encoder.encode(data[33:])
@@ -28,7 +28,7 @@ def test_ppmd_encoder2():
         assert result == f.read()
 
 
-def test_ppmd_decoder():
+def test_ppmd7_decoder():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
     with testdata_path.joinpath("ppmd7.dat").open("rb") as f:
         result = decoder.decode(f.read(41), 66)
@@ -36,7 +36,7 @@ def test_ppmd_decoder():
         assert result == data
 
 
-def test_ppmd_decoder2():
+def test_ppmd7_decoder2():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
     with testdata_path.joinpath("ppmd7.dat").open("rb") as f:
         result = decoder.decode(f.read(33), 33)
@@ -45,7 +45,7 @@ def test_ppmd_decoder2():
         assert result == data
 
 
-def test_ppmd_encode_decode(tmp_path):
+def test_ppmd7_encode_decode(tmp_path):
     length = 0
     m = hashlib.sha256()
     with testdata_path.joinpath("10000SalesRecords.csv").open("rb") as f:
