@@ -353,13 +353,13 @@ class PpmdBaseDecoder:
                 self._in_begin += in_buf.pos
 
 
-
 class Ppmd7Encoder(PpmdBaseEncoder):
     def __init__(self, max_order: int, mem_size: int):
         if mem_size > sys.maxsize:
             raise ValueError("Mem_size exceed to platform limit.")
         if (_PPMD7_MIN_ORDER > max_order or max_order > _PPMD7_MAX_ORDER) or (
-                _PPMD7_MIN_MEM_SIZE > mem_size or mem_size > _PPMD7_MAX_MEM_SIZE):
+            _PPMD7_MIN_MEM_SIZE > mem_size or mem_size > _PPMD7_MAX_MEM_SIZE
+        ):
             raise ValueError("PPMd wrong parameters.")
         self._init_common()
         self.ppmd = ffi.new("CPpmd7 *")
@@ -373,7 +373,7 @@ class Ppmd7Encoder(PpmdBaseEncoder):
         out, out_buf = self._setup_outBuffer()
         while True:
             if lib.ppmd7_compress(self.ppmd, self.rc, out_buf, in_buf) == 0:
-                break # Finished
+                break  # Finished
             # Output buffer should be exhausted, grow the buffer.
             if out_buf.pos == out_buf.size:
                 out.grow(out_buf)
@@ -382,7 +382,7 @@ class Ppmd7Encoder(PpmdBaseEncoder):
 
     def flush(self) -> bytes:
         if self.flushed:
-            raise("Ppmd7Encoder: Double flush error.")
+            raise ("Ppmd7Encoder: Double flush error.")
         self.lock.acquire()
         self.flushed = True
         out, out_buf = self._setup_outBuffer()
@@ -454,7 +454,7 @@ class Ppmd7Decoder(PpmdBaseDecoder):
             lib.ppmd7_decompress_flush(self.ppmd, self.rc, out_buf, in_buf, size)
             remaining = remaining - size
         if self.rc.Code != 0:
-            raise("PPMd decode error.")
+            raise ("PPMd decode error.")
         res = out.finish(out_buf)
         self.lock.release()
         return res
@@ -534,11 +534,10 @@ class Ppmd8Encoder(PpmdBaseEncoder):
 
 
 class Ppmd8Decoder(PpmdBaseDecoder):
-
-    def __init__(self,max_order: int, mem_size: int):
+    def __init__(self, max_order: int, mem_size: int):
         self.closed = False
         self._init_common()
-        self.ppmd = ffi.new('CPpmd8 *')
+        self.ppmd = ffi.new("CPpmd8 *")
         lib.Ppmd8_Construct(self.ppmd)
         lib.ppmd8_decompress_init(self.ppmd, self.reader)
         lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator)
@@ -595,4 +594,3 @@ class Ppmd8Decoder(PpmdBaseDecoder):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
-
