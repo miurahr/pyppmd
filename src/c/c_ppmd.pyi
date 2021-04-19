@@ -1,0 +1,13 @@
+from typing import Union
+
+from ._ppmd import Ppmd7Decoder as Ppmd7Decoder
+from ._ppmd import Ppmd7Encoder as Ppmd7Encoder
+from ._ppmd import Ppmd8Decoder as Ppmd8Decoder
+from ._ppmd import Ppmd8Encoder as Ppmd8Encoder
+
+class PpmdError(Exception): ...
+
+def compress(data: Union[bytes, bytearray, memoryview], max_order: int = ..., mem_size: int = ...) -> bytes: ...
+def decompress(
+    data: Union[bytes, bytearray, memoryview], length: int, max_order: int = ..., mem_size: int = ...
+) -> bytes: ...

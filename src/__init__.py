@@ -1,9 +1,7 @@
 try:
-    from importlib.metadata import PackageNotFoundError
-    from importlib.metadata import version
+    from importlib.metadata import PackageNotFoundError, version
 except ImportError:
-    from importlib_metadata import PackageNotFoundError  # type: ignore  # noqa
-    from importlib_metadata import version  # type: ignore  # noqa
+    from importlib_metadata import PackageNotFoundError, version  # type: ignore  # noqa
 
 try:
     from .c.c_ppmd import *  # noqa
@@ -20,7 +18,7 @@ Python's bz2/lzma/zlib module.
 
 Documentation: https://pyppmd.readthedocs.io
 Github: https://github.com/miurahr/pyppmd
-PyPI: https://pypi.org/prject/pyppmd"""
+PyPI: httpsrecursive-include src *.pyi://pypi.org/prject/pyppmd"""
 
 __copyright__ = "Copyright (C) 2020,2021 Hiroshi Miura"
 
@@ -29,4 +27,3 @@ try:
 except PackageNotFoundError:  # pragma: no-cover
     # package is not installed
     __version__ = "unknown"
-

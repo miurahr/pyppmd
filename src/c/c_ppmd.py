@@ -1,3 +1,5 @@
+from typing import Union
+
 from ._ppmd import Ppmd7Decoder, Ppmd7Encoder, Ppmd8Decoder, Ppmd8Encoder
 
 __all__ = ("compress", "decompress", "Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder", "PpmdError")
@@ -8,7 +10,7 @@ class PpmdError(Exception):
     pass
 
 
-def compress(data, max_order: int = 6, mem_size: int = 16 << 20) -> bytes:
+def compress(data: Union[bytes, bytearray, memoryview], max_order: int = 6, mem_size: int = 16 << 20) -> bytes:
     """Compress a block of data, return a bytes object.
 
     Arguments
@@ -21,7 +23,9 @@ def compress(data, max_order: int = 6, mem_size: int = 16 << 20) -> bytes:
     return result + comp.flush()
 
 
-def decompress(data, length, max_order: int = 6, mem_size: int = 16 << 20) -> bytes:
+def decompress(
+    data: Union[bytes, bytearray, memoryview], length: int, max_order: int = 6, mem_size: int = 16 << 20
+) -> bytes:
     """Decompress a PPMd data, return a bytes object.
 
     Arguments

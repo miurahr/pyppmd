@@ -12,6 +12,8 @@ recursive-include lib *.c
 recursive-include lib *.txt
 
 recursive-include src *.py
+recursive-include src *.pyi
+recursive-include src py.typed
 recursive-include src *.c
 
 recursive-include tests *.csv
