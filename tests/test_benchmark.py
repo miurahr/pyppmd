@@ -51,7 +51,7 @@ def test_benchmark_text_decompress(tmp_path, benchmark, name, var, max_order, me
             with tmp_path.joinpath("target.csv").open("wb") as target:
                 remaining = src_size
                 data = src.read(READ_BLOCKSIZE)
-                while len(data) > 0:
+                while remaining > 0:
                     if len(data) == 0:
                         target.write(decoder.flush(remaining))
                         break
