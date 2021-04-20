@@ -9,12 +9,11 @@ from tabulate import tabulate  # type: ignore
 def generate_metainfo(root: dict) -> str:
     machine_info = root["machine_info"]
     commit_info = root["commit_info"]
-    if "brand" in machine_info["cpu"]:
-        brand = machine_info["cpu"]["brand"]
-    else:
-        brand = machine_info["cpu"]["brand_raw"]
     result = "Machine: {} {} on {}({})\n".format(
-        machine_info["system"], machine_info["release"], brand, machine_info["cpu"]["hz_actual_friendly"]
+        machine_info["system"],
+        machine_info["release"],
+        machine_info["cpu"]["brand"],
+        machine_info["cpu"]["hz_actual_friendly"],
     )
     result += "Python: {} {} [{} {}]\n".format(
         machine_info["python_implementation"],
