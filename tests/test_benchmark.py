@@ -40,7 +40,7 @@ def test_benchmark_text_compress(tmp_path, benchmark, name, var, max_order, mem_
     benchmark.extra_info["ratio"] = str(tmp_path.joinpath("target.ppmd").stat().st_size / src_size)
 
 
-@pytest.mark.parametrize("name, config", targets)
+@pytest.mark.parametrize("name, var, max_order, mem_size", targets)
 def test_benchmark_text_decompress(tmp_path, benchmark, name, var, max_order, mem_size):
     def decode(config):
         if var == 7:
