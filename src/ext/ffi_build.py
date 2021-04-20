@@ -330,7 +330,7 @@ void ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, P
     const Byte* out_end = (Byte *)out_buf->dst + length;
     while (c < out_end) {
         *c++ = Ppmd7_DecodeSymbol(p, rc);
-        if (in_buf->pos == in_buf->size) {
+        if (in_buf->pos > in_buf->size - 2) {
             break;
         }
     }
