@@ -21,5 +21,8 @@ recursive-include tests *.dat
 recursive-include tests *.ppmd
 recursive-include tests *.py
 
+recursive-include utils *.py
+recursive-include utils *.txt
+
 recursive-exclude * __pycache__
 recursive-exclude * *.pyc
