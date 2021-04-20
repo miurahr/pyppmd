@@ -331,7 +331,7 @@ class PpmdBaseDecoder:
                 # Clear input_buffer
                 self._in_begin = 0
                 self._in_end = 0
-        else:
+        elif in_buf.pos < in_buf.size:
             data_size = in_buf.size - in_buf.pos
             if not use_input_buffer:
                 # Discard buffer if it's too small
@@ -351,6 +351,8 @@ class PpmdBaseDecoder:
             else:
                 # Use input buffer
                 self._in_begin += in_buf.pos
+        else:
+            raise PpmdError("Wrong status: input buffer overrun.")
 
 
 class Ppmd7Encoder(PpmdBaseEncoder):
