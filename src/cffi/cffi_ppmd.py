@@ -426,6 +426,8 @@ class Ppmd7Decoder(PpmdBaseDecoder):
             raise ValueError("PPMd wrong parameters.")
 
     def decode(self, data: Union[bytes, bytearray, memoryview], length: int) -> bytes:
+        if not isinstance(length, int) or length <= 0:
+            raise PpmdError("Wrong length argument is specified. It should be positive integer.")
         self.lock.acquire()
         in_buf, use_input_buffer = self._setup_inBuffer(data)
         if not self.inited:
@@ -445,6 +447,8 @@ class Ppmd7Decoder(PpmdBaseDecoder):
         return res
 
     def flush(self, length: int) -> bytes:
+        if not isinstance(length, int) or length <= 0:
+            raise PpmdError("Wrong length argument is specified. It should be positive integer.")
         self.lock.acquire()
         in_buf, use_input_buffer = self._setup_inBuffer(b"")
         out, out_buf = self._setup_outBuffer()
@@ -550,6 +554,8 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         lib.Ppmd8_RangeDec_Init(self.ppmd)
 
     def decode(self, data: Union[bytes, bytearray, memoryview], length: int):
+        if not isinstance(length, int) or length <= 0:
+            raise PpmdError("Wrong length argument is specified. It should be positive integer.")
         self.lock.acquire()
         in_buf, use_input_buffer = self._setup_inBuffer(data)
         out, out_buf = self._setup_outBuffer()
@@ -569,6 +575,8 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         return res
 
     def flush(self, length: int):
+        if not isinstance(length, int) or length <= 0:
+            raise PpmdError("Wrong length argument is specified. It should be positive integer.")
         self.lock.acquire()
         in_buf, use_input_buffer = self._setup_inBuffer(b"")
         out, out_buf = self._setup_outBuffer()
