@@ -52,11 +52,14 @@ def test_benchmark_text_decompress(tmp_path, benchmark, name, var, max_order, me
                 remaining = src_size
                 data = src.read(READ_BLOCKSIZE)
                 while len(data) > 0:
-                    out = decoder.decode(data, remaining)
+                    if len(data) == 0:
+                        target.write(decoder.flush(remaining))
+                        break
+                    else:
+                        out = decoder.decode(data, remaining)
                     target.write(out)
                     remaining = remaining - len(out)
                     data = src.read(READ_BLOCKSIZE)
-                target.write(decoder.flush(remaining))
 
     def setup():
         if tmp_path.joinpath("target.csv").exists():
