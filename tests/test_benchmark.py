@@ -42,7 +42,7 @@ def test_benchmark_text_compress(tmp_path, benchmark, name, var, max_order, mem_
 
 @pytest.mark.parametrize("name, var, max_order, mem_size", targets)
 def test_benchmark_text_decompress(tmp_path, benchmark, name, var, max_order, mem_size):
-    def decode(config):
+    def decode(var, max_order, mem_size):
         if var == 7:
             decoder = pyppmd.Ppmd7Decoder(max_order=max_order, mem_size=mem_size)
         else:
