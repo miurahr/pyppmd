@@ -36,13 +36,12 @@ def generate_table(benchmarks: dict, group, type="simple") -> str:
                 rate = round(rate, 2)
             else:
                 rate = round(rate, 1)
-            ratex = "x {}".format(round(rate / base, 2))
             min = bm["stats"]["min"]
             max = bm["stats"]["max"]
             avr = bm["stats"]["mean"]
-            table.append([target, rate, ratex, min, max, avr])
+            table.append([target, rate, min, max, avr])
     return tabulate(
-        table, headers=["target", "speed(MB/sec)", "rate", "min(sec)", "max(sec)", "mean(sec)"], tablefmt=type
+        table, headers=["target", "speed(MB/sec)", "min(sec)", "max(sec)", "mean(sec)"], tablefmt=type
     )
 
 
@@ -56,6 +55,7 @@ def generate_comment(results_file, type):
     comment_body += generate_table(benchmarks, "compress", type=type)
     comment_body += "\n\n### Decompression benchmarks\n\n"
     comment_body += generate_table(benchmarks, "decompress", type=type)
+    comment_body += "\n\n"
     return comment_body
 
 
