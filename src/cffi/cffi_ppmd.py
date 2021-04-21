@@ -561,7 +561,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         lib.Ppmd8_RangeDec_Init(self.ppmd)
 
     def decode(self, data: Union[bytes, bytearray, memoryview], length: int):
-        if not isinstance(length, int) or length <= 0:
+        if not isinstance(length, int) or length < 0:
             raise PpmdError("Wrong length argument is specified. It should be positive integer.")
         self.lock.acquire()
         in_buf, use_input_buffer = self._setup_inBuffer(data)
