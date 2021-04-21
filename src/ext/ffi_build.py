@@ -263,7 +263,7 @@ static void Write(void *p, Byte b)
 {
     BufferWriter *bw = p;
     PPMD_outBuffer *buf = bw->outBuffer;
-    if (buf->pos <= buf->size) {
+    if (buf->pos < buf->size) {
         *((Byte *)buf->dst + buf->pos++) = b;
     }
 }
@@ -273,7 +273,7 @@ static Byte Read(void *p)
     BufferReader *br = p;
     PPMD_inBuffer *buf = br->inBuffer;
     char b;
-    if (buf->pos <= buf->size) {
+    if (buf->pos < buf->size) {
         b = *((Byte *)buf->src + buf->pos++);
     } else {
         return (Byte) 0;
@@ -332,7 +332,7 @@ int ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, PP
     while (c < out_end) {
         *c++ = Ppmd7_DecodeSymbol(p, rc);
         out_size++;
-        if (in_buf->pos > in_buf->size - 2) {
+        if (in_buf->pos == in_buf->size) {
             break;
         }
     }
