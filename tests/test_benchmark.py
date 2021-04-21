@@ -12,10 +12,11 @@ READ_BLOCKSIZE = 16384
 
 targets = [
     ("PPMd H", 7, 6, 16 << 20),
-    # ("PPMd I", 8, 8, 8 << 20),
+    ("PPMd I", 8, 8, 8 << 20),
 ]
 
 
+@pytest.mark.benchmark(group="compress")
 @pytest.mark.parametrize("name, var, max_order, mem_size", targets)
 def test_benchmark_text_compress(tmp_path, benchmark, name, var, max_order, mem_size):
     def encode(var, max_order, mem_size):
@@ -37,9 +38,9 @@ def test_benchmark_text_compress(tmp_path, benchmark, name, var, max_order, mem_
 
     benchmark.extra_info["data_size"] = src_size
     benchmark.pedantic(encode, setup=setup, args=[var, max_order, mem_size], iterations=1, rounds=3)
-    benchmark.extra_info["ratio"] = str(tmp_path.joinpath("target.ppmd").stat().st_size / src_size)
 
 
+@pytest.mark.benchmark(group="decompress")
 @pytest.mark.parametrize("name, var, max_order, mem_size", targets)
 def test_benchmark_text_decompress(tmp_path, benchmark, name, var, max_order, mem_size):
     def decode(var, max_order, mem_size):
@@ -79,5 +80,4 @@ def test_benchmark_text_decompress(tmp_path, benchmark, name, var, max_order, me
             target.write(encoder.flush())
 
     benchmark.extra_info["data_size"] = src_size
-    benchmark.extra_info["ratio"] = str(tmp_path.joinpath("target.ppmd").stat().st_size / src_size)
     benchmark.pedantic(decode, setup=setup, args=[var, max_order, mem_size], iterations=1, rounds=3)
