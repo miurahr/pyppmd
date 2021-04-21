@@ -206,7 +206,7 @@ void ppmd7_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *write);
 
 int ppmd7_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf);
 void ppmd7_compress_flush(CPpmd7z_RangeEnc *rc);
-void ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length);
+int ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length);
 void ppmd7_decompress_flush(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length);
 
 void Ppmd7_Construct(CPpmd7 *p);
@@ -263,7 +263,7 @@ static void Write(void *p, Byte b)
 {
     BufferWriter *bw = p;
     PPMD_outBuffer *buf = bw->outBuffer;
-    if (buf->pos <= buf->size) {
+    if (buf->pos < buf->size) {
         *((Byte *)buf->dst + buf->pos++) = b;
     }
 }
@@ -271,14 +271,12 @@ static void Write(void *p, Byte b)
 static Byte Read(void *p)
 {
     BufferReader *br = p;
-    PPMD_inBuffer *buf = br->inBuffer;
-    char b;
-    if (buf->pos <= buf->size) {
-        b = *((Byte *)buf->src + buf->pos++);
+    PPMD_inBuffer *inBuffer = br->inBuffer;
+    if (inBuffer->pos == inBuffer->size) {
+        return -1;
     } else {
-        return (Byte) 0;
+        return *((const Byte *)inBuffer->src + inBuffer->pos++);
     }
-    return (Byte) b;
 }
 
 void ppmd7_state_init(CPpmd7 *p, unsigned int maxOrder, unsigned int memSize, ISzAlloc *allocator)
@@ -325,8 +323,9 @@ void ppmd7_compress_flush(CPpmd7z_RangeEnc *rc){
     Ppmd7z_RangeEnc_FlushData(rc);
 }
 
-void ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length) {
+int ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length) {
     Byte* c = (Byte *) out_buf->dst + out_buf->pos;
+    const size_t out_start = out_buf->pos;
     const Byte* out_end = (Byte *)out_buf->dst + length;
     while (c < out_end) {
         *c++ = Ppmd7_DecodeSymbol(p, rc);
@@ -335,6 +334,7 @@ void ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, P
         }
     }
     out_buf->pos = c - (Byte *)out_buf->dst;
+    return out_buf->pos - out_start;
 }
 
 void ppmd7_decompress_flush(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length) {

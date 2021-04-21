@@ -14,6 +14,8 @@ jobs:
       ISSUE_NUMBER: 7
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 20
       - name: Setup python
         uses: actions/setup-python@v2
         with:
