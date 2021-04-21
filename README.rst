@@ -8,8 +8,8 @@
 .. image:: https://github.com/miurahr/pyppmd/workflows/Run%20Tox%20tests/badge.svg
   :target: https://github.com/miurahr/pyppmd/actions
 
-.. image:: https://coveralls.io/repos/github/miurahr/pyppmd/badge.svg?branch=master
-  :target: https://coveralls.io/github/miurahr/pyppmd?branch=master
+.. image:: https://coveralls.io/repos/github/miurahr/pyppmd/badge.svg?branch=main
+  :target: https://coveralls.io/github/miurahr/pyppmd?branch=main
 
 
 Introduction
