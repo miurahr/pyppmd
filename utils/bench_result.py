@@ -25,24 +25,23 @@ def generate_metainfo(root: dict) -> str:
     return result
 
 
-def generate_table(benchmarks: dict, type="simple") -> str:
+def generate_table(benchmarks: dict, group, type="simple") -> str:
     base = 1
     table = []
     for bm in benchmarks:
-        target = bm["params"]["name"]
-        rate = bm["extra_info"]["rate"] / 1000000
-        if rate < 10:
-            rate = round(rate, 2)
-        else:
-            rate = round(rate, 1)
-        ratex = "x {}".format(round(rate / base, 2))
-        ratio = round(float(bm["extra_info"]["ratio"]) * 100, 1)
-        min = bm["stats"]["min"]
-        max = bm["stats"]["max"]
-        avr = bm["stats"]["mean"]
-        table.append([target, rate, ratex, ratio, min, max, avr])
+        if group == bm["group"]:
+            target = bm["params"]["name"]
+            rate = 1.0 * bm["extra_info"]["rate"] / 1000000.0
+            if rate < 10:
+                rate = round(rate, 2)
+            else:
+                rate = round(rate, 1)
+            min = bm["stats"]["min"]
+            max = bm["stats"]["max"]
+            avr = bm["stats"]["mean"]
+            table.append([target, rate, min, max, avr])
     return tabulate(
-        table, headers=["target", "speed(MB/sec)", "rate", "ratio(%)", "min(sec)", "max(sec)", "mean(sec)"], tablefmt=type
+        table, headers=["target", "speed(MB/sec)", "min(sec)", "max(sec)", "mean(sec)"], tablefmt=type
     )
 
 
@@ -52,8 +51,11 @@ def generate_comment(results_file, type):
     benchmarks = root["benchmarks"]
     comment_body = "## Benchmark results\n\n"
     comment_body += generate_metainfo(root)
-    comment_body += "\n\n### benchmarks\n\n"
-    comment_body += generate_table(benchmarks, type=type)
+    comment_body += "\n\n### Compression benchmarks\n\n"
+    comment_body += generate_table(benchmarks, "compress", type=type)
+    comment_body += "\n\n### Decompression benchmarks\n\n"
+    comment_body += generate_table(benchmarks, "decompress", type=type)
+    comment_body += "\n\n"
     return comment_body
 
 
