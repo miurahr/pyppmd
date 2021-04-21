@@ -450,7 +450,7 @@ class Ppmd7Decoder(PpmdBaseDecoder):
     def flush(self, length: int) -> bytes:
         if not isinstance(length, int) or length < 0:
             raise PpmdError("Wrong length argument is specified. It should be positive integer.")
-        elif length == 0:
+        if length == 0:
             if self.rc.Code != 0:
                 raise ("PPMd decode error.")
             return b""
@@ -465,6 +465,7 @@ class Ppmd7Decoder(PpmdBaseDecoder):
             lib.ppmd7_decompress_flush(self.ppmd, self.rc, out_buf, in_buf, size)
             remaining = remaining - size
         if self.rc.Code != 0:
+            self.lock.release()
             raise ("PPMd decode error.")
         res = out.finish(out_buf)
         self.lock.release()
