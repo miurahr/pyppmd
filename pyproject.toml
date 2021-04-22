@@ -12,7 +12,6 @@ target-version = ['py38']
 [tool.coverage.run]
 branch = true
 parallel = true
-source = ["pyppmd"]
 
 [tool.coverage.report]
 show_missing = true
