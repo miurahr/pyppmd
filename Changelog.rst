@@ -25,6 +25,22 @@ Removed
 Security
 --------
 
+`v0.13.0`_
+==========
+
+Added
+-----
+* Benchmark test to show performance
+
+Changed
+-------
+* Change folder structures in source.
+* Release resources on flush()
+
+Fixed
+-----
+* Fix input buffer overrun(#8)
+
 `v0.12.1`_
 ==========
 
@@ -78,7 +94,8 @@ v0.10.0
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.12.1...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.13.0...HEAD
+.. _v0.13.0: https://github.com/miurahr/py7zr/compare/v0.12.1...v0.13.0
 .. _v0.12.1: https://github.com/miurahr/py7zr/compare/v0.12.0...v0.12.1
 .. _v0.12.0: https://github.com/miurahr/py7zr/compare/v0.11.1...v0.12.0
 .. _v0.11.1: https://github.com/miurahr/py7zr/compare/v0.11.0...v0.11.1
