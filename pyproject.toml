@@ -9,6 +9,9 @@ local_scheme = "no-local-version"
 line-length = 125
 target-version = ['py38']
 
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
+
 [tool.coverage.run]
 branch = true
 parallel = true
