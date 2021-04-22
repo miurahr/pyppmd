@@ -642,7 +642,9 @@ Ppmd7Decoder_flush(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs) {
                 goto error;
             }
         }
+        Py_BEGIN_ALLOW_THREADS
         *((Byte *)out.dst + out.pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
+        Py_END_ALLOW_THREADS
     }
     if (!Ppmd7z_RangeDec_IsFinishedOK(self->rangeDec)) {
         PyErr_SetString(PyExc_ValueError, "Decompression failed.");
@@ -1040,7 +1042,9 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
     self->rangeEnc->Stream = (IByteOut *) &writer;
 
     for (UInt32 i = 0; i < data.len; i++){
+        Py_BEGIN_ALLOW_THREADS
         Ppmd7_EncodeSymbol(self->cPpmd7, self->rangeEnc, *((Byte *)data.buf + i));
+        Py_END_ALLOW_THREADS
         if (out.size == out.pos) {
             if (OutputBuffer_Grow(&buffer, &out) < 0) {
                 PyErr_SetString(PyExc_ValueError, "No memory.");
@@ -1312,7 +1316,9 @@ Ppmd8Decoder_flush(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs) {
                 goto error;
             }
         }
+        Py_BEGIN_ALLOW_THREADS
         *((Byte *)out.dst + out.pos++) = Ppmd8_DecodeSymbol(self->cPpmd8);
+        Py_END_ALLOW_THREADS
     }
     if (!self->cPpmd8->Code != 0) {
         PyErr_SetString(PyExc_ValueError, "Decompression failed.");
@@ -1695,7 +1701,9 @@ Ppmd8Encoder_encode(Ppmd8Encoder *self,  PyObject *args, PyObject *kwargs) {
     self->cPpmd8->Stream.Out = (IByteOut *) &writer;
 
     for (UInt32 i = 0; i < data.len; i++){
+        Py_BEGIN_ALLOW_THREADS
         Ppmd8_EncodeSymbol(self->cPpmd8, *((Byte *)data.buf + i));
+        Py_END_ALLOW_THREADS
         if (out.size == out.pos) {
             if (OutputBuffer_Grow(&buffer, &out) < 0) {
                 PyErr_SetString(PyExc_ValueError, "No memory.");
