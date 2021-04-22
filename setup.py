@@ -59,7 +59,7 @@ class build_ext_compiler_check(build_ext):
 setup(
     use_scm_version={"local_scheme": "no-local-version"},
     ext_modules=[binary_extension],
-    package_dir={"pyppmd": "src/pyppmd"},
+    package_dir={"": "src/"},
     packages=packages,
     cmdclass={"build_ext": build_ext_compiler_check},
 )
