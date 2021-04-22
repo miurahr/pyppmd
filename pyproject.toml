@@ -15,6 +15,7 @@ source = ["src", "*/site-packages"]
 [tool.coverage.run]
 branch = true
 parallel = true
+omit = ["tests/*"]
 
 [tool.coverage.report]
 show_missing = true
