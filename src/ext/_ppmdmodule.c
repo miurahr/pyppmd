@@ -1573,7 +1573,10 @@ Ppmd8Encoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         if ((self->lock = PyThread_allocate_lock()) != NULL) {
             return (PyObject*)self;
         }
+        PyErr_SetString(PyExc_RuntimeError, "Ppmd8Encoder_new error(lock error)");
         Py_XDECREF(self);
+    } else {
+        PyErr_SetString(PyExc_RuntimeError, "Ppmd8Encoder_new error(no memory)");
     }
     PyErr_NoMemory();
     return NULL;
