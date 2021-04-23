@@ -7,7 +7,7 @@ from hypothesis import strategies as st
 import pyppmd
 
 vmem = psutil.virtual_memory()
-MAX_SIZE = min(0xFFFFFFFF - 12 * 3, sys.maxsize, vmem.available)
+MAX_SIZE = min(0xFFFFFFFF - 12 * 3, sys.maxsize, vmem.available >> 2)
 
 
 @given(
