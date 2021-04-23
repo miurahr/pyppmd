@@ -453,7 +453,7 @@ Ppmd7Decoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     Ppmd7Decoder *self;
     self = (Ppmd7Decoder*)type->tp_alloc(type, 0);
     if (self == NULL) {
-        goto error;
+        return NULL;
     }
     assert(self->inited == 0);
     assert(self->inited2 == 0);
@@ -899,14 +899,19 @@ static PyObject *
 Ppmd7Encoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     Ppmd7Encoder *self;
-    if ((self = (Ppmd7Encoder*)type->tp_alloc(type, 0)) != NULL) {
-        assert(self->inited == 0);
-        /* Thread lock */
-        if ((self->lock = PyThread_allocate_lock()) != NULL) {
-            return (PyObject*)self;
-        }
-        Py_XDECREF(self);
+    self = (Ppmd7Encoder*)type->tp_alloc(type, 0);
+    if (self == NULL) {
+        return NULL;
     }
+    assert(self->inited == 0);
+    /* Thread lock */
+    if ((self->lock = PyThread_allocate_lock()) == NULL) {
+        goto error;
+    }
+    return (PyObject*)self;
+
+error:
+    Py_XDECREF(self);
     return PyErr_NoMemory();
 }
 
@@ -1124,7 +1129,7 @@ Ppmd8Decoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     Ppmd8Decoder *self;
     self = (Ppmd8Decoder*)type->tp_alloc(type, 0);
     if (self == NULL) {
-        goto error;
+        return NULL;
     }
     assert(self->inited == 0);
     assert(self->inited2 == 0);
@@ -1558,14 +1563,19 @@ static PyObject *
 Ppmd8Encoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     Ppmd8Encoder *self;
-    if ((self = (Ppmd8Encoder*)type->tp_alloc(type, 0)) != NULL) {
-        assert(self->inited == 0);
-        /* Thread lock */
-        if ((self->lock = PyThread_allocate_lock()) != NULL) {
-            return (PyObject*)self;
-        }
-        Py_XDECREF(self);
+    self = (Ppmd8Encoder*)type->tp_alloc(type, 0);
+     if (self == NULL) {
+        return NULL;
+     }
+    assert(self->inited == 0);
+    /* Thread lock */
+    if ((self->lock = PyThread_allocate_lock()) == NULL) {
+        goto error;
     }
+    return (PyObject*)self;
+
+error:
+    Py_XDECREF(self);
     return PyErr_NoMemory();
 }
 

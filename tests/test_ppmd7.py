@@ -1,6 +1,10 @@
 import hashlib
 import os
 import pathlib
+import sys
+
+import psutil
+import pytest
 
 import pyppmd
 
@@ -77,3 +81,11 @@ def test_ppmd7_encode_decode(tmp_path):
             assert remaining == 0
         thash = m2.digest()
     assert thash == shash
+
+
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Reprouce error on Windows")
+def test_ppmd7_nomemory():
+    vmem = psutil.virtual_memory()
+    mem_size = min(0xFFFFFFFF - 12 * 3, sys.maxsize, vmem.available)
+    with pytest.raises(ValueError):
+        pyppmd.Ppmd7Encoder(6, mem_size)
