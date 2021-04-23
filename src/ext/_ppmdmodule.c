@@ -1578,7 +1578,7 @@ Ppmd8Encoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     } else {
         PyErr_SetString(PyExc_RuntimeError, "Ppmd8Encoder_new error(no memory)");
     }
-    PyErr_NoMemory();
+    //return PyErr_NoMemory();
     return NULL;
 }
 
