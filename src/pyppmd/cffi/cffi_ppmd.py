@@ -4,7 +4,7 @@ from typing import Union
 
 from ._cffi_ppmd import ffi, lib
 
-__all__ = ("Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder")
+__all__ = ("Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder", "PpmdError")
 
 _PPMD7_MIN_ORDER = 2
 _PPMD7_MAX_ORDER = 64
@@ -21,7 +21,7 @@ _new_nonzero = ffi.new_allocator(should_clear_after_alloc=False)
 
 
 class PpmdError(Exception):
-    "Call to the underlying library failed."
+    "Call to the underlying PPMd library failed."
     pass
 
 

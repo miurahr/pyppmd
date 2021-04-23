@@ -1,3 +1,5 @@
+from typing import Union
+
 try:
     from importlib.metadata import PackageNotFoundError, version
 except ImportError:
@@ -11,6 +13,8 @@ except ImportError:
     except ImportError:
         msg = "pyppmd module: Neither C implementation nor CFFI " "implementation can be imported."
         raise ImportError(msg)
+
+__all__ = ("compress", "decompress", "Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder", "PpmdError")
 
 __doc__ = """\
 Python bindings to PPMd compression library, the API is similar to
@@ -27,3 +31,32 @@ try:
 except PackageNotFoundError:  # pragma: no-cover
     # package is not installed
     __version__ = "unknown"
+
+
+def compress(data: Union[bytes, bytearray, memoryview], max_order: int = 6, mem_size: int = 16 << 20) -> bytes:
+    """Compress a block of data, return a bytes object.
+
+    Arguments
+    data:        A bytes-like object, data to be compressed.
+    max_order:   An integer object represent compression level.
+    mem_size:    An integer object represent memory size to use.
+    """
+    comp = Ppmd7Encoder(max_order, mem_size)
+    result = comp.encode(data)
+    return result + comp.flush()
+
+
+def decompress(
+    data: Union[bytes, bytearray, memoryview], length: int, max_order: int = 6, mem_size: int = 16 << 20
+) -> bytes:
+    """Decompress a PPMd data, return a bytes object.
+
+    Arguments
+    data:      A bytes-like object, compressed data.
+    length:    A size of uncompressed data.
+    max_order: An integer object represent max order of PPMd.
+    mem_size:  An integer object represent memory size to use.
+    """
+    decomp = Ppmd7Decoder(max_order, mem_size)
+    res = decomp.decode(data, length)
+    return res + decomp.flush(length - len(res))
