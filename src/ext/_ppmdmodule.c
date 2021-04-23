@@ -461,7 +461,6 @@ Ppmd7Decoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     Ppmd7Decoder *self;
     self = (Ppmd7Decoder*)type->tp_alloc(type, 0);
     if (self == NULL) {
-        PyErr_NoMemory();
         goto error;
     }
     assert(self->inited == 0);
@@ -470,14 +469,13 @@ Ppmd7Decoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     /* Thread lock */
     self->lock = PyThread_allocate_lock();
     if (self->lock == NULL) {
-        PyErr_NoMemory();
         goto error;
     }
     return (PyObject*)self;
 
 error:
     Py_XDECREF(self);
-    return NULL;
+    return PyErr_NoMemory();
 }
 
 static void
@@ -1573,13 +1571,9 @@ Ppmd8Encoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         if ((self->lock = PyThread_allocate_lock()) != NULL) {
             return (PyObject*)self;
         }
-        PyErr_SetString(PyExc_RuntimeError, "Ppmd8Encoder_new error(lock error)");
         Py_XDECREF(self);
-    } else {
-        PyErr_SetString(PyExc_RuntimeError, "Ppmd8Encoder_new error(no memory)");
     }
-    //return PyErr_NoMemory();
-    return NULL;
+    return PyErr_NoMemory();
 }
 
 static void
@@ -1612,6 +1606,8 @@ Ppmd8Encoder_init(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
     static char *kwlist[] = {"max_order", "mem_size", NULL};
     PyObject *max_order = Py_None;
     PyObject *mem_size = Py_None;
+
+    ACQUIRE_LOCK(self);
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "OO:Ppmd8Encoder.__init__", kwlist,
                                      &max_order, &mem_size)) {
@@ -1660,11 +1656,14 @@ Ppmd8Encoder_init(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
             goto success;
         }
         PyMem_Free(self->cPpmd8);
+        PyErr_NoMemory();
     }
 error:
+    RELEASE_LOCK(self);
     return -1;
 
 success:
+    RELEASE_LOCK(self);
     return 0;
 }
 
