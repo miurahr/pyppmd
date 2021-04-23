@@ -47,14 +47,6 @@ static const char unable_allocate_msg[] = "Unable to allocate output buffer.";
 #define KB (1024)
 #define MB (1024*1024)
 static const int BUFFER_BLOCK_SIZE[] =
-        /* If change this list, also change:
-             The CFFI implementation
-             OutputBufferTestCase unittest
-           If change the first blocks's size, also change:
-             ZstdDecompressReader.seek() method
-             ZstdFile.__init__() method
-             ZstdFile.read1() method
-             FileTestCase.test_decompress_limited() test */
         { 32*KB, 64*KB, 256*KB, 1*MB, 4*MB, 8*MB, 16*MB, 16*MB,
           32*MB, 32*MB, 32*MB, 32*MB, 64*MB, 64*MB, 128*MB, 128*MB,
           256*MB };
@@ -949,7 +941,6 @@ Ppmd7Encoder_init(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
     PyObject *max_order = Py_None;
     PyObject *mem_size = Py_None;
 
-    ACQUIRE_LOCK(self);
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "OO:Ppmd7Encoder.__init__", kwlist,
                                      &max_order, &mem_size)) {
@@ -1004,11 +995,9 @@ Ppmd7Encoder_init(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
     }
 
 error:
-    RELEASE_LOCK(self);
     return -1;
 
 success:
-    RELEASE_LOCK(self);
     return 0;
 }
 
@@ -1184,7 +1173,6 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
     PyObject *max_order = Py_None;
     PyObject *mem_size = Py_None;
 
-    ACQUIRE_LOCK(self);
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "OO:Ppmd8Decoder.__init__", kwlist,
                                      &max_order, &mem_size)) {
@@ -1236,11 +1224,9 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
     }
 
 error:
-    RELEASE_LOCK(self);
     return -1;
 
 success:
-    RELEASE_LOCK(self);
     return 0;
 }
 
@@ -1614,7 +1600,6 @@ Ppmd8Encoder_init(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
     PyObject *max_order = Py_None;
     PyObject *mem_size = Py_None;
 
-    ACQUIRE_LOCK(self);
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "OO:Ppmd8Encoder.__init__", kwlist,
                                      &max_order, &mem_size)) {
@@ -1666,11 +1651,9 @@ Ppmd8Encoder_init(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
         PyErr_NoMemory();
     }
 error:
-    RELEASE_LOCK(self);
     return -1;
 
 success:
-    RELEASE_LOCK(self);
     return 0;
 }
 
