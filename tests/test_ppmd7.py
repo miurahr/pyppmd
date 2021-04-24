@@ -9,6 +9,7 @@ data = b"This file is located in a folder.This file is located in the root."
 encoded = b"\x00T\x16C\x98\xbdi\x9b\n\xf1B^N\xac\xc8}:\xbak&\xc1\x7f\x01p\xc51C\xb0b\x1b@\x9a\xb6h\x9a-0\x98\xc0\\'"
 READ_BLOCKSIZE = 16384
 
+
 def test_ppmd7_encoder():
     encoder = pyppmd.Ppmd7Encoder(6, 16 << 20)
     result = encoder.encode(data)

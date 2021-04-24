@@ -8,8 +8,8 @@ encoded = (
 length = len(source.encode("UTF-8"))
 READ_BLOCKSIZE = 16384
 
-# Test one-shot functions
 
+# Test one-shot functions
 def test_compress_str():
     assert pyppmd.compress(source, max_order=6, mem_size=8 << 20) == encoded
 
