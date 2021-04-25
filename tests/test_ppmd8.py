@@ -75,3 +75,39 @@ def test_ppmd8_encode_decode(tmp_path):
             assert remaining == 0
         thash = m2.digest()
     assert thash == shash
+
+
+def test_ppmd8_endmark_mode(tmp_path):
+    length = 0
+    m = hashlib.sha256()
+    with testdata_path.joinpath("10000SalesRecords.csv").open("rb") as f:
+        with tmp_path.joinpath("target.ppmd").open("wb") as target:
+            enc = pyppmd.Ppmd8Encoder(6, 8 << 20, True)
+            data = f.read(READ_BLOCKSIZE)
+            while len(data) > 0:
+                m.update(data)
+                length += len(data)
+                target.write(enc.encode(data))
+                data = f.read(READ_BLOCKSIZE)
+            target.write(enc.flush())
+    shash = m.digest()
+    m2 = hashlib.sha256()
+    assert length == 1237262
+    length = 0
+    with tmp_path.joinpath("target.ppmd").open("rb") as target:
+        with tmp_path.joinpath("target.csv").open("wb") as out:
+            dec = pyppmd.Ppmd8Decoder(6, 8 << 20, True)
+            data = target.read(READ_BLOCKSIZE)
+            while len(data) > 0:
+                res = dec.decode(data)
+                m2.update(res)
+                out.write(res)
+                length += len(res)
+                data = target.read(READ_BLOCKSIZE)
+            res = dec.flush()
+            m2.update(res)
+            out.write(res)
+            length += len(res)
+    assert length == 1237262
+    thash = m2.digest()
+    assert thash == shash
