@@ -29,6 +29,22 @@ Removed
 Security
 --------
 
+`v0.14.0`_
+==========
+
+Added
+-----
+* Introduce compress() and decompress() one-shot utility
+  - compress() accept bytes-like object or string. When string, encode it to UTF-8 first.
+  - decompress() has an argument encoding, if specified, it returns string.
+* C: CFFI: Introduce End-Mark mode for PPMd8
+
+Changed
+-------
+* C: Limit initial output buffer size as same as specified length.
+* C: Allow python thread when decode/encode loop running.
+
+
 `v0.13.0`_
 ==========
 
@@ -98,7 +114,8 @@ v0.10.0
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.13.0...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.14.0...HEAD
+.. _v0.14.0: https://github.com/miurahr/py7zr/compare/v0.13.0...v0.14.0
 .. _v0.13.0: https://github.com/miurahr/py7zr/compare/v0.12.1...v0.13.0
 .. _v0.12.1: https://github.com/miurahr/py7zr/compare/v0.12.0...v0.12.1
 .. _v0.12.0: https://github.com/miurahr/py7zr/compare/v0.11.1...v0.12.0
