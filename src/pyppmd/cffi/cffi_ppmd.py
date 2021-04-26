@@ -478,12 +478,13 @@ class Ppmd7Decoder(PpmdBaseDecoder):
 
 
 class Ppmd8Encoder(PpmdBaseEncoder):
-    def __init__(self, max_order, mem_size):
+    def __init__(self, max_order, mem_size, end_mark=False):
         self.lock = Lock()
         if mem_size > sys.maxsize:
             raise ValueError("Mem_size exceed to platform limit.")
         self._init_common()
         self.ppmd = ffi.new("CPpmd8 *")
+        self.endmark = end_mark
         lib.ppmd8_compress_init(self.ppmd, self.writer)
         lib.Ppmd8_Construct(self.ppmd)
         lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator)
@@ -494,7 +495,7 @@ class Ppmd8Encoder(PpmdBaseEncoder):
         self.lock.acquire()
         in_buf = self._setup_inBuffer(data)
         out, out_buf = self._setup_outBuffer()
-        while lib.ppmd8_compress(self.ppmd, out_buf, in_buf) > 0:
+        while lib.ppmd8_compress(self.ppmd, out_buf, in_buf, self.endmark) > 0:
             if out_buf.pos == out_buf.size:
                 out.grow(out_buf)
         self.lock.release()
@@ -507,6 +508,9 @@ class Ppmd8Encoder(PpmdBaseEncoder):
             return
         self.flushed = True
         out, out_buf = self._setup_outBuffer()
+        if self.endmark:
+            lib.Ppmd8_EncodeSymbol(self.ppmd, 0x01)  # endmark
+            lib.Ppmd8_EncodeSymbol(self.ppmd, 0x00)
         lib.Ppmd8_EncodeSymbol(self.ppmd, -1)  # endmark
         lib.Ppmd8_RangeEnc_FlushData(self.ppmd)
         res = out.finish(out_buf)
@@ -525,9 +529,10 @@ class Ppmd8Encoder(PpmdBaseEncoder):
 
 
 class Ppmd8Decoder(PpmdBaseDecoder):
-    def __init__(self, max_order: int, mem_size: int):
+    def __init__(self, max_order: int, mem_size: int, end_mark=False):
         self._init_common()
         self.ppmd = ffi.new("CPpmd8 *")
+        self.endmark = end_mark
         lib.Ppmd8_Construct(self.ppmd)
         lib.ppmd8_decompress_init(self.ppmd, self.reader)
         lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator)
@@ -538,40 +543,81 @@ class Ppmd8Decoder(PpmdBaseDecoder):
     def _init2(self):
         lib.Ppmd8_RangeDec_Init(self.ppmd)
 
-    def decode(self, data: Union[bytes, bytearray, memoryview], length: int):
-        if not isinstance(length, int) or length < 0:
-            raise PpmdError("Wrong length argument is specified. It should be positive integer.")
+    def decode(self, data: Union[bytes, bytearray, memoryview], length: int = -1):
+        if not isinstance(length, int) or (not self.endmark and length < 0):
+            raise PpmdError("Wrong length argument is specified. It should be positive integer without endmark mode.")
         self.lock.acquire()
         in_buf, use_input_buffer = self._setup_inBuffer(data)
         out, out_buf = self._setup_outBuffer()
         if not self.inited:
             self.inited = True
             self._init2()
-        remaining: int = length
-        while remaining > 0:
-            if out_buf.pos == out_buf.size:
-                out.grow(out_buf)
-            size = min(out_buf.size, remaining)
-            lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, size)
-            remaining = remaining - size
+        if self.endmark:
+            while True:
+                if out_buf.pos == out_buf.size:
+                    out.grow(out_buf)
+                size = lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, -1)
+                if size == -1:
+                    self.flushed = True
+                    res = out.finish(out_buf)
+                    self.lock.release()
+                    lib.Ppmd8_Free(self.ppmd, self._allocator)
+                    ffi.release(self.ppmd)
+                    self._release()
+                    return res
+                elif size == -2:
+                    raise ValueError("Corrupted archive data.")
+                if in_buf.pos == in_buf.size:
+                    break
+        else:
+            remaining: int = length
+            while remaining > 0:
+                if out_buf.pos == out_buf.size:
+                    out.grow(out_buf)
+                size = lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, min(out_buf.size, remaining))
+                if size <= 0:
+                    break
+                remaining = remaining - size
         self._unconsumed_in(in_buf, use_input_buffer)
         res = out.finish(out_buf)
         self.lock.release()
         return res
 
-    def flush(self, length: int):
-        if not isinstance(length, int) or length < 0:
+    def flush(self, length: int = -1):
+        if self.flushed:
+            return b""
+        if not isinstance(length, int) or (not self.endmark and length < 0):
             raise PpmdError("Wrong length argument is specified. It should be positive integer.")
         self.lock.acquire()
-        if length > 0:
+        if self.endmark:
+            if length == -1:
+                in_buf, use_input_buffer = self._setup_inBuffer(b"")
+                out, out_buf = self._setup_outBuffer()
+                while True:
+                    if out_buf.pos == out_buf.size:
+                        out.grow(out_buf)
+                    size = lib.ppmd8_decompress_flush(self.ppmd, out_buf, in_buf, -1)
+                    if size == -1:
+                        break
+                    elif size == -2:
+                        raise ValueError("Corrupted archive")
+                    elif size == 0:
+                        break
+                    else:
+                        pass
+                self._unconsumed_in(in_buf, use_input_buffer)
+                res = out.finish(out_buf)
+            else:
+                # FIXME
+                res = b""
+        elif length > 0:
             in_buf, use_input_buffer = self._setup_inBuffer(b"")
             out, out_buf = self._setup_outBuffer()
             remaining: int = length
             while remaining > 0:
                 if out_buf.pos == out_buf.size:
                     out.grow(out_buf)
-                size = min(out_buf.size - out_buf.pos, remaining)
-                lib.ppmd8_decompress_flush(self.ppmd, out_buf, in_buf, size)
+                size = lib.ppmd8_decompress_flush(self.ppmd, out_buf, in_buf, min(out_buf.size - out_buf.pos, remaining))
                 remaining = remaining - size
             self._unconsumed_in(in_buf, use_input_buffer)
             res = out.finish(out_buf)
