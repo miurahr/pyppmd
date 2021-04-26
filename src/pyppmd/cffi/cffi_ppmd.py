@@ -86,21 +86,21 @@ class _BlocksOutputBuffer:
         out.size = block_size
         out.pos = 0
 
-    def initWithSize(self, out, init_size):
-        # The first block
-        block = _new_nonzero("char[]", init_size)
-        if block == ffi.NULL:
-            raise MemoryError(self.MEM_ERR_MSG)
-
-        # Create the list
-        self.list = [block]
-
-        # Set variables
-        self.allocated = init_size
-        self.max_length = -1
-        out.dst = block
-        out.size = init_size
-        out.pos = 0
+#    def initWithSize(self, out, init_size):
+#        # The first block
+#        block = _new_nonzero("char[]", init_size)
+#        if block == ffi.NULL:
+#            raise MemoryError(self.MEM_ERR_MSG)
+#
+#        # Create the list
+#        self.list = [block]
+#
+#        # Set variables
+#        self.allocated = init_size
+#        self.max_length = -1
+#        out.dst = block
+#        out.size = init_size
+#        out.pos = 0
 
     def grow(self, out):
         # Ensure no gaps in the data
