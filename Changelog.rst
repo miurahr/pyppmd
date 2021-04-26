@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file.
 
 Added
 -----
+* Introduce compress() and decompress() one-shot utility
+  - compress() accept bytes-like object or string. When string, encode it to UTF-8 first.
+  - decompress() has an argument encoding, if specified, it returns string.
+* Introduce End-Mark mode for PPMd8.
 
 Changed
 -------

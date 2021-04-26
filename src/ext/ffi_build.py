@@ -218,10 +218,10 @@ void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
 void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
 
 void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer);
-int ppmd8_compress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf);
+int ppmd8_compress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, Bool end_mark);
 void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader);
-void ppmd8_decompress(CPpmd8 *p, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length);
-void ppmd8_decompress_flush(CPpmd8 *p, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length);
+int ppmd8_decompress(CPpmd8 *p, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, int length);
+int ppmd8_decompress_flush(CPpmd8 *p, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, int length);
 
 void Ppmd8_Construct(CPpmd8 *ppmd);
 Bool Ppmd8_Alloc(CPpmd8 *p, UInt32 size, ISzAlloc *alloc);
@@ -352,16 +352,29 @@ void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer)
     ppmd->Stream.Out = (IByteOut *) writer;
 }
 
-int ppmd8_compress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf) {
-    Byte* c = (Byte *) in_buf->src + in_buf->pos;
+int ppmd8_compress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, Bool end_mark) {
+    Byte* pos = (Byte *) in_buf->src + in_buf->pos;
     const Byte* in_end = (Byte *)in_buf->src + in_buf->size;
-    while (c < in_end) {
-        Ppmd8_EncodeSymbol(ppmd, *c++);
-        if (out_buf->pos >= out_buf->size) {
-            break;
+    if (end_mark) {
+        while (pos < in_end) {
+            Byte c = *pos++;
+            if (c == 0x01) {
+                Ppmd8_EncodeSymbol(ppmd, 0x01);
+            }
+            Ppmd8_EncodeSymbol(ppmd, c);
+            if (out_buf->pos >= out_buf->size) {
+                break;
+            }
+        }
+    } else {
+        while (pos < in_end) {
+            Ppmd8_EncodeSymbol(ppmd, *pos++);
+            if (out_buf->pos >= out_buf->size) {
+                break;
+            }
         }
     }
-    in_buf->pos = c - (Byte *)in_buf->src;
+    in_buf->pos = pos - (Byte *)in_buf->src;
     return in_buf->size - in_buf->pos;
 }
 
@@ -371,25 +384,72 @@ void ppmd8_decompress_init(CPpmd8 *ppmd,  BufferReader *reader)
     ppmd->Stream.In = (IByteIn *) reader;
 }
 
-void ppmd8_decompress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length) {
-    Byte* c = (Byte *) out_buf->dst + out_buf->pos;
-    const Byte* out_end = (Byte *)out_buf->dst + length;
-    while (c < out_end) {
-        *c++ = Ppmd8_DecodeSymbol(ppmd);
-        if (in_buf->pos == in_buf->size) {
-            break;
+int ppmd8_decompress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, int length) {
+    Byte* pos = (Byte *) out_buf->dst + out_buf->pos;
+    Byte* start_pos = pos;
+    if (length == -1) {
+        const Byte* out_end = (Byte *)out_buf->dst + out_buf->size;
+        while (pos < out_end) {
+            Byte c = Ppmd8_DecodeSymbol(ppmd);
+            if (c == 0x01) {
+                c = Ppmd8_DecodeSymbol(ppmd);
+                if (c == 0x01) {
+                    *pos++ = c;
+                } else if (c == 0x00) {
+                    out_buf->pos = pos - (Byte *)out_buf->dst;
+                    return -1; // reached to endmark
+                } else {
+                    out_buf->pos = pos - (Byte *)out_buf->dst;
+                    return -2; // return error
+                }
+            } else {
+                *pos ++ = c;
+            }
+            if (in_buf->pos == in_buf->size) {
+                break;
+            }
+        }
+    } else {
+        const Byte* out_end = (Byte *)out_buf->dst + length;
+        while (pos < out_end) {
+            *pos++ = Ppmd8_DecodeSymbol(ppmd);
+            if (in_buf->pos == in_buf->size) {
+                break;
+            }
         }
     }
-    out_buf->pos = c - (Byte *)out_buf->dst;
+    out_buf->pos = pos - (Byte *)out_buf->dst;
+    return(pos - start_pos);
 }
 
-void ppmd8_decompress_flush(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length) {
-    Byte* c = (Byte *) out_buf->dst + out_buf->pos;
-    const Byte* out_end = (Byte *)out_buf->dst + length;
-    while (c < out_end) {
-        *c++ = Ppmd8_DecodeSymbol(ppmd);
-    }
-    out_buf->pos = c - (Byte *)out_buf->dst;
+int ppmd8_decompress_flush(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, int length) {
+    Byte* pos = (Byte *) out_buf->dst + out_buf->pos;
+    Byte* start_pos = pos;
+    if (length == -1) {
+        const Byte* out_end = (Byte *)out_buf->dst + out_buf->size;
+        while (pos < out_end) {
+            Byte c = Ppmd8_DecodeSymbol(ppmd);
+            if (c == 0x01) {
+                c = Ppmd8_DecodeSymbol(ppmd);
+                if (c == 0x01) {
+                    *pos++ = c;
+                } else if (c == 0x00) {
+                    out_buf->pos = pos - (Byte *)out_buf->dst;
+                    return(-1);
+                } else {
+                    return(-2); // corrupted
+                }
+            }
+        }
+        out_buf->pos = pos - (Byte *)out_buf->dst;
+    } else {
+        const Byte* out_end = (Byte *)out_buf->dst + length;
+        while (pos < out_end) {
+            *pos++ = Ppmd8_DecodeSymbol(ppmd);
+        }
+        out_buf->pos = pos - (Byte *)out_buf->dst;
+   }
+   return(pos - start_pos);
 }
 """
 
