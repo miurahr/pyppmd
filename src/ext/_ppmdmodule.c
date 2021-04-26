@@ -772,7 +772,13 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
     reader.inBuffer = &in;
     self->rangeDec->Stream = (IByteIn *) &reader;
 
-    if (OutputBuffer_InitAndGrow(&buffer, &out, -1) < 0) {
+    int max_length;
+    if (length < 0) {
+        max_length = -1;
+    } else {
+        max_length = length;
+    }
+    if (OutputBuffer_InitAndGrow(&buffer, &out, max_length) < 0) {
         PyErr_SetString(PyExc_ValueError, "No Memory.");
         RELEASE_LOCK(self);
         return NULL;
@@ -797,7 +803,7 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
             }
             if (out.pos == out.size) {
                 if (OutputBuffer_Grow(&buffer, &out) < 0) {
-                    PyErr_SetString(PyExc_ValueError, "L616: Unknown status");
+                    PyErr_SetString(PyExc_ValueError, "No Memory.");
                     goto error;
                 }
             }
@@ -1485,7 +1491,13 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
     reader.inBuffer = &in;
     self->cPpmd8->Stream.In = (IByteIn *) &reader;
 
-    if (OutputBuffer_InitAndGrow(&buffer, &out, -1) < 0) {
+    int max_length;
+    if (length < 0) {
+        max_length = -1;
+    } else {
+        max_length = length;
+    }
+    if (OutputBuffer_InitAndGrow(&buffer, &out, length) < 0) {
         PyErr_SetString(PyExc_ValueError, "No Memory.");
         RELEASE_LOCK(self);
         return NULL;
