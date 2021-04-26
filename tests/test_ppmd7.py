@@ -6,6 +6,7 @@ import pyppmd
 
 testdata_path = pathlib.Path(os.path.dirname(__file__)).joinpath("data")
 data = b"This file is located in a folder.This file is located in the root."
+encoded = b"\x00T\x16C\x98\xbdi\x9b\n\xf1B^N\xac\xc8}:\xbak&\xc1\x7f\x01p\xc51C\xb0b\x1b@\x9a\xb6h\x9a-0\x98\xc0\\'"
 READ_BLOCKSIZE = 16384
 
 
@@ -14,8 +15,7 @@ def test_ppmd7_encoder():
     result = encoder.encode(data)
     result += encoder.flush()
     assert len(result) == 41
-    with testdata_path.joinpath("ppmd7.dat").open("rb") as f:
-        assert bytes(result) == f.read()
+    assert result == encoded
 
 
 def test_ppmd7_encoder2():
@@ -24,25 +24,22 @@ def test_ppmd7_encoder2():
     result += encoder.encode(data[33:])
     result += encoder.flush()
     assert len(result) == 41
-    with testdata_path.joinpath("ppmd7.dat").open("rb") as f:
-        assert result == f.read()
+    assert result == encoded
 
 
 def test_ppmd7_decoder():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
-    with testdata_path.joinpath("ppmd7.dat").open("rb") as f:
-        result = decoder.decode(f.read(41), 66)
-        result += decoder.flush(66 - len(result))
-        assert result == data
+    result = decoder.decode(encoded, 66)
+    result += decoder.flush(66 - len(result))
+    assert result == data
 
 
 def test_ppmd7_decoder2():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
-    with testdata_path.joinpath("ppmd7.dat").open("rb") as f:
-        result = decoder.decode(f.read(33), 33)
-        result += decoder.decode(f.read(8), 28)
-        result += decoder.flush(66 - len(result))
-        assert result == data
+    result = decoder.decode(encoded[:33], 33)
+    result += decoder.decode(encoded[33:], 28)
+    result += decoder.flush(66 - len(result))
+    assert result == data
 
 
 def test_ppmd7_encode_decode(tmp_path):
