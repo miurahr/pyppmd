@@ -1063,12 +1063,12 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
         }
     }
     Py_END_ALLOW_THREADS
+    if (!result)
+        goto error;
 
-    if (result) {
-        ret = OutputBuffer_Finish(&buffer, &out);
-        RELEASE_LOCK(self);
-        return ret;
-    }
+    ret = OutputBuffer_Finish(&buffer, &out);
+    RELEASE_LOCK(self);
+    return ret;
 
 error:
     OutputBuffer_OnError(&buffer);
