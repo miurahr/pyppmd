@@ -1,9 +1,9 @@
-.. ppmd-cffi documentation main index file, created by
+.. PyPPMd documentation main index file, created by
    sphinx-quickstart on Mon Sep 28 14:52:30 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to ppmd-cffi's documentation!
+Welcome to PyPPMd's documentation!
 =====================================
 
 .. toctree::

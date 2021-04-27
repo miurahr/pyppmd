@@ -11,13 +11,13 @@ Development environment
 
 If you’re reading this, you’re probably interested in contributing to pyppmd.
 Thank you very much! The purpose of this guide is to get you to the point
-where you can make improvements to the py7zr and share them with the rest of the team.
+where you can make improvements to the PyPPMd and share them with the rest of the team.
 
 
 Setup Python and C compiler
 ---------------------------
 
-The ppmd is written in the Python and C languages bound with both CFFI, C Foreign
+The PyPPMd is written in the Python and C languages bound with both CFFI, C Foreign
 Function Interface, and CPython C/C++ API.
 CFFI is used for PyPy3 and CPython API is used for CPython.
 
