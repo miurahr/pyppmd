@@ -1,16 +1,27 @@
-.. PyPPMd documentation main index file, created by
-   sphinx-quickstart on Mon Sep 28 14:52:30 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+PyPPMd Python module
+====================
 
-Welcome to PyPPMd's documentation!
-=====================================
+PPM, Prediction by partial matching, is a wellknown compression technique
+based on context modeling and prediction. PPM models use a set of previous
+symbols in the uncompressed symbol stream to predict the next symbol in the
+stream.
+
+PPMd is an implementation of PPMII by Dmitry Shkarin.
+
+The ``pyppmd`` package uses core C files from ``p7zip``.
+The library has a bare function and no metadata/header handling functions.
+This means you should know compression parameters and input/output data
+sizes.
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   user_guide
+   getting_started
+   api_guide
+   ppmd8
+   ppmd7
    contribution
    authors
 

@@ -26,7 +26,7 @@ Some parts of th codes are derived from ``7-zip``, ``pyzstd`` and ``ppmd-cffi``.
 Development status
 ------------------
 
-A development status is considered as ``Alpha``.
+A development status is considered as ``Beta``.
 
 
 Copyright
