@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 try:
     from importlib.metadata import PackageNotFoundError, version
@@ -33,6 +33,53 @@ except PackageNotFoundError:  # pragma: no-cover
     __version__ = "unknown"
 
 
+class PpmdCompressor:
+    """Compressor class to compress data by PPMd algorithm."""
+    def __init__(self, max_order: int = 6, mem_size: int = 8 << 20):
+        self.encoder = Ppmd8Encoder(max_order, mem_size)
+        self.eof = False
+
+    def compress(self, data_or_str: Union[bytes, bytearray, memoryview, str]):
+        if type(data_or_str) == str:
+            data = data_or_str.encode("UTF-8")
+        elif _is_bytelike(data_or_str):
+            data = data_or_str
+        else:
+            raise ValueError("Argument data_or_str is neither bytes-like object nor str.")
+        return self.encoder.encode(data)
+
+    def flush(self):
+        self.eof = True
+        return self.encoder.flush()
+
+
+class PpmdDecompressor:
+    """Decompressor class to decompress data by PPMd algorithm."""
+    def __init__(self, max_order: int = 6, mem_size: int = 8<< 20, encoding: Optional[str] = None):
+        self.decoder = Ppmd8Decoder(max_order=max_order, mem_size=mem_size)
+        self.eof = False
+        self.need_input = True
+        if encoding is not None:
+            try:
+                "abcde".encode(encoding=encoding)
+            except:
+                raise ValueError("Invalid encoding.")
+        self.encoding = encoding
+
+    def decompress(self, data: Union[bytes, memoryview]):
+        if self.decoder.eof:
+            self.eof = True
+            return b""
+        if self.decoder.need_input and len(data) == 0:
+            raise PpmdError("No enough data is provided for decompression.")
+        elif not self.decoder.need_input and len(data) > 0:
+            raise PpmdError("Unused data is given.")
+        if self.encoding is None:
+            return self.decoder.decode(data)
+        else:
+            return self.decoder.decode(data).decode(self.encoding)
+
+
 def compress(
     data_or_str: Union[bytes, bytearray, memoryview, str], *, max_order: int = 6, mem_size: int = 16 << 20
 ) -> bytes:
@@ -57,7 +104,6 @@ def compress(
 
 def decompress(
     data: Union[bytes, bytearray, memoryview],
-    length: int,
     *,
     max_order: int = 6,
     mem_size: int = 16 << 20,
@@ -74,18 +120,16 @@ def decompress(
     """
     if not _is_bytelike(data):
         raise ValueError("Argument data should be bytes-like object.")
-    if not isinstance(length, int) or length < 0:
-        raise ValueError("Argument length should be positive integer.")
     if encoding is None:
-        return _decompress(data, length, max_order, mem_size)
+        return _decompress(data, max_order, mem_size)
     else:
-        return _decompress(data, length, max_order, mem_size).decode(encoding)
+        return _decompress(data, max_order, mem_size).decode(encoding)
 
 
-def _decompress(data: Union[bytes, bytearray, memoryview], length: int, max_order: int, mem_size: int):
+def _decompress(data: Union[bytes, bytearray, memoryview], max_order: int, mem_size: int):
     decomp = Ppmd8Decoder(max_order, mem_size)
-    res = decomp.decode(data, length)
-    return res + decomp.flush(length - len(res))
+    res = decomp.decode(data)
+    return res
 
 
 def _is_bytelike(data):

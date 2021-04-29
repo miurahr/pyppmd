@@ -45,22 +45,17 @@ that use the range coder from 7z.
 Ppmd8Encoder and Ppmd8Decoder classes are intend to use
 general purpose text compression.
 
-It use `end mark` of source, when output text has ``\x01\x00``,
+It uses `end mark` of source, when output text has ``\x01\x00``,
 decompression is end, and ``\x01`` raw data is escaped as ``\x01\x01``.
 This is a similar way with RAR archiver but is not compatible.
-
-Ppmd8Decoder also accept ``length`` parameter how many bytes should
-generated.
 
 Ppmd8Encoder object
 -------------------
 
-.. class:: Ppmd8Encoder(max_order: int, mem_size: int, end_mark: boolean)
+.. class:: Ppmd8Encoder(max_order: int, mem_size: int)
 
     Encoder for PPMd Var.I. The ``max_order`` parameter is between 2 to 64.
     ``mem_size`` is a memory size in bytes which the encoder use.
-    ``end_mark`` is a flag whether encoder escape ``\x01`` and use ``\x00``
-    for end mark. Default is ``False``.
 
 .. method:: Ppmd8Encoder.encode(data: Union[bytes, bytearray, memoryview])
 
@@ -79,37 +74,27 @@ Ppmd8Encoder object
 Ppmd8Decoder object
 -------------------
 
-.. class:: Ppmd8Decoder(max_order: int, mem_size: int, end_mark: boolean)
+.. class:: Ppmd8Decoder(max_order: int, mem_size: int)
 
     Decoder for PPMd Var.I. The ``max_order`` parameter is between 2 to 64.
     ``mem_size`` is a memory size in bytes which the encoder use.
-    ``end_mark`` is a flag whether decoder escape ``\x01`` and use ``\x00``
-    for end mark. Default is ``False``
 
     These parameters should as same as one when encode the data.
 
 .. method:: Ppmd8Decoder.decode(data: Union[bytes, bytearray, memoryview], length: int)
 
    decode the given data and returns decoded data.
-   When end mark mode specified, and length is -1, then maximum output data is returned.
+   When length is -1, maximum output data may be returned.
 
    If decoder got the end mark, decode() method automatically flush all data and close
-   some resource. When reached to end mark, ``Ppmd8Decoder.eof`` member.
+   some resource. When reached to end mark, ``Ppmd8Decoder.eof`` member become True.
 
-   When there is not an end mark mode, length should be positive integer.
+   When ``Ppmd8Decoder.needs_input`` is True, all input data is exhausted and
+   need more input data to generate output. Otherwise, there are some data in internal
+   buffer and reusable.
 
    The decoder may return data which size is smaller than specified length, that is
    because size of input data is not enough to decode.
-
-
-.. method:: Ppmd8Decoder.flush(length: int)
-
-   When end mark mode, length is ignored.
-   When data has already flushed, it just returns b""
-
-   All pending input is processed, and a bytes object containing the remaining uncompressed
-   output of specified length is returned. After calling flush(), the decode() method
-   cannot be called again; the only realistic action is to delete the object.
 
 
 Ppmd7Encoder object
