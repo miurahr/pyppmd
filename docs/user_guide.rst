@@ -32,8 +32,54 @@ as like follows;
     $ pip install pyppmd
 
 
-:mod:`pyppmd` Programming Interfaces
-====================================
+:mod:`pyppmd` Application programming interface
+===============================================
+
+Exception
+---------
+
+.. py:exception:: PpmdError
+
+    This exception is raised when an error occurs.
+
+
+
+Simple compression/decompression
+--------------------------------
+
+    This section contains:
+
+        * function :py:func:`compress`
+        * function :py:func:`decompress`
+
+
+.. py:function:: compress(bytes_or_str: Union[bytes, bytearray, memoryview, str], max_order: int, mem_size: int)
+
+    Compress *bytes_or_str*, return the compressed data.
+
+    :param bytes_or_str: Data to be compressed. When it is type of str, encoded with "UTF-8" encoding before compress.
+    :type bytes_or_str: bytes-like object or str
+    :return: Compressed data
+    :rtype: bytes
+
+.. sourcecode:: python
+
+    compressed_data = compress(data)
+
+.. py:function:: decompress(data: Union[bytes, memoryview], max_order: int, mem_size: int, encoding: Optional[str])
+
+    Decompress *data*, return the decompressed data.
+
+    When encoding specified, return the decoded data as str type by specified encoding.
+    Otherwise it returns bytes.
+
+
+
+.. class::
+
+
+:mod:`pyppmd` Low level Programming Interfaces
+==============================================
 
 There are FOUR classes to handle bare PPMd data.
 

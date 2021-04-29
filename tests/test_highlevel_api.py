@@ -18,7 +18,7 @@ def test_compress():
 
 
 def test_decompress_str():
-    assert pyppmd.decompress(encoded, max_order=6, mem_size=8 << 20, encoding="UTF-8") == source
+    assert pyppmd.decompress_str(encoded, max_order=6, mem_size=8 << 20, encoding="UTF-8") == source
 
 
 def test_decompress():

@@ -55,16 +55,10 @@ class PpmdCompressor:
 
 class PpmdDecompressor:
     """Decompressor class to decompress data by PPMd algorithm."""
-    def __init__(self, max_order: int = 6, mem_size: int = 8<< 20, encoding: Optional[str] = None):
+    def __init__(self, max_order: int = 6, mem_size: int = 8<< 20):
         self.decoder = Ppmd8Decoder(max_order=max_order, mem_size=mem_size)
         self.eof = False
         self.need_input = True
-        if encoding is not None:
-            try:
-                "abcde".encode(encoding=encoding)
-            except:
-                raise ValueError("Invalid encoding.")
-        self.encoding = encoding
 
     def decompress(self, data: Union[bytes, memoryview]):
         if self.decoder.eof:
@@ -74,10 +68,7 @@ class PpmdDecompressor:
             raise PpmdError("No enough data is provided for decompression.")
         elif not self.decoder.need_input and len(data) > 0:
             raise PpmdError("Unused data is given.")
-        if self.encoding is None:
-            return self.decoder.decode(data)
-        else:
-            return self.decoder.decode(data).decode(self.encoding)
+        return self.decoder.decode(data)
 
 
 def compress(
@@ -102,7 +93,7 @@ def compress(
     return result + comp.flush()
 
 
-def decompress(
+def decompress_str(
     data: Union[bytes, bytearray, memoryview],
     *,
     max_order: int = 6,
@@ -113,17 +104,34 @@ def decompress(
 
     Arguments
     data:      A bytes-like object, compressed data.
-    length:    A size of uncompressed data.
     max_order: An integer object represent max order of PPMd.
     mem_size:  An integer object represent memory size to use.
-    encoding:  Encoding of compressed text data, when it is None return as bytes. Default is None
+    encoding:  Encoding of compressed text data, when it is None return as bytes. Default is UTF-8
     """
     if not _is_bytelike(data):
         raise ValueError("Argument data should be bytes-like object.")
     if encoding is None:
-        return _decompress(data, max_order, mem_size)
+        return _decompress(data, max_order, mem_size).decode("UTF-8")
     else:
         return _decompress(data, max_order, mem_size).decode(encoding)
+
+
+def decompress(
+    data: Union[bytes, bytearray, memoryview],
+    *,
+    max_order: int = 6,
+    mem_size: int = 16 << 20,
+) -> Union[bytes, str]:
+    """Decompress a PPMd data, return a bytes object.
+
+    Arguments
+    data:      A bytes-like object, compressed data.
+    max_order: An integer object represent max order of PPMd.
+    mem_size:  An integer object represent memory size to use.
+    """
+    if not _is_bytelike(data):
+        raise ValueError("Argument data should be bytes-like object.")
+    return _decompress(data, max_order, mem_size)
 
 
 def _decompress(data: Union[bytes, bytearray, memoryview], max_order: int, mem_size: int):
