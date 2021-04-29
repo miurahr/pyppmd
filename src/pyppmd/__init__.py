@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Union
 
 try:
     from importlib.metadata import PackageNotFoundError, version
@@ -35,6 +35,7 @@ except PackageNotFoundError:  # pragma: no-cover
 
 class PpmdCompressor:
     """Compressor class to compress data by PPMd algorithm."""
+
     def __init__(self, max_order: int = 6, mem_size: int = 8 << 20):
         self.encoder = Ppmd8Encoder(max_order, mem_size)
         self.eof = False
@@ -55,7 +56,8 @@ class PpmdCompressor:
 
 class PpmdDecompressor:
     """Decompressor class to decompress data by PPMd algorithm."""
-    def __init__(self, max_order: int = 6, mem_size: int = 8<< 20):
+
+    def __init__(self, max_order: int = 6, mem_size: int = 8 << 20):
         self.decoder = Ppmd8Decoder(max_order=max_order, mem_size=mem_size)
         self.eof = False
         self.need_input = True
