@@ -9,10 +9,6 @@ All notable changes to this project will be documented in this file.
 
 Added
 -----
-* Introduce compress() and decompress() one-shot utility
-  - compress() accept bytes-like object or string. When string, encode it to UTF-8 first.
-  - decompress() has an argument encoding, if specified, it returns string.
-* Introduce End-Mark mode for PPMd8 that is default mode now.
 
 Changed
 -------
@@ -28,6 +24,28 @@ Removed
 
 Security
 --------
+
+`v0.15.0`_
+==========
+
+* Now development status is Beta.
+
+Added
+-----
+
+* Introduce PpmdCompressor and PpmdDecompressor class for stream compression.
+* Introduce decompress_str() one-shot utility to return str object.
+
+Changed
+-------
+
+* decompress() always return bytes object.
+
+Deprecated
+----------
+
+* PPMd8: drop length mode for decompression and always use end mark mode.
+* PPMd8: drop flush() method for decompression.
 
 `v0.14.0`_
 ==========
@@ -114,7 +132,8 @@ v0.10.0
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.14.0...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.15.0...HEAD
+.. _v0.15.0: https://github.com/miurahr/py7zr/compare/v0.14.0...v0.15.0
 .. _v0.14.0: https://github.com/miurahr/py7zr/compare/v0.13.0...v0.14.0
 .. _v0.13.0: https://github.com/miurahr/py7zr/compare/v0.12.1...v0.13.0
 .. _v0.12.1: https://github.com/miurahr/py7zr/compare/v0.12.0...v0.12.1
