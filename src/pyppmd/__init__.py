@@ -22,7 +22,7 @@ Python's bz2/lzma/zlib module.
 
 Documentation: https://pyppmd.readthedocs.io
 Github: https://github.com/miurahr/pyppmd
-PyPI: httpsrecursive-include src *.pyi://pypi.org/prject/pyppmd"""
+PyPI: https://pypi.org/project/pyppmd"""
 
 __copyright__ = "Copyright (C) 2020,2021 Hiroshi Miura"
 
