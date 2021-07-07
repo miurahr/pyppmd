@@ -8,6 +8,9 @@ PyPPMd
 .. image:: https://badge.fury.io/py/pyppmd.svg
   :target: https://badge.fury.io/py/pyppmd
 
+.. image:: https://img.shields.io/conda/vn/conda-forge/pyppmd
+  :target: https://anaconda.org/conda-forge/pyppmd
+
 .. image:: https://github.com/miurahr/pyppmd/workflows/Run%20Tox%20tests/badge.svg
   :target: https://github.com/miurahr/pyppmd/actions
 
