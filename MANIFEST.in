@@ -24,5 +24,9 @@ recursive-include tests *.py
 recursive-include utils *.py
 recursive-include utils *.txt
 
+exclude .gitignore
+exclude .gitattributes
 recursive-exclude * __pycache__
-recursive-exclude * *.pyc
+recursive-exclude *.pyc
+recursive-exclude .github *.yml
+recursive-exclude .github *.md
