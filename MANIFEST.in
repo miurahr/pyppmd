@@ -17,12 +17,11 @@ recursive-include src py.typed
 recursive-include src *.c
 
 recursive-include tests *.csv
-recursive-include tests *.dat
-recursive-include tests *.ppmd
 recursive-include tests *.py
 
 recursive-include utils *.py
 recursive-include utils *.txt
 
-recursive-exclude * __pycache__
-recursive-exclude * *.pyc
+exclude .gitignore
+exclude .gitattributes
+prune .github
