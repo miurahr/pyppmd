@@ -49,11 +49,21 @@ else:  # C implementation
     binary_extension = Extension(**kwargs)
 
 
+WARNING_AS_ERROR = has_option("--warning-as-error")
+
+
 class build_ext_compiler_check(build_ext):
     def build_extensions(self):
-        if "msvc" in self.compiler.compiler_type.lower():
-            for extension in self.extensions:
-                more_options = ["/Ob3", "/GF", "/Gy"]
+        for extension in self.extensions:
+            if self.compiler.compiler_type.lower() in ("unix", "mingw32"):
+                if WARNING_AS_ERROR:
+                    extension.extra_compile_args.append("-Werror")
+            elif self.compiler.compiler_type.lower() == "msvc":
+                # /GF eliminates duplicate strings
+                # /Gy does function level linking
+                more_options = ["/GF", "/Gy"]
+                if WARNING_AS_ERROR:
+                    more_options.append("/WX")
                 extension.extra_compile_args.extend(more_options)
         super().build_extensions()
 
