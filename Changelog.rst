@@ -25,6 +25,23 @@ Removed
 Security
 --------
 
+`v0.15.1`_
+==========
+
+Added
+-----
+* Badge for conda-forge package(#19)
+
+Changed
+-------
+* Test document with tox
+
+Fixed
+-----
+* Fix setup.py: pyppmd.egg-info/SOURCES.txt not including full path
+* Fix source package not include .git* files(#20)
+* Fix compiler warning by cast.
+
 `v0.15.0`_
 ==========
 
@@ -132,7 +149,8 @@ v0.10.0
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.15.0...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.15.1...HEAD
+.. _v0.15.1: https://github.com/miurahr/py7zr/compare/v0.15.0...v0.15.1
 .. _v0.15.0: https://github.com/miurahr/py7zr/compare/v0.14.0...v0.15.0
 .. _v0.14.0: https://github.com/miurahr/py7zr/compare/v0.13.0...v0.14.0
 .. _v0.13.0: https://github.com/miurahr/py7zr/compare/v0.12.1...v0.13.0
