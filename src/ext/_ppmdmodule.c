@@ -909,7 +909,7 @@ static PyType_Slot Ppmd7Decoder_slots[] = {
     {Py_tp_dealloc, Ppmd7Decoder_dealloc},
     {Py_tp_init, Ppmd7Decoder_init},
     {Py_tp_methods, Ppmd7Decoder_methods},
-    {Py_tp_doc, Ppmd7Decoder_doc},
+    {Py_tp_doc, (char *)Ppmd7Decoder_doc},
     {0, 0}
 };
 
@@ -1147,7 +1147,7 @@ static PyType_Slot Ppmd7Encoder_slots[] = {
         {Py_tp_dealloc, Ppmd7Encoder_dealloc},
         {Py_tp_init, Ppmd7Encoder_init},
         {Py_tp_methods, Ppmd7Encoder_methods},
-        {Py_tp_doc, Ppmd7Encoder_doc},
+        {Py_tp_doc, (char *)Ppmd7Encoder_doc},
         {0, 0}
 };
 
@@ -1567,7 +1567,7 @@ static PyType_Slot Ppmd8Decoder_slots[] = {
     {Py_tp_methods, Ppmd8Decoder_methods},
     {Py_tp_members, Ppmd8Decoder_members},
     {Py_tp_getset, Ppmd8Decoder_getset},
-    {Py_tp_doc, Ppmd8Decoder_doc},
+    {Py_tp_doc, (char *)Ppmd8Decoder_doc},
     {0, 0}
 };
 
@@ -1811,7 +1811,7 @@ static PyType_Slot Ppmd8Encoder_slots[] = {
         {Py_tp_dealloc, Ppmd8Encoder_dealloc},
         {Py_tp_init, Ppmd8Encoder_init},
         {Py_tp_methods, Ppmd8Encoder_methods},
-        {Py_tp_doc, Ppmd8Encoder_doc},
+        {Py_tp_doc, (char *)Ppmd8Encoder_doc},
         {0, 0}
 };
 
