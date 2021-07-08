@@ -86,7 +86,7 @@ jobs:
         uses: actions/setup-python@v2
       - name: Build source distribution & wheels
         run: |
-          python setup.py --egg-base /tmp sdist --formats=gztar
+          python setup.py sdist --formats=gztar
           python -m pip install -U pip
           python -m pip install -U cibuildwheel
           python -m cibuildwheel --output-dir wheelhouse
