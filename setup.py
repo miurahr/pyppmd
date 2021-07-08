@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
+import os
 import pathlib
 import platform
 import sys
 
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
+from setuptools.command.egg_info import egg_info
 
 src_root = pathlib.Path(__file__).parent / "lib"
 sources = [
@@ -56,10 +58,20 @@ class build_ext_compiler_check(build_ext):
         super().build_extensions()
 
 
+# Work around pypa/setuptools#436.
+class my_egg_info(egg_info):
+    def run(self):
+        try:
+            os.remove(os.path.join(self.egg_info, "SOURCES.txt"))
+        except FileNotFoundError:
+            pass
+        super().run()
+
+
 setup(
     use_scm_version={"local_scheme": "no-local-version"},
     ext_modules=[binary_extension],
     package_dir={"": "src"},
     packages=packages,
-    cmdclass={"build_ext": build_ext_compiler_check},
+    cmdclass={"build_ext": build_ext_compiler_check, "egg_info": my_egg_info},
 )
