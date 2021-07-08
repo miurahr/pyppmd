@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import os
-import pathlib
 import platform
 import sys
 
@@ -8,13 +7,9 @@ from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 from setuptools.command.egg_info import egg_info
 
-src_root = pathlib.Path(__file__).parent / "lib"
-sources = [
-    src_root.joinpath(s).as_posix() for s in ["Ppmd7.c", "Ppmd7Dec.c", "Ppmd7Enc.c", "Ppmd8.c", "Ppmd8Dec.c", "Ppmd8Enc.c"]
-]
 
+sources = ['lib/Ppmd7.c', 'lib/Ppmd8.c', 'lib/Ppmd8Dec.c', 'lib/Ppmd7Enc.c', 'lib/Ppmd8Enc.c', 'lib/Ppmd7Dec.c']
 _ppmd_extension = Extension("pyppmd._ppmd", sources)
-
 kwargs = {"include_dirs": ["lib"], "library_dirs": [], "libraries": [], "sources": sources, "define_macros": []}
 
 
