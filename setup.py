@@ -8,7 +8,7 @@ from setuptools.command.build_ext import build_ext
 from setuptools.command.egg_info import egg_info
 
 
-sources = ['lib/Ppmd7.c', 'lib/Ppmd8.c', 'lib/Ppmd8Dec.c', 'lib/Ppmd7Enc.c', 'lib/Ppmd8Enc.c', 'lib/Ppmd7Dec.c']
+sources = ["lib/Ppmd7.c", "lib/Ppmd8.c", "lib/Ppmd8Dec.c", "lib/Ppmd7Enc.c", "lib/Ppmd8Enc.c", "lib/Ppmd7Dec.c"]
 _ppmd_extension = Extension("pyppmd._ppmd", sources)
 kwargs = {"include_dirs": ["lib"], "library_dirs": [], "libraries": [], "sources": sources, "define_macros": []}
 
