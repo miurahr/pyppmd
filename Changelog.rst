@@ -25,6 +25,21 @@ Removed
 Security
 --------
 
+`v0.15.2`_
+==========
+
+Added
+-----
+* Add development note using cmake
+
+Fixed
+-----
+* Make CMake build script working
+
+Security
+--------
+* Hardening for multiplexing overflow(scan#1)
+
 `v0.15.1`_
 ==========
 
@@ -149,7 +164,8 @@ v0.10.0
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.15.1...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.15.2...HEAD
+.. _v0.15.2: https://github.com/miurahr/py7zr/compare/v0.15.1...v0.15.2
 .. _v0.15.1: https://github.com/miurahr/py7zr/compare/v0.15.0...v0.15.1
 .. _v0.15.0: https://github.com/miurahr/py7zr/compare/v0.14.0...v0.15.0
 .. _v0.14.0: https://github.com/miurahr/py7zr/compare/v0.13.0...v0.14.0
