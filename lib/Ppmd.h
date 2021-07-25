@@ -5,6 +5,7 @@ This code is based on PPMd var.H (2001): Dmitry Shkarin : Public domain */
 #ifndef __PPMD_H
 #define __PPMD_H
 
+#include <assert.h>
 #include "Arch.h"
 #include "Interface.h"
 
