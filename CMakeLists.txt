@@ -4,16 +4,13 @@ project(pyppmd C CXX)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
 
+## TARGET PYTHON version
+set(PY_VERSION 3.8)
+
 ############################################
 ## Configuration for python-ext
-set(PY_VERSION 3.8)
-set(PY_MAJOR_MINOR 38)
-#
-set(Python_ROOT_DIR "$HOME/.virtuanlenvs/pyppmd10/")
-set(Python_FIND_STRATEGY LOCATION)
-set(Python_FIND_VIRTUALENV ONLY)
+set(Python_FIND_STRATEGY VERSION)
 set(Python_FIND_IMPLEMENTATIONS CPython)
-set(Python_FIND_UNVERSIONED_NAMES NEVER)
 find_package(Python ${PY_VERSION}.0...${PY_VERSION}.99 COMPONENTS Interpreter Development)
 set(PY_EXT_FILE _ppmd)
 set(PY_EXT_DIR src/pyppmd/c)
