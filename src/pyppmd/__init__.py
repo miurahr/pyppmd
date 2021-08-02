@@ -67,7 +67,9 @@ class PpmdDecompressor:
             self.eof = True
             return b""
         if self.decoder.need_input and len(data) == 0:
-            raise PpmdError("No enough data is provided for decompression.")
+            # about to decode the last symbol
+            pass
+            # raise PpmdError("No enough data is provided for decompression.")
         elif not self.decoder.need_input and len(data) > 0:
             raise PpmdError("Unused data is given.")
         return self.decoder.decode(data)
