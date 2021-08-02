@@ -1197,7 +1197,7 @@ Ppmd8Decoder_dealloc(Ppmd8Decoder *self)
 }
 
 PyDoc_STRVAR(Ppmd8Decoder_doc, "A PPMd compression algorithm decoder.\n\n"
-                                 "Ppmd8Decoder.__init__(self, max_order, mem_size)\n"
+                                 "Ppmd8Decoder.__init__(self, max_order, mem_size, restore_method=0)\n"
                                  "----\n"
                                  "Initialize a Ppmd8Decoder object.\n\n"
                                  "Arguments\n"
@@ -1207,18 +1207,20 @@ PyDoc_STRVAR(Ppmd8Decoder_doc, "A PPMd compression algorithm decoder.\n\n"
                                  "mem_size:  max memory size in bytes the compressor is able to use, bigger values improve compression,\n"
                                  "           raging from 10kB to physical memory size.\n"
                                  "           Default size is 16MB.\n"
+                                 "restore_method: restore method, 0=restart, 1=cutoff.\n"
                                  );
 
 static int
 Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
 {
-    static char *kwlist[] = {"max_order", "mem_size", NULL};
+    static char *kwlist[] = {"max_order", "mem_size", "restore_method", NULL};
     PyObject *max_order = Py_None;
     PyObject *mem_size = Py_None;
+    int restore_method = PPMD8_RESTORE_METHOD_RESTART;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                                     "OO:Ppmd8Decoder.__init__", kwlist,
-                                     &max_order, &mem_size)) {
+                                     "OO|i:Ppmd8Decoder.__init__", kwlist,
+                                     &max_order, &mem_size, &restore_method)) {
         return -1;
     }
 
@@ -1260,7 +1262,7 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
     if ((self->cPpmd8 = PyMem_Malloc(sizeof(CPpmd8))) != NULL) {
         Ppmd8_Construct(self->cPpmd8);
         if (Ppmd8_Alloc(self->cPpmd8, (UInt32)memory_size, &allocator)) {
-            Ppmd8_Init(self->cPpmd8, (unsigned int)maximum_order, PPMD8_RESTORE_METHOD_RESTART);
+            Ppmd8_Init(self->cPpmd8, (unsigned int)maximum_order, restore_method);
             goto success;
         }
         PyMem_Free(self->cPpmd8);
@@ -1609,7 +1611,7 @@ Ppmd8Encoder_dealloc(Ppmd8Encoder *self)
 }
 
 PyDoc_STRVAR(Ppmd8Encoder_doc, "A PPMd compression algorithm.\n\n"
-                                 "Ppmd8Encoder.__init__(self, max_order, mem_size)\n"
+                                 "Ppmd8Encoder.__init__(self, max_order, mem_size, restore_method=0)\n"
                                  "----\n"
                                  "Initialize a Ppmd8Encoder object.\n\n"
                                  "Arguments\n"
@@ -1618,18 +1620,20 @@ PyDoc_STRVAR(Ppmd8Encoder_doc, "A PPMd compression algorithm.\n\n"
                                  "mem_size:  max memory size in bytes the compressor is able to use, bigger values improve compression,\n"
                                  "           raging from 10kB to physical memory size.\n"
                                  "           Default size is 16MB.\n"
+                                 "restore_method: restore method, 0=restart, 1=cutoff.\n"
                                  );
 
 static int
 Ppmd8Encoder_init(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
 {
-    static char *kwlist[] = {"max_order", "mem_size", NULL};
+    static char *kwlist[] = {"max_order", "mem_size", "restore_method", NULL};
     PyObject *max_order = Py_None;
     PyObject *mem_size = Py_None;
+    int restore_method = PPMD8_RESTORE_METHOD_RESTART;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                                     "OO:Ppmd8Encoder.__init__", kwlist,
-                                     &max_order, &mem_size)) {
+                                     "OO|i:Ppmd8Encoder.__init__", kwlist,
+                                     &max_order, &mem_size, &restore_method)) {
         goto error;
     }
 
@@ -1671,7 +1675,7 @@ Ppmd8Encoder_init(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
         Ppmd8_Construct(self->cPpmd8);
         if (Ppmd8_Alloc(self->cPpmd8, (UInt32)memory_size, &allocator)) {
             Ppmd8_RangeEnc_Init(self->cPpmd8);
-            Ppmd8_Init(self->cPpmd8, (unsigned int)maximum_order, PPMD8_RESTORE_METHOD_RESTART);
+            Ppmd8_Init(self->cPpmd8, (unsigned int)maximum_order, restore_method);
             goto success;
         }
         PyMem_Free(self->cPpmd8);
