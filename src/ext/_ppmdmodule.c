@@ -1435,12 +1435,9 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
 
     Bool result = True;
     Py_BEGIN_ALLOW_THREADS
-    if (data.len  > 0) {
+    if (1) { // data.len  > 0) {
         int i = 0;
         while (length == -1 || i++ < length ) {
-            if (in.pos == in.size) {
-                break;
-            }
             if (out.pos == out.size) {
                 if (OutputBuffer_Grow(&buffer, &out) < 0) {
                     PyErr_SetString(PyExc_ValueError, "L616: Unknown status");
@@ -1457,6 +1454,9 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
             } else {
                 PyErr_SetString(PyExc_ValueError, "Corrupted input data.");
                 result = False;
+                break;
+            }
+            if (in.pos == in.size) {
                 break;
             }
         }
