@@ -1448,21 +1448,16 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
                     break;
                 }
             }
-            unsigned char c = Ppmd8_DecodeSymbol(self->cPpmd8);
-            if (c != 0x01) {
+            int c = Ppmd8_DecodeSymbol(self->cPpmd8);
+            if (c >= 0) {
                 *((Byte *)out.dst + out.pos++) = c;
+            } else  if (c == -1){ // endmark
+                self->eof = True;
+                break;
             } else {
-                c = Ppmd8_DecodeSymbol(self->cPpmd8);
-                if (c == 0x01) { // escaped character
-                    *((Byte *)out.dst + out.pos++) = c;
-                } else if (c == 0x00){ // endmark
-                    self->eof = True;
-                    break;
-                } else {
-                    PyErr_SetString(PyExc_ValueError, "Corrupted input data.");
-                    result = False;
-                    break;
-                }
+                PyErr_SetString(PyExc_ValueError, "Corrupted input data.");
+                result = False;
+                break;
             }
         }
     }
@@ -1781,8 +1776,6 @@ Ppmd8Encoder_flush(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
     writer.Write = Write;
     writer.outBuffer = &out;
     self->cPpmd8->Stream.Out = (IByteOut *) &writer;
-    Ppmd8_EncodeSymbol(self->cPpmd8, 0x01);  // endmark sequence
-    Ppmd8_EncodeSymbol(self->cPpmd8, 0x00);
     Ppmd8_EncodeSymbol(self->cPpmd8, -1);  // endmark for encoder
     Ppmd8_RangeEnc_FlushData(self->cPpmd8);
     ret = OutputBuffer_Finish(&buffer, &out);

@@ -380,12 +380,9 @@ int ppmd8_decompress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_bu
     if (length == -1) {
         const Byte* out_end = (Byte *)out_buf->dst + out_buf->size;
         while (pos < out_end) {
-            Byte c = Ppmd8_DecodeSymbol(ppmd);
-            if (c == 0x01) {
-                c = Ppmd8_DecodeSymbol(ppmd);
-                if (c == 0x01) {
-                    *pos++ = c;
-                } else if (c == 0x00) {
+            int c = Ppmd8_DecodeSymbol(ppmd);
+            if (c < 0) {
+                if (c == -1) {
                     out_buf->pos = pos - (Byte *)out_buf->dst;
                     return -1; // reached to endmark
                 } else {

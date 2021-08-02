@@ -507,8 +507,6 @@ class Ppmd8Encoder(PpmdBaseEncoder):
             return
         self.flushed = True
         out, out_buf = self._setup_outBuffer()
-        lib.Ppmd8_EncodeSymbol(self.ppmd, 0x01)  # endmark
-        lib.Ppmd8_EncodeSymbol(self.ppmd, 0x00)
         lib.Ppmd8_EncodeSymbol(self.ppmd, -1)  # endmark
         lib.Ppmd8_RangeEnc_FlushData(self.ppmd)
         res = out.finish(out_buf)
