@@ -356,9 +356,6 @@ int ppmd8_compress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf)
     const Byte* in_end = (Byte *)in_buf->src + in_buf->size;
     while (pos < in_end) {
         Byte c = *pos++;
-        if (c == 0x01) {
-            Ppmd8_EncodeSymbol(ppmd, 0x01);
-        }
         Ppmd8_EncodeSymbol(ppmd, c);
         if (out_buf->pos >= out_buf->size) {
             break;

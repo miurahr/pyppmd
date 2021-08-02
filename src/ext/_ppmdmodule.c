@@ -1716,19 +1716,6 @@ Ppmd8Encoder_encode(Ppmd8Encoder *self,  PyObject *args, PyObject *kwargs) {
     Bool result = True;
     Py_BEGIN_ALLOW_THREADS
     for (UInt32 i = 0; i < data.len; i++){
-        // when endmark mode, escape 0x01.
-        if (*((Byte *)data.buf + i) == 0x01) {
-            Ppmd8_EncodeSymbol(self->cPpmd8, 0x01);
-            if (out.size == out.pos) {
-                if (OutputBuffer_Grow(&buffer, &out) < 0) {
-                    PyErr_SetString(PyExc_ValueError, "No memory.");
-                    result = False;
-                    break;
-                } else {
-                    writer.outBuffer = &out;
-                }
-            }
-        }
         Ppmd8_EncodeSymbol(self->cPpmd8, *((Byte *)data.buf + i));
         if (out.size == out.pos) {
             if (OutputBuffer_Grow(&buffer, &out) < 0) {
