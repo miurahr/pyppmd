@@ -1,6 +1,7 @@
 import hashlib
 import os
 import pathlib
+import pytest
 
 import pyppmd
 
@@ -41,13 +42,17 @@ def test_ppmd7_decoder2():
     result += decoder.flush(66 - len(result))
     assert result == data
 
-
-def test_ppmd7_encode_decode(tmp_path):
+# test mem_size less than original file size as well
+@pytest.mark.parametrize("mem_size",[
+    (16 << 20),
+    (1 << 20),
+])
+def test_ppmd7_encode_decode(tmp_path, mem_size):
     length = 0
     m = hashlib.sha256()
     with testdata_path.joinpath("10000SalesRecords.csv").open("rb") as f:
         with tmp_path.joinpath("target.ppmd").open("wb") as target:
-            enc = pyppmd.Ppmd7Encoder(6, 16 << 20)
+            enc = pyppmd.Ppmd7Encoder(6, mem_size)
             data = f.read(READ_BLOCKSIZE)
             while len(data) > 0:
                 m.update(data)
@@ -61,7 +66,7 @@ def test_ppmd7_encode_decode(tmp_path):
     remaining = length
     with tmp_path.joinpath("target.ppmd").open("rb") as target:
         with tmp_path.joinpath("target.csv").open("wb") as out:
-            dec = pyppmd.Ppmd7Decoder(6, 16 << 20)
+            dec = pyppmd.Ppmd7Decoder(6, mem_size)
             while remaining > 0:
                 data = target.read(READ_BLOCKSIZE)
                 if len(data) == 0:
