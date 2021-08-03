@@ -1898,6 +1898,12 @@ PyInit__ppmd(void) {
     if (!module) {
         goto error;
     }
+    PyModule_AddIntConstant(module, "PPMD8_RESTORE_METHOD_RESTART", 0);
+    PyModule_AddIntConstant(module, "PPMD8_RESTORE_METHOD_CUT_OFF", 1);
+    // #ifdef PPMD8_FREEZE_SUPPORT
+    // PyModule_AddIntConstant(module, "PPMD8_RESTORE_METHOD_FREEZE", 2);
+    // #endif
+
     if (add_type_to_module(module,
                            "Ppmd7Encoder",
                            &Ppmd7Encoder_type_spec,
