@@ -29,10 +29,13 @@ The API is similar to Python's bz2/lzma/zlib module.
 
 Some parts of th codes are derived from ``7-zip``, ``pyzstd`` and ``ppmd-cffi``.
 
+
 Development status
 ------------------
 
-A development status is considered as ``Beta``.
+A development status is considered as ``Alpha``. 
+There is an known issue for decompressor when data size is larger than memory_size parameter.
+It is considered to be usable within limited conditions.
 
 
 Copyright

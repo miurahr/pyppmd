@@ -4,7 +4,14 @@ from typing import Union
 
 from ._cffi_ppmd import ffi, lib
 
-__all__ = ("Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder", "PpmdError")
+__all__ = (
+    "Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder", "PpmdError",
+    "PPMD8_RESTORE_METHOD_RESTART", "PPMD8_RESTORE_METHOD_CUT_OFF",
+)
+
+PPMD8_RESTORE_METHOD_RESTART = 0
+PPMD8_RESTORE_METHOD_CUT_OFF = 1
+# PPMD8_RESTORE_METHOD_FREEZE = 2
 
 _PPMD7_MIN_ORDER = 2
 _PPMD7_MAX_ORDER = 64
