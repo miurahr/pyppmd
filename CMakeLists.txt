@@ -21,7 +21,7 @@ execute_process(
         OUTPUT_STRIP_TRAILING_WHITESPACE)
 set(PY_EXT ${PY_EXT_DIR}/${PY_EXT_FILE}.${PY_EXT_EXT})
 add_custom_target(generate_ext BYPRODUCTS ${PY_EXT}
-    COMMAND ${Python_EXECUTABLE} setup.py build_ext --inplace
+    COMMAND ${Python_EXECUTABLE} setup.py build_ext --inplace --debug
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     SOURCES ${pyppmd_sources}
 )
@@ -57,7 +57,7 @@ add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
 target_link_libraries(pytest_runner PUBLIC pyppmd)
 target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
-add_dependencies(pytest_runner venv.stamp)
+add_dependencies(pytest_runner venv.stamp generate_ext)
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt
 "
