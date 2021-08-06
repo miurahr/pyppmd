@@ -21,15 +21,27 @@ typedef unsigned int UInt32;
 typedef long long Int64;
 typedef unsigned long long UInt64;
 typedef int Bool;
+typedef struct PPMD_inBuffer_s {
+    const void* src;    /**< start of input buffer */
+    size_t size;        /**< size of input buffer */
+    size_t pos;         /**< position where reading stopped. Will be updated. Necessarily 0 <= pos <= size */
+} PPMD_inBuffer;
+typedef struct PPMD_outBuffer_s {
+    void*  dst;         /**< start of output buffer */
+    size_t size;        /**< size of output buffer */
+    size_t pos;         /**< position where writing stopped. Will be updated. Necessarily 0 <= pos <= size */
+} PPMD_outBuffer;
 typedef struct IByteIn IByteIn;
 struct IByteIn
 {
   Byte (*Read)(const IByteIn *p); /* reads one byte, returns 0 in case of EOF or error */
+  PPMD_inBuffer *inBuffer;
 };
 typedef struct IByteOut IByteOut;
 struct IByteOut
 {
   void (*Write)(const IByteOut *p, Byte b);
+  PPMD_outBuffer *outBuffer;
 };
 struct ISzAlloc
 {
@@ -37,18 +49,6 @@ struct ISzAlloc
   void (*Free)(void *address); /* address can be NULL */
 };
 typedef struct ISzAlloc ISzAlloc;
-
-typedef struct PPMD_inBuffer_s {
-    const void* src;    /**< start of input buffer */
-    size_t size;        /**< size of input buffer */
-    size_t pos;         /**< position where reading stopped. Will be updated. Necessarily 0 <= pos <= size */
-} PPMD_inBuffer;
-
-typedef struct PPMD_outBuffer_s {
-    void*  dst;         /**< start of output buffer */
-    size_t size;        /**< size of output buffer */
-    size_t pos;         /**< position where writing stopped. Will be updated. Necessarily 0 <= pos <= size */
-} PPMD_outBuffer;
 """
 )
 
@@ -187,22 +187,10 @@ ffibuilder.cdef(
 extern "Python" void *raw_alloc(size_t);
 extern "Python" void raw_free(void *);
 
-typedef struct {
-    /* Inherits from IByteOut */
-    void (*Write)(void *p, Byte b);
-    PPMD_outBuffer *outBuffer;
-} BufferWriter;
-
-typedef struct {
-    /* Inherits from IByteIn */
-    Byte (*Read)(void *p);
-    PPMD_inBuffer *inBuffer;
-} BufferReader;
-
 void ppmd7_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize, ISzAlloc *allocator);
 void ppmd7_state_close(CPpmd7 *ppmd, ISzAlloc *allocator);
-int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader);
-void ppmd7_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *write);
+int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, IByteIn *reader);
+void ppmd7_compress_init(CPpmd7z_RangeEnc *rc, IByteOut *write);
 
 int ppmd7_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf);
 void ppmd7_compress_flush(CPpmd7z_RangeEnc *rc);
@@ -217,9 +205,9 @@ void Ppmd7z_RangeEnc_Init(CPpmd7z_RangeEnc *p);
 void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
 void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
 
-void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer);
+void ppmd8_compress_init(CPpmd8 *ppmd, IByteOut *writer);
 int ppmd8_compress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf);
-void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader);
+void ppmd8_decompress_init(CPpmd8 *ppmd, IByteIn *reader);
 int ppmd8_decompress(CPpmd8 *p, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, int length);
 
 void Ppmd8_Construct(CPpmd8 *ppmd);
@@ -246,30 +234,16 @@ source = r"""
 #define putc_unlocked fputc
 #endif
 
-typedef struct {
-    /* Inherits from IByteOut */
-    void (*Write)(void *p, Byte b);
-    PPMD_outBuffer *outBuffer;
-} BufferWriter;
-
-typedef struct {
-    /* Inherits from IByteIn */
-    Byte (*Read)(void *p);
-    PPMD_inBuffer *inBuffer;
-} BufferReader;
-
-static void Write(void *p, Byte b)
+static void Write(const IByteOut *bw, Byte b)
 {
-    BufferWriter *bw = p;
-    PPMD_outBuffer *buf = bw->outBuffer;
-    if (buf->pos < buf->size) {
-        *((Byte *)buf->dst + buf->pos++) = b;
+    PPMD_outBuffer *out = bw->outBuffer;
+    if (out->pos < out->size) {
+        *((Byte *)out->dst + out->pos++) = b;
     }
 }
 
-static Byte Read(void *p)
+static Byte Read(const IByteIn *br)
 {
-    BufferReader *br = p;
     PPMD_inBuffer *inBuffer = br->inBuffer;
     if (inBuffer->pos == inBuffer->size) {
         return -1;
@@ -290,17 +264,17 @@ void ppmd7_state_close(CPpmd7 *ppmd, ISzAlloc *allocator)
     Ppmd7_Free(ppmd, allocator);
 }
 
-void ppmd7_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *writer)
+void ppmd7_compress_init(CPpmd7z_RangeEnc *rc, IByteOut *writer)
 {
     writer->Write = Write;
-    rc->Stream = (IByteOut *) writer;
+    rc->Stream = writer;
     Ppmd7z_RangeEnc_Init(rc);
 }
 
-int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader)
+int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, IByteIn *reader)
 {
     reader->Read = Read;
-    rc->Stream = (IByteIn *) reader;
+    rc->Stream = reader;
     Bool res = Ppmd7z_RangeDec_Init(rc);
     return res;
 }
@@ -345,7 +319,7 @@ void ppmd7_decompress_flush(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_
     out_buf->pos = c - (Byte *)out_buf->dst;
 }
 
-void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer)
+void ppmd8_compress_init(CPpmd8 *ppmd, IByteOut *writer)
 {
     writer->Write = Write;
     ppmd->Stream.Out = (IByteOut *) writer;
@@ -368,10 +342,10 @@ int ppmd8_compress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf)
     return in_buf->size - in_buf->pos;
 }
 
-void ppmd8_decompress_init(CPpmd8 *ppmd,  BufferReader *reader)
+void ppmd8_decompress_init(CPpmd8 *ppmd,  IByteIn *reader)
 {
     reader->Read = Read;
-    ppmd->Stream.In = (IByteIn *) reader;
+    ppmd->Stream.In = reader;
 }
 
 int ppmd8_decompress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, int length) {

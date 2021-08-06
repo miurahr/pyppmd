@@ -29,19 +29,6 @@ typedef struct {
     Py_ssize_t max_length;
 } BlocksOutputBuffer;
 
-typedef struct {
-    /* Inherits from IByteOut */
-    void (*Write)(void *p, Byte b);
-    BlocksOutputBuffer * buffer;
-    PPMD_outBuffer *outBuffer;
-} BufferWriter;
-
-typedef struct {
-    /* Inherits from IByteIn */
-    Byte (*Read)(void *p);
-    PPMD_inBuffer *inBuffer;
-} BufferReader;
-
 static const char unable_allocate_msg[] = "Unable to allocate output buffer.";
 
 /* Block size sequence. Below functions assume the type is int. */
@@ -295,25 +282,18 @@ OutputBuffer_OnError(BlocksOutputBuffer *buffer)
    End of BlocksOutputBuffer code
    ------------------------------ */
 
-static void Write(void *p, Byte b) {
-    BufferWriter *bufferWriter = (BufferWriter *) p;
-
+static void Write(const IByteOut *bufferWriter, Byte b) {
     // Grow output buffer size when buffer is full
     if (bufferWriter->outBuffer->size == bufferWriter->outBuffer->pos) {
-        if (OutputBuffer_Grow(bufferWriter->buffer, bufferWriter->outBuffer) < 0) {
-            // FIXME: propagate memory error to upstream
-            goto error;
-        }
+        goto error;
     }
-
     *((Byte *)bufferWriter->outBuffer->dst + bufferWriter->outBuffer->pos++) = b;
     return;
 error:
     return;
 }
 
-Byte Reader(void *p) {
-    BufferReader *bufferReader = (BufferReader *) p;
+Byte Reader(const IByteIn *bufferReader) {
     PPMD_inBuffer *inBuffer = bufferReader->inBuffer;
     if (inBuffer->pos == inBuffer->size) {
         return -1;
@@ -586,7 +566,7 @@ Ppmd7Decoder_flush(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs) {
     PPMD_inBuffer in;
     PPMD_outBuffer out;
     PyObject *ret = NULL;
-    BufferReader reader;
+    IByteIn reader;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "i:Ppmd7Decoder.flush", kwlist,
@@ -681,7 +661,7 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
     PPMD_outBuffer out;
     PyObject *ret = NULL;
     char use_input_buffer;
-    BufferReader reader;
+    IByteIn reader;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "y*i:Ppmd7Decoder.decode", kwlist,
@@ -1045,7 +1025,7 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
     Py_buffer data;
     PyObject *ret;
     PPMD_outBuffer out;
-    BufferWriter writer;
+    IByteOut writer;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "y*:Ppmd7Encoder.encode", kwlist,
@@ -1102,7 +1082,7 @@ Ppmd7Encoder_flush(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
     CPpmd7z_RangeEnc *rc = self->rangeEnc;
     PPMD_outBuffer out;
     BlocksOutputBuffer buffer;
-    BufferWriter writer;
+    IByteOut writer;
 
     ACQUIRE_LOCK(self);
     if (self->flushed) {
@@ -1315,7 +1295,7 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
     PPMD_outBuffer out;
     PyObject *ret = NULL;
     char use_input_buffer;
-    BufferReader reader;
+    IByteIn reader;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "y*|i:Ppmd8Decoder.decode", kwlist,
@@ -1700,7 +1680,7 @@ Ppmd8Encoder_encode(Ppmd8Encoder *self,  PyObject *args, PyObject *kwargs) {
     Py_buffer data;
     PyObject *ret;
     PPMD_outBuffer out;
-    BufferWriter writer;
+    IByteOut writer;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "y*:Ppmd8Encoder.encode", kwlist,
@@ -1769,7 +1749,7 @@ Ppmd8Encoder_flush(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
     PyObject *ret;
     PPMD_outBuffer out;
     BlocksOutputBuffer buffer;
-    BufferWriter writer;
+    IByteOut writer;
 
     ACQUIRE_LOCK(self);
 
