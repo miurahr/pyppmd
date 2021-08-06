@@ -74,7 +74,7 @@ static const int BUFFER_BLOCK_SIZE[] =
    Return -1 on failure
 */
 static inline int
-OutputBuffer_InitAndGrow(BlocksOutputBuffer *buffer, PPMD_outBuffer *ob,
+OutputBuffer_InitAndGrow(BlocksOutputBuffer *buffer, OutBuffer *ob,
                          Py_ssize_t max_length)
 {
     PyObject *b;
@@ -118,7 +118,7 @@ OutputBuffer_InitAndGrow(BlocksOutputBuffer *buffer, PPMD_outBuffer *ob,
    Return -1 on failure
 */
 static inline int
-OutputBuffer_InitWithSize(BlocksOutputBuffer *buffer, PPMD_outBuffer *ob,
+OutputBuffer_InitWithSize(BlocksOutputBuffer *buffer, OutBuffer *ob,
                           Py_ssize_t init_size)
 {
     PyObject *b;
@@ -154,7 +154,7 @@ OutputBuffer_InitWithSize(BlocksOutputBuffer *buffer, PPMD_outBuffer *ob,
    Return -1 on failure
 */
 static inline int
-OutputBuffer_Grow(BlocksOutputBuffer *buffer, PPMD_outBuffer *ob)
+OutputBuffer_Grow(BlocksOutputBuffer *buffer, OutBuffer *ob)
 {
     PyObject *b;
     const Py_ssize_t list_len = Py_SIZE(buffer->list);
@@ -212,7 +212,7 @@ OutputBuffer_Grow(BlocksOutputBuffer *buffer, PPMD_outBuffer *ob)
 /* Whether the output data has reached max_length.
    The avail_out must be 0, please check it before calling. */
 static inline int
-OutputBuffer_ReachedMaxLength(BlocksOutputBuffer *buffer, PPMD_outBuffer *ob)
+OutputBuffer_ReachedMaxLength(BlocksOutputBuffer *buffer, OutBuffer *ob)
 {
     /* Ensure (data size == allocated size) */
     assert(ob->pos == ob->size);
@@ -225,7 +225,7 @@ OutputBuffer_ReachedMaxLength(BlocksOutputBuffer *buffer, PPMD_outBuffer *ob)
    Return NULL on failure
 */
 static PyObject *
-OutputBuffer_Finish(BlocksOutputBuffer *buffer, PPMD_outBuffer *ob)
+OutputBuffer_Finish(BlocksOutputBuffer *buffer, OutBuffer *ob)
 {
     PyObject *result, *block;
     const Py_ssize_t list_len = Py_SIZE(buffer->list);
@@ -294,7 +294,7 @@ error:
 }
 
 Byte Reader(const IByteIn *bufferReader) {
-    PPMD_inBuffer *inBuffer = bufferReader->inBuffer;
+    InBuffer *inBuffer = bufferReader->inBuffer;
     if (inBuffer->pos == inBuffer->size) {
         return -1;
     } else {
@@ -563,8 +563,8 @@ Ppmd7Decoder_flush(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = {"length", NULL};
     BlocksOutputBuffer buffer;
     int length;
-    PPMD_inBuffer in;
-    PPMD_outBuffer out;
+    InBuffer in;
+    OutBuffer out;
     PyObject *ret = NULL;
     IByteIn reader;
 
@@ -657,8 +657,8 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
     BlocksOutputBuffer buffer;
     Py_buffer data;
     int length;
-    PPMD_inBuffer in;
-    PPMD_outBuffer out;
+    InBuffer in;
+    OutBuffer out;
     PyObject *ret = NULL;
     char use_input_buffer;
     IByteIn reader;
@@ -1024,7 +1024,7 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
     BlocksOutputBuffer buffer;
     Py_buffer data;
     PyObject *ret;
-    PPMD_outBuffer out;
+    OutBuffer out;
     IByteOut writer;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
@@ -1080,7 +1080,7 @@ Ppmd7Encoder_flush(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *ret;
     CPpmd7z_RangeEnc *rc = self->rangeEnc;
-    PPMD_outBuffer out;
+    OutBuffer out;
     BlocksOutputBuffer buffer;
     IByteOut writer;
 
@@ -1291,8 +1291,8 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
     BlocksOutputBuffer buffer;
     Py_buffer data;
     int length = -1;
-    PPMD_inBuffer in;
-    PPMD_outBuffer out;
+    InBuffer in;
+    OutBuffer out;
     PyObject *ret = NULL;
     char use_input_buffer;
     IByteIn reader;
@@ -1679,7 +1679,7 @@ Ppmd8Encoder_encode(Ppmd8Encoder *self,  PyObject *args, PyObject *kwargs) {
     BlocksOutputBuffer buffer;
     Py_buffer data;
     PyObject *ret;
-    PPMD_outBuffer out;
+    OutBuffer out;
     IByteOut writer;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
@@ -1747,7 +1747,7 @@ static PyObject *
 Ppmd8Encoder_flush(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *ret;
-    PPMD_outBuffer out;
+    OutBuffer out;
     BlocksOutputBuffer buffer;
     IByteOut writer;
 

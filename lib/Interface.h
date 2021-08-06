@@ -10,17 +10,17 @@
 *  Streaming
 ****************************/
 
-typedef struct PPMD_inBuffer_s {
+typedef struct InBuffer_s {
     const void* src;    /**< start of input buffer */
     size_t size;        /**< size of input buffer */
     size_t pos;         /**< position where reading stopped. Will be updated. Necessarily 0 <= pos <= size */
-} PPMD_inBuffer;
+} InBuffer;
 
-typedef struct PPMD_outBuffer_s {
+typedef struct OutBuffer_s {
     void*  dst;         /**< start of output buffer */
     size_t size;        /**< size of output buffer */
     size_t pos;         /**< position where writing stopped. Will be updated. Necessarily 0 <= pos <= size */
-} PPMD_outBuffer;
+} OutBuffer;
 
 /* The following interfaces use first parameter as pointer to structure */
 
@@ -28,17 +28,15 @@ typedef struct IByteIn IByteIn;
 struct IByteIn
 {
     Byte (*Read)(const IByteIn *p); /* reads one byte, returns 0 in case of EOF or error */
-    PPMD_inBuffer *inBuffer;
-
+    InBuffer *inBuffer;
 };
 #define IByteIn_Read(p) (p)->Read(p)
-
 
 typedef struct IByteOut IByteOut;
 struct IByteOut
 {
     void (*Write)(const IByteOut *p, Byte b);
-    PPMD_outBuffer *outBuffer;
+    OutBuffer *outBuffer;
 };
 #define IByteOut_Write(p, b) (p)->Write(p, b)
 

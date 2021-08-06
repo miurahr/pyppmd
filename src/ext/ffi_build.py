@@ -21,16 +21,16 @@ typedef unsigned int UInt32;
 typedef long long Int64;
 typedef unsigned long long UInt64;
 typedef int Bool;
-typedef struct PPMD_inBuffer_s {
+typedef struct InBuffer_s {
     const void* src;    /**< start of input buffer */
     size_t size;        /**< size of input buffer */
     size_t pos;         /**< position where reading stopped. Will be updated. Necessarily 0 <= pos <= size */
-} PPMD_inBuffer;
-typedef struct PPMD_outBuffer_s {
+} InBuffer;
+typedef struct OutBuffer_s {
     void*  dst;         /**< start of output buffer */
     size_t size;        /**< size of output buffer */
     size_t pos;         /**< position where writing stopped. Will be updated. Necessarily 0 <= pos <= size */
-} PPMD_outBuffer;
+} OutBuffer;
 typedef struct IByteIn IByteIn;
 struct IByteIn
 {
@@ -236,7 +236,7 @@ source = r"""
 
 static void Write(const IByteOut *bw, Byte b)
 {
-    PPMD_outBuffer *out = bw->outBuffer;
+    OutBuffer *out = bw->outBuffer;
     if (out->pos < out->size) {
         *((Byte *)out->dst + out->pos++) = b;
     }
@@ -244,7 +244,7 @@ static void Write(const IByteOut *bw, Byte b)
 
 static Byte Read(const IByteIn *br)
 {
-    PPMD_inBuffer *inBuffer = br->inBuffer;
+    InBuffer *inBuffer = br->inBuffer;
     if (inBuffer->pos == inBuffer->size) {
         return -1;
     } else {
@@ -296,7 +296,7 @@ void ppmd7_compress_flush(CPpmd7z_RangeEnc *rc){
     Ppmd7z_RangeEnc_FlushData(rc);
 }
 
-int ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc,PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, size_t length) {
+int ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc, OutBuffer *out_buf, InBuffer *in_buf, size_t length) {
     Byte* c = (Byte *) out_buf->dst + out_buf->pos;
     const size_t out_start = out_buf->pos;
     const Byte* out_end = (Byte *)out_buf->dst + length;
@@ -325,7 +325,7 @@ void ppmd8_compress_init(CPpmd8 *ppmd, IByteOut *writer)
     ppmd->Stream.Out = (IByteOut *) writer;
 }
 
-int ppmd8_compress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf) {
+int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf) {
     Byte* pos = (Byte *) in_buf->src + in_buf->pos;
     const Byte* in_end = (Byte *)in_buf->src + in_buf->size;
     while (pos < in_end) {
@@ -348,7 +348,7 @@ void ppmd8_decompress_init(CPpmd8 *ppmd,  IByteIn *reader)
     ppmd->Stream.In = reader;
 }
 
-int ppmd8_decompress(CPpmd8 *ppmd, PPMD_outBuffer *out_buf, PPMD_inBuffer *in_buf, int length) {
+int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length) {
     Byte* pos = (Byte *) out_buf->dst + out_buf->pos;
     Byte* start_pos = pos;
     if (length == -1) {
