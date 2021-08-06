@@ -44,6 +44,7 @@ else:  # C implementation
 
 
 WARNING_AS_ERROR = has_option("--warning-as-error")
+DEBUG_BUILD = has_option("--debug")
 
 
 class build_ext_compiler_check(build_ext):
@@ -52,6 +53,9 @@ class build_ext_compiler_check(build_ext):
             if self.compiler.compiler_type.lower() in ("unix", "mingw32"):
                 if WARNING_AS_ERROR:
                     extension.extra_compile_args.append("-Werror")
+                if DEBUG_BUILD:
+                    extension.extra_compile_args.append("-g")
+                    extension.extra_compile_args.append("-O0")
             elif self.compiler.compiler_type.lower() == "msvc":
                 # /GF eliminates duplicate strings
                 # /Gy does function level linking

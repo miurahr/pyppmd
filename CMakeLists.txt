@@ -21,7 +21,7 @@ execute_process(
         OUTPUT_STRIP_TRAILING_WHITESPACE)
 set(PY_EXT ${PY_EXT_DIR}/${PY_EXT_FILE}.${PY_EXT_EXT})
 add_custom_target(generate_ext BYPRODUCTS ${PY_EXT}
-    COMMAND ${Python_EXECUTABLE} setup.py build_ext --inplace
+    COMMAND ${Python_EXECUTABLE} setup.py build_ext --inplace --debug
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     SOURCES ${pyppmd_sources}
 )
