@@ -57,7 +57,7 @@ add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
 target_link_libraries(pytest_runner PUBLIC pyppmd)
 target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
-add_dependencies(pytest_runner venv.stamp)
+add_dependencies(pytest_runner venv.stamp generate_ext)
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt
 "
