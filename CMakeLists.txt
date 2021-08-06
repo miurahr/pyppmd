@@ -99,7 +99,9 @@ add_library(
   lib/Ppmd8.h
   lib/Ppmd8Dec.c
   lib/Ppmd8Enc.c
-  src/ext/_ppmdmodule.c)
+  src/ext/_ppmdmodule.c
+  src/ext/Buffer.c
+  src/ext/Buffer.h)
 target_include_directories(pyppmd PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pyppmd PRIVATE ${Python_LIBRARIES})
 # ##################################################################################################

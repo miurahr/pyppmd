@@ -179,7 +179,7 @@ class PpmdBaseEncoder:
 
     def _setup_inBuffer(self, data):
         # Input buffer
-        in_buf = _new_nonzero("PPMD_inBuffer *")
+        in_buf = _new_nonzero("InBuffer *")
         if in_buf == ffi.NULL:
             raise MemoryError
         in_buf.src = ffi.from_buffer(data)
@@ -189,7 +189,7 @@ class PpmdBaseEncoder:
 
     def _setup_outBuffer(self):
         # Output buffer
-        out_buf = _new_nonzero("PPMD_outBuffer *")
+        out_buf = _new_nonzero("OutBuffer *")
         self.writer.outBuffer = out_buf
         if out_buf == ffi.NULL:
             raise MemoryError
@@ -240,7 +240,7 @@ class PpmdBaseDecoder:
 
     def _setup_inBuffer(self, data):
         # Input buffer
-        in_buf = _new_nonzero("PPMD_inBuffer *")
+        in_buf = _new_nonzero("InBuffer *")
         # Prepare input buffer w/wo unconsumed data
         if self._in_begin == self._in_end:
             # No unconsumed data
@@ -311,7 +311,7 @@ class PpmdBaseDecoder:
 
     def _setup_outBuffer(self):
         # Output buffer
-        out_buf = _new_nonzero("PPMD_outBuffer *")
+        out_buf = _new_nonzero("OutBuffer *")
         if out_buf == ffi.NULL:
             raise MemoryError
         out = _BlocksOutputBuffer()

@@ -9,7 +9,7 @@ from setuptools.command.egg_info import egg_info
 
 sources = ["lib/Ppmd7.c", "lib/Ppmd8.c", "lib/Ppmd8Dec.c", "lib/Ppmd7Enc.c", "lib/Ppmd8Enc.c", "lib/Ppmd7Dec.c"]
 _ppmd_extension = Extension("pyppmd._ppmd", sources)
-kwargs = {"include_dirs": ["lib"], "library_dirs": [], "libraries": [], "sources": sources, "define_macros": []}
+kwargs = {"include_dirs": ["lib", "src/ext"], "library_dirs": [], "libraries": [], "sources": sources, "define_macros": []}
 
 
 def has_option(option):
@@ -26,6 +26,7 @@ if has_option("--cffi") or platform.python_implementation() == "PyPy":
 
     # binary extension
     kwargs["module_name"] = "pyppmd.cffi._cffi_ppmd"
+    kwargs["sources"].append("src/ext/Buffer.c")
 
     sys.path.append("src/ext")
     import ffi_build
@@ -38,7 +39,7 @@ else:  # C implementation
 
     # binary extension
     kwargs["name"] = "pyppmd.c._ppmd"
-    kwargs["sources"].append("src/ext/_ppmdmodule.c")
+    kwargs["sources"].extend(["src/ext/_ppmdmodule.c", "src/ext/Buffer.c"])
 
     binary_extension = Extension(**kwargs)
 
