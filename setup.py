@@ -2,6 +2,7 @@
 import os
 import platform
 import sys
+import errno
 
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
@@ -47,7 +48,7 @@ WARNING_AS_ERROR = has_option("--warning-as-error")
 DEBUG_BUILD = has_option("--debug")
 
 
-class build_ext_compiler_check(build_ext):
+class build_ext_compiler_check(build_ext, object):
     def build_extensions(self):
         for extension in self.extensions:
             if self.compiler.compiler_type.lower() in ("unix", "mingw32"):
@@ -63,17 +64,18 @@ class build_ext_compiler_check(build_ext):
                 if WARNING_AS_ERROR:
                     more_options.append("/WX")
                 extension.extra_compile_args.extend(more_options)
-        super().build_extensions()
+        super(build_ext_compiler_check, self).build_extensions()
 
 
 # Work around pypa/setuptools#436.
-class my_egg_info(egg_info):
+class my_egg_info(egg_info, object):
     def run(self):
         try:
             os.remove(os.path.join(self.egg_info, "SOURCES.txt"))
-        except FileNotFoundError:
-            pass
-        super().run()
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
+        super(my_egg_info, self).run()
 
 
 setup(

@@ -3,7 +3,7 @@ import sys
 import cffi  # type: ignore  # noqa
 
 
-def is_64bit() -> bool:
+def is_64bit():
     return sys.maxsize > 2 ** 32
 
 
