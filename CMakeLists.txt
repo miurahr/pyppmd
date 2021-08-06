@@ -25,6 +25,11 @@ add_custom_target(generate_ext BYPRODUCTS ${PY_EXT}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     SOURCES ${pyppmd_sources}
 )
+add_custom_target(generate_cffi BYPRODUCTS ${PY_EXT}
+                  COMMAND ${Python_EXECUTABLE} setup.py build_ext --cffi --debug
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                  SOURCES ${pyppmd_sources}
+                  )
 
 ############################################
 #  For pytest
