@@ -7,9 +7,10 @@ from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 from setuptools.command.egg_info import egg_info
 
-sources = ["lib/Ppmd7.c", "lib/Ppmd8.c", "lib/Ppmd8Dec.c", "lib/Ppmd7Enc.c", "lib/Ppmd8Enc.c", "lib/Ppmd7Dec.c"]
+sources = ["lib/Ppmd7.c", "lib/Ppmd8.c", "lib/Ppmd8Dec.c", "lib/Ppmd7Enc.c", "lib/Ppmd8Enc.c", "lib/Ppmd7Dec.c",
+           "lib2/Buffer.c", "lib2/threading.c", "lib2/Ppmd8Tdecoder.c"]
 _ppmd_extension = Extension("pyppmd._ppmd", sources)
-kwargs = {"include_dirs": ["lib", "src/ext"], "library_dirs": [], "libraries": [], "sources": sources, "define_macros": []}
+kwargs = {"include_dirs": ["lib", "lib2"], "library_dirs": [], "libraries": [], "sources": sources, "define_macros": []}
 
 
 def has_option(option):
@@ -26,9 +27,6 @@ if has_option("--cffi") or platform.python_implementation() == "PyPy":
 
     # binary extension
     kwargs["module_name"] = "pyppmd.cffi._cffi_ppmd"
-    kwargs["sources"].extend(["src/ext/Buffer.c",
-                              "src/ext/threading.c",
-                              "src/ext/Ppmd8Tdecoder.c"])
 
     sys.path.append("src/ext")
     import ffi_build
@@ -41,10 +39,7 @@ else:  # C implementation
 
     # binary extension
     kwargs["name"] = "pyppmd.c._ppmd"
-    kwargs["sources"].extend(["src/ext/_ppmdmodule.c",
-                              "src/ext/Buffer.c",
-                              "src/ext/threading.c",
-                              "src/ext/Ppmd8Tdecoder.c"])
+    kwargs["sources"].append("src/ext/_ppmdmodule.c")
 
     binary_extension = Extension(**kwargs)
 
