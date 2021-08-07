@@ -181,10 +181,20 @@ typedef struct
 )
 
 # Ppmd8Tdecoder.h
+if sys.platform.startswith("win32"):
+    ffibuilder.cdef(
+        r"""
+    typedef struct {
+        HANDLE handle;
+        void* (*start_routine)(void*);
+        void* arg;
+    } PPMD_pthread_t;
+    """)
+else:
+    ffibuilder.cdef(r"typedef unsigned long int PPMD_pthread_t;")
+
 ffibuilder.cdef(
     r"""
-typedef unsigned long int pthread_t;
-
 typedef struct ppmd8_args_s {
     CPpmd8 *cPpmd8;
     InBuffer *in;
@@ -192,7 +202,7 @@ typedef struct ppmd8_args_s {
     int max_length;
     Bool finished;
     int result;
-    pthread_t handle;
+    PPMD_pthread_t handle;
 } ppmd8_args;
 
 Byte TReader(const void *p);
@@ -243,7 +253,7 @@ void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
 void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer);
 int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf);
 void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader);
-int ppmd8_decompress(CPpmd8 *p, OutBuffer *out_buf, InBuffer *in_buf, int length);
+int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd8_args *args);
 
 void Ppmd8_Construct(CPpmd8 *ppmd);
 Bool Ppmd8_Alloc(CPpmd8 *p, UInt32 size, ISzAlloc *alloc);
@@ -262,10 +272,10 @@ source = r"""
 #include "Ppmd8.h"
 #include "Buffer.h"
 #include "Ppmd8Tdecoder.h"
+#include "threading.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 
 #ifdef _WIN32
 #define getc_unlocked fgetc
@@ -369,46 +379,8 @@ void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader)
     Ppmd8T_decode_init();
 }
 
-int ppmd8_decompress_T(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd8_args *args) {
+int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd8_args *args) {
     return Ppmd8T_decode(ppmd, out_buf, length, args);
-}
-
-int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length) {
-    Byte* pos = (Byte *) out_buf->dst + out_buf->pos;
-    Byte* start_pos = pos;
-    if (length == -1) {
-        const Byte* out_end = (Byte *)out_buf->dst + out_buf->size;
-        while (pos < out_end) {
-            Byte c = Ppmd8_DecodeSymbol(ppmd);
-            if (c == 0x01) {
-                c = Ppmd8_DecodeSymbol(ppmd);
-                if (c == 0x01) {
-                    *pos++ = c;
-                } else if (c == 0x00) {
-                    out_buf->pos = pos - (Byte *)out_buf->dst;
-                    return -1; // reached to endmark
-                } else {
-                    out_buf->pos = pos - (Byte *)out_buf->dst;
-                    return -2; // return error
-                }
-            } else {
-                *pos ++ = c;
-            }
-            if (in_buf->pos == in_buf->size) {
-                break;
-            }
-        }
-    } else {
-        const Byte* out_end = (Byte *)out_buf->dst + length;
-        while (pos < out_end) {
-            *pos++ = Ppmd8_DecodeSymbol(ppmd);
-            if (in_buf->pos == in_buf->size) {
-                break;
-            }
-        }
-    }
-    out_buf->pos = pos - (Byte *)out_buf->dst;
-    return(pos - start_pos);
 }
 """
 

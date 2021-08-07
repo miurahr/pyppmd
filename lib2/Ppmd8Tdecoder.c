@@ -33,7 +33,7 @@ Ppmd8T_decode_run(void *p) {
     InBuffer *in = reader->inBuffer;
     int max_length = args->max_length;
     args->finished = False;
-    pthread_mutex_unlock(&mutex);
+    PPMD_pthread_mutex_unlock(&mutex);
 
     Bool escaped = False;
     int i = 0;
