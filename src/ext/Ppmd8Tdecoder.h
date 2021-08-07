@@ -5,10 +5,8 @@
 #ifndef PYPPMD_PPMD8TDECODER_H
 #define PYPPMD_PPMD8TDECODER_H
 
-#include <pthread.h>
-#include <time.h>
-
 #include "Buffer.h"
+#include "threading.h"
 
 typedef struct ppmd8_args_s {
     CPpmd8 *cPpmd8;
@@ -17,7 +15,7 @@ typedef struct ppmd8_args_s {
     int max_length;
     Bool finished;
     int result;
-    pthread_t handle;
+    PPMD_pthread_t handle;
 } ppmd8_args;
 
 

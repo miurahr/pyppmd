@@ -26,7 +26,9 @@ if has_option("--cffi") or platform.python_implementation() == "PyPy":
 
     # binary extension
     kwargs["module_name"] = "pyppmd.cffi._cffi_ppmd"
-    kwargs["sources"].extend(["src/ext/Buffer.c", "src/ext/Ppmd8Tdecoder.c"])
+    kwargs["sources"].extend(["src/ext/Buffer.c",
+                              "src/ext/threading.c",
+                              "src/ext/Ppmd8Tdecoder.c"])
 
     sys.path.append("src/ext")
     import ffi_build
@@ -39,7 +41,10 @@ else:  # C implementation
 
     # binary extension
     kwargs["name"] = "pyppmd.c._ppmd"
-    kwargs["sources"].extend(["src/ext/_ppmdmodule.c", "src/ext/Buffer.c", "src/ext/Ppmd8Tdecoder.c"])
+    kwargs["sources"].extend(["src/ext/_ppmdmodule.c",
+                              "src/ext/Buffer.c",
+                              "src/ext/threading.c",
+                              "src/ext/Ppmd8Tdecoder.c"])
 
     binary_extension = Extension(**kwargs)
 

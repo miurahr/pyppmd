@@ -102,6 +102,8 @@ add_library(
         src/ext/_ppmdmodule.c
         src/ext/Buffer.c
         src/ext/Buffer.h
+        src/ext/threading.c
+        src/ext/threading.h
         src/ext/Ppmd8Tdecoder.c
         src/ext/Ppmd8Tdecoder.h)
 target_include_directories(pyppmd PRIVATE ${Python_INCLUDE_DIRS})
