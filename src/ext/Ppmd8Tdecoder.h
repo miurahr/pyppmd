@@ -22,7 +22,7 @@ typedef struct ppmd8_args_s {
 
 
 Byte TReader(const void *p);
-Bool Ppmd8T_decode_init(CPpmd8 *cPpmd8, UInt32 memory_size, unsigned int maximum_order, ISzAlloc *allocator);
+Bool Ppmd8T_decode_init();
 int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *args);
 
 #endif //PYPPMD_PPMD8TDECODER_H

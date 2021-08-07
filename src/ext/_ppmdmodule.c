@@ -1219,9 +1219,12 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
     }
 
     if ((self->cPpmd8 = PyMem_Malloc(sizeof(CPpmd8))) != NULL) {
-        if (Ppmd8T_decode_init(self->cPpmd8, memory_size, maximum_order, &allocator)) {
+        Ppmd8_Construct(self->cPpmd8);
+        if (Ppmd8_Alloc(self->cPpmd8, memory_size ,&allocator)) {
+            Ppmd8_Init(self->cPpmd8, maximum_order, PPMD8_RESTORE_METHOD_RESTART);
             self->args = PyMem_Malloc(sizeof(ppmd8_args));
             self->args->cPpmd8 = self->cPpmd8;
+            Ppmd8T_decode_init();
             goto success;
         }
         PyMem_Free(self->cPpmd8);
@@ -1422,16 +1425,16 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
             if (out->pos == out->size) {
                 if (OutputBuffer_Grow(&buffer, out) < 0) {
                     PyErr_SetString(PyExc_ValueError, "L616: Unknown status");
-                    result = -1;
+                    result = -2;
                     break;
                 }
             }
         }
         Py_END_ALLOW_THREADS
-        if (result == -2) {
+        if (result == -1) {
             self->eof = True;
         }
-        if (result == -1) {
+        if (result == -2) {
             PyErr_SetString(PyExc_ValueError, "Corrupted input data.");
             goto error;
         }

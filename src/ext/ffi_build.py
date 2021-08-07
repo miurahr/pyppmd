@@ -180,6 +180,27 @@ typedef struct
 """
 )
 
+# Ppmd8Tdecoder.h
+ffibuilder.cdef(
+    r"""
+typedef unsigned long int pthread_t;
+
+typedef struct ppmd8_args_s {
+    CPpmd8 *cPpmd8;
+    InBuffer *in;
+    OutBuffer *out;
+    int max_length;
+    Bool finished;
+    int result;
+    pthread_t handle;
+} ppmd8_args;
+
+Byte TReader(const void *p);
+Bool Ppmd8T_decode_init();
+int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *args);
+ 
+""")
+
 # ----------- python binding API ---------------------
 ffibuilder.cdef(
     r"""
@@ -188,7 +209,6 @@ extern "Python" void raw_free(void *);
 
 void Writer(const void *p, Byte b);
 Byte Reader(const void *p);
-
 
 typedef struct {
     /* Inherits from IByteOut */
@@ -241,9 +261,11 @@ source = r"""
 #include "Ppmd7.h"
 #include "Ppmd8.h"
 #include "Buffer.h"
+#include "Ppmd8Tdecoder.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #ifdef _WIN32
 #define getc_unlocked fgetc
@@ -342,8 +364,13 @@ int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf) {
 
 void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader)
 {
-    reader->Read = (Byte (*)(void *)) Reader;
+    reader->Read = (Byte (*)(void *)) TReader;
     ppmd->Stream.In = (IByteIn *) reader;
+    Ppmd8T_decode_init();
+}
+
+int ppmd8_decompress_T(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd8_args *args) {
+    return Ppmd8T_decode(ppmd, out_buf, length, args);
 }
 
 int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length) {

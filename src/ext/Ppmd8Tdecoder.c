@@ -16,19 +16,13 @@ Byte TReader(const void *p) {
     return *((const Byte *)bufferReader->inBuffer->src + bufferReader->inBuffer->pos++);
 }
 
-Bool Ppmd8T_decode_init(CPpmd8 *cPpmd8, UInt32 memory_size, unsigned int maximum_order, ISzAlloc *allocator) {
+Bool Ppmd8T_decode_init() {
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&finished, NULL);
     pthread_cond_init(&outFull, NULL);
     pthread_cond_init(&inEmpty, NULL);
     pthread_cond_init(&notEmpty, NULL);
-
-    Ppmd8_Construct(cPpmd8);
-    if (Ppmd8_Alloc(cPpmd8, memory_size, allocator)) {
-        Ppmd8_Init(cPpmd8, maximum_order, PPMD8_RESTORE_METHOD_RESTART);
-        return True;
-    }
-    return False;
+    return True;
 }
 
 static void *
@@ -70,11 +64,11 @@ Ppmd8T_decode_run(void *p) {
                 i++;
             } else if (c == 0x00) { // endmark
                 // eof
-                result = -2;
+                result = -1;
                 goto exit;
             } else {
                 // failed
-                result = -1;
+                result = -2;
                 goto exit;
             }
         } else {
@@ -139,7 +133,7 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
             pthread_mutex_unlock(&mutex);
         } else {
             pthread_mutex_unlock(&mutex);
-            return -1;  // error
+            return -2;  // error
         }
     }
     while(True) {
