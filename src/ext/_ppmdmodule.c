@@ -1421,9 +1421,9 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
              if ((remains -= result) == 0) {
                  break;
              }
-            if (in->pos == in->size) {
-                break;
-            }
+            //if (in->pos == in->size) {
+            //    break;
+            //}
             if (out->pos == out->size) {
                 if (OutputBuffer_Grow(&buffer, out) < 0) {
                     PyErr_SetString(PyExc_ValueError, "L616: Unknown status");
@@ -1697,19 +1697,6 @@ Ppmd8Encoder_encode(Ppmd8Encoder *self,  PyObject *args, PyObject *kwargs) {
     Bool result = True;
     Py_BEGIN_ALLOW_THREADS
     for (UInt32 i = 0; i < data.len; i++){
-        // when endmark mode, escape 0x01.
-        if (*((Byte *)data.buf + i) == 0x01) {
-            Ppmd8_EncodeSymbol(self->cPpmd8, 0x01);
-            if (out.size == out.pos) {
-                if (OutputBuffer_Grow(&buffer, &out) < 0) {
-                    PyErr_SetString(PyExc_ValueError, "No memory.");
-                    result = False;
-                    break;
-                } else {
-                    writer.outBuffer = &out;
-                }
-            }
-        }
         Ppmd8_EncodeSymbol(self->cPpmd8, *((Byte *)data.buf + i));
         if (out.size == out.pos) {
             if (OutputBuffer_Grow(&buffer, &out) < 0) {
@@ -1758,8 +1745,6 @@ Ppmd8Encoder_flush(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
     writer.outBuffer = &out;
     self->cPpmd8->Stream.Out = (IByteOut *) &writer;
 
-    Ppmd8_EncodeSymbol(self->cPpmd8, 0x01);  // endmark sequence
-    Ppmd8_EncodeSymbol(self->cPpmd8, 0x00);
     Ppmd8_EncodeSymbol(self->cPpmd8, -1);  // endmark for encoder
     Ppmd8_RangeEnc_FlushData(self->cPpmd8);
     ret = OutputBuffer_Finish(&buffer, &out);

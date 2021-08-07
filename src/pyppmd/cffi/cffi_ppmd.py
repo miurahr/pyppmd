@@ -514,8 +514,6 @@ class Ppmd8Encoder(PpmdBaseEncoder):
             return
         self.flushed = True
         out, out_buf = self._setup_outBuffer()
-        lib.Ppmd8_EncodeSymbol(self.ppmd, 0x01)  # endmark
-        lib.Ppmd8_EncodeSymbol(self.ppmd, 0x00)
         lib.Ppmd8_EncodeSymbol(self.ppmd, -1)  # endmark
         lib.Ppmd8_RangeEnc_FlushData(self.ppmd)
         res = out.finish(out_buf)
@@ -575,8 +573,10 @@ class Ppmd8Decoder(PpmdBaseDecoder):
                 return res
             elif size == -2:
                 raise ValueError("Corrupted archive data.")
-            if in_buf.pos == in_buf.size:
+            elif size == 0:
                 break
+            #if in_buf.pos == in_buf.size:
+            #    break
         self._unconsumed_in(in_buf, use_input_buffer)
         if self._eof:
             self._needs_input = False

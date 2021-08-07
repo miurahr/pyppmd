@@ -34,16 +34,14 @@ Ppmd8T_decode_run(void *p) {
     int max_length = args->max_length;
     args->finished = False;
     PPMD_pthread_mutex_unlock(&mutex);
-
-    Bool escaped = False;
     int i = 0;
     int result = 0;
     while (i < max_length ) {
         Bool can_break = False;
         PPMD_pthread_mutex_lock(&mutex);
-        if (in->size == in->pos) {
-            can_break = True;
-        }
+        //if (in->size == in->pos) {
+        //    can_break = True;
+        //}
         if (args->out->size == args->out->pos) {
             can_break = True;
         }
@@ -54,31 +52,14 @@ Ppmd8T_decode_run(void *p) {
         PPMD_pthread_mutex_lock(&mutex);
         int c = Ppmd8_DecodeSymbol(cPpmd8);
         PPMD_pthread_mutex_unlock(&mutex);
-        if (escaped) {
-            escaped = False;
-            if (c == 0x01) { // escaped character
-                PPMD_pthread_mutex_lock(&mutex);
-                *((Byte *)args->out->dst + args->out->pos++) = c;
-                PPMD_pthread_mutex_unlock(&mutex);
-                i++;
-            } else if (c == 0x00) { // endmark
-                // eof
-                result = -1;
-                goto exit;
-            } else {
-                // failed
-                result = -2;
-                goto exit;
-            }
+        if (c < 0) {
+            result = c;
+            goto exit;
         } else {
-            if (c != 0x01) { // ordinary data
-                PPMD_pthread_mutex_lock(&mutex);
-                *((Byte *)args->out->dst + args->out->pos++) = (Byte) c;
-                PPMD_pthread_mutex_unlock(&mutex);
-                i++;
-            } else { // enter escape sequence
-                escaped = True;
-            }
+            PPMD_pthread_mutex_lock(&mutex);
+            *((Byte *)args->out->dst + args->out->pos++) = (Byte) c;
+            PPMD_pthread_mutex_unlock(&mutex);
+            i++;
         }
     }
     // when success return produced size
@@ -112,7 +93,7 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
         PPMD_pthread_mutex_unlock(&mutex);
     } else {
         PPMD_pthread_mutex_lock(&mutex);
-        if (in->pos < in->size) {
+        if (!args->result) { //in->pos < in->size) {
             PPMD_pthread_cond_signal(&notEmpty);
             PPMD_pthread_mutex_unlock(&mutex);
         } else {
