@@ -209,7 +209,6 @@ typedef struct ppmd8_args_s {
 Byte TReader(const void *p);
 Bool Ppmd8T_decode_init();
 int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *args);
- 
 """
 )
 
