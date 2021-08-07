@@ -1,4 +1,4 @@
-from typing import Union
+#from typing import Union
 
 try:
     from importlib.metadata import PackageNotFoundError, version
