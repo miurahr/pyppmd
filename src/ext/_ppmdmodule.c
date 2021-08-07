@@ -14,6 +14,7 @@
 #include "Ppmd8.h"
 
 #include "Buffer.h"
+#include "Ppmd8Tdecoder.h"
 
 #ifndef Py_UNREACHABLE
     #define Py_UNREACHABLE() assert(0)
@@ -1218,7 +1219,7 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
     }
 
     if ((self->cPpmd8 = PyMem_Malloc(sizeof(CPpmd8))) != NULL) {
-        if (Ppmd8T_init(self->cPpmd8, memory_size, maximum_order, &allocator)) {
+        if (Ppmd8T_decode_init(self->cPpmd8, memory_size, maximum_order, &allocator)) {
             self->args = PyMem_Malloc(sizeof(ppmd8_args));
             self->args->cPpmd8 = self->cPpmd8;
             goto success;
@@ -1385,7 +1386,7 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
     }
     assert(in->pos == 0);
 
-    reader.Read = (Byte (*)(void *)) Reader;
+    reader.Read = (Byte (*)(void *)) TReader;
     reader.inBuffer = in;
     self->cPpmd8->Stream.In = (IByteIn *) &reader;
 

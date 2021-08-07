@@ -87,21 +87,23 @@ add_custom_target(
 # for build test and analytics
 include_directories(lib)
 add_library(
-  pyppmd
-  lib/Arch.h
-  lib/Interface.h
-  lib/Ppmd.h
-  lib/Ppmd7.c
-  lib/Ppmd7.h
-  lib/Ppmd7Dec.c
-  lib/Ppmd7Enc.c
-  lib/Ppmd8.c
-  lib/Ppmd8.h
-  lib/Ppmd8Dec.c
-  lib/Ppmd8Enc.c
-  src/ext/_ppmdmodule.c
-  src/ext/Buffer.c
-  src/ext/Buffer.h)
+        pyppmd
+        lib/Arch.h
+        lib/Interface.h
+        lib/Ppmd.h
+        lib/Ppmd7.c
+        lib/Ppmd7.h
+        lib/Ppmd7Dec.c
+        lib/Ppmd7Enc.c
+        lib/Ppmd8.c
+        lib/Ppmd8.h
+        lib/Ppmd8Dec.c
+        lib/Ppmd8Enc.c
+        src/ext/_ppmdmodule.c
+        src/ext/Buffer.c
+        src/ext/Buffer.h
+        src/ext/Ppmd8Tdecoder.c
+        src/ext/Ppmd8Tdecoder.h)
 target_include_directories(pyppmd PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pyppmd PRIVATE ${Python_LIBRARIES})
 # ##################################################################################################

@@ -39,7 +39,7 @@ else:  # C implementation
 
     # binary extension
     kwargs["name"] = "pyppmd.c._ppmd"
-    kwargs["sources"].extend(["src/ext/_ppmdmodule.c", "src/ext/Buffer.c"])
+    kwargs["sources"].extend(["src/ext/_ppmdmodule.c", "src/ext/Buffer.c", "src/ext/Ppmd8Tdecoder.c"])
 
     binary_extension = Extension(**kwargs)
 
