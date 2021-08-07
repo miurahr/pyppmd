@@ -1,6 +1,7 @@
 import hashlib
 import os
 import pathlib
+
 import pytest
 
 import pyppmd
@@ -47,13 +48,17 @@ def test_ppmd8_decoder2():
     assert not decoder.needs_input
     assert result == source
 
+
 # test mem_size less than original file size as well
-@pytest.mark.parametrize("mem_size, restore_method",[
-    (8 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART),
-    (8 << 20, pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF),
-    (1 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART),
-    (1 << 20, pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF),
-])
+@pytest.mark.parametrize(
+    "mem_size, restore_method",
+    [
+        (8 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART),
+        (8 << 20, pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF),
+        (1 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART),
+        (1 << 20, pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF),
+    ],
+)
 def test_ppmd8_encode_decode(tmp_path, mem_size, restore_method):
     length = 0
     m = hashlib.sha256()

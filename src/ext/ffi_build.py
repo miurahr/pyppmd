@@ -189,7 +189,8 @@ if sys.platform.startswith("win32"):
         void* (*start_routine)(void*);
         void* arg;
     } PPMD_pthread_t;
-    """)
+    """
+    )
 else:
     ffibuilder.cdef(r"typedef unsigned long int PPMD_pthread_t;")
 
@@ -208,8 +209,8 @@ typedef struct ppmd8_args_s {
 Byte TReader(const void *p);
 Bool Ppmd8T_decode_init();
 int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *args);
- 
-""")
+"""
+)
 
 # ----------- python binding API ---------------------
 ffibuilder.cdef(
