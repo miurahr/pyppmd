@@ -3,8 +3,6 @@
 //
 
 #include "Ppmd8Tdecoder.h"
-int inputEmpty = 0;
-int notEmptyReceived = 0;
 
 PPMD_pthread_mutex_t mutex;
 PPMD_pthread_cond_t finished, inEmpty, notEmpty;
@@ -12,9 +10,8 @@ PPMD_pthread_cond_t finished, inEmpty, notEmpty;
 Byte TReader(const void *p) {
     BufferReader *bufferReader = (BufferReader *)p;
     if (bufferReader->inBuffer->pos == bufferReader->inBuffer->size) {
-        inputEmpty = 1;
+        PPMD_pthread_cond_signal(&inEmpty);
         PPMD_pthread_cond_wait(&notEmpty, &mutex);
-        notEmptyReceived = 1;
     }
     return *((const Byte *)bufferReader->inBuffer->src + bufferReader->inBuffer->pos++);
 }
@@ -88,11 +85,8 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
     Bool exited = args->finished;
     PPMD_pthread_mutex_unlock(&mutex);
 
-    notEmptyReceived = -1;
-    inputEmpty = 0;
     if (exited) {
         PPMD_pthread_t handle;
-        args->finished = False;
         PPMD_pthread_create(&handle, NULL, Ppmd8T_decode_run, args);
         PPMD_pthread_mutex_lock(&mutex);
         args->handle = handle;
@@ -100,7 +94,6 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
     } else {
         PPMD_pthread_mutex_lock(&mutex);
         if (!args->result) { //in->pos < in->size) {
-            notEmptyReceived = 0;
             PPMD_pthread_cond_signal(&notEmpty);
             PPMD_pthread_mutex_unlock(&mutex);
         } else {
@@ -108,9 +101,7 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
             return -2;  // error
         }
     }
-    for(;notEmptyReceived==0;)usleep(100);
     while(True) {
-#if 0
         PPMD_pthread_mutex_lock(&mutex);
         if (PPMD_pthread_cond_wait1(&inEmpty, &mutex) == 0) {
             // inBuffer is empty
@@ -122,11 +113,6 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
             break;
         }
         PPMD_pthread_mutex_unlock(&mutex);
-#endif
-	int finished = args->finished;
-	if(inputEmpty)return 0;
-	if(finished)break;
-	usleep(100);
     }
     PPMD_pthread_join(args->handle, NULL);
     return args->result;
