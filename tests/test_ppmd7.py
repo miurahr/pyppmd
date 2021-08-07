@@ -1,6 +1,7 @@
 import hashlib
 import os
 import pathlib
+
 import pytest
 
 import pyppmd
@@ -42,11 +43,15 @@ def test_ppmd7_decoder2():
     result += decoder.flush(66 - len(result))
     assert result == data
 
+
 # test mem_size less than original file size as well
-@pytest.mark.parametrize("mem_size",[
-    (16 << 20),
-    (1 << 20),
-])
+@pytest.mark.parametrize(
+    "mem_size",
+    [
+        (16 << 20),
+        (1 << 20),
+    ],
+)
 def test_ppmd7_encode_decode(tmp_path, mem_size):
     length = 0
     m = hashlib.sha256()
