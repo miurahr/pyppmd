@@ -34,7 +34,7 @@ jobs:
           PYTEST_ADDOPTS: "--cov-config=pyproject.toml --cov --cov-append --benchmark-skip"
       - name: Send coverage to coveralls
         run: |
-          coveralls
+          coveralls --service=github
         env:
           COVERALLS_PARALLEL: true
           COVERALLS_FLAG_NAME: py-${{ matrix.python-version }}-${{ matrix.os }}
@@ -76,6 +76,6 @@ jobs:
       - name: Tell Coveralls that the parallel build is finished
         run: |
           pip3 install --upgrade coveralls
-          coveralls --finish
+          coveralls --finish --service=github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
