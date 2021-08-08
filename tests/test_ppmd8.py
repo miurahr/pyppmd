@@ -90,7 +90,7 @@ def test_ppmd8_encode_decode(tmp_path, mem_size):
     assert thash == shash
 
 
-@pytest.mark.parametrize("obj,max_order,mem_size", [(b'\x00', 2, 2048)])
+@pytest.mark.parametrize("obj,max_order,mem_size", [(b"\x00", 2, 2048)])
 @pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="Known issue")
 def test_ppmd8_encode_decode2(obj, max_order, mem_size):
     enc = pyppmd.Ppmd8Encoder(max_order=max_order, mem_size=mem_size)
