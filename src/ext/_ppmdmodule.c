@@ -378,7 +378,7 @@ typedef struct {
     /* decode has been called with some data*/
     char inited2;
     /* threaded decoder context */
-    ppmd8_args *args;
+    ppmd8_decode_status *pStatusS;
 } Ppmd8Decoder;
 
 typedef struct {
@@ -1223,8 +1223,8 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
         Ppmd8_Construct(self->cPpmd8);
         if (Ppmd8_Alloc(self->cPpmd8, memory_size ,&allocator)) {
             Ppmd8_Init(self->cPpmd8, maximum_order, PPMD8_RESTORE_METHOD_RESTART);
-            self->args = PyMem_Malloc(sizeof(ppmd8_args));
-            self->args->cPpmd8 = self->cPpmd8;
+            self->pStatusS = PyMem_Malloc(sizeof(ppmd8_decode_status));
+            self->pStatusS->cPpmd8 = self->cPpmd8;
             goto success;
         }
         PyMem_Free(self->cPpmd8);
@@ -1408,14 +1408,14 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
         }
         self->inited2++;
         // first time to call `decode`
-        self->args->finished = True;
+        self->pStatusS->finished = True;
     }
 
     int result = 0;
     if (data.len  > 0) {
         int remains = length >= 0 ? length : INT_MAX;
         Py_BEGIN_ALLOW_THREADS
-        while ((result = Ppmd8T_decode(self->cPpmd8, out, remains, self->args)) > 0) {
+        while ((result = Ppmd8T_decode(self->cPpmd8, out, remains, self->pStatusS)) > 0) {
              if ((remains -= result) == 0) {
                  break;
              }
