@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
         }
         args.append(\"]\");
     }
-    std::string pycode = \"import sys\\nimport pytest\\nsys.path.append('${CMAKE_BINARY_DIR}/venv/lib/python${PY_VERSION}/site-packages')\\nsys.path.append('${CMAKE_SOURCE_DIR}/src')\\npytest.main(\" + args + \")\\n\";
+    std::string pycode = \"import sys\\nimport pytest\\nif sys.platform.startswith('win32'):\\n    l='Lib'\\nelse:\\n    l='lib/python${PY_VERSION}'\\nsys.path.append('${CMAKE_BINARY_DIR}/venv/'+l+'/site-packages/')\\nsys.path.append('${CMAKE_SOURCE_DIR}/src')\\npytest.main(\" + args + \")\\n\";
     wchar_t * program_name = Py_DecodeLocale(argv[0], NULL);
     Py_SetProgramName(program_name);
     Py_Initialize();
@@ -78,10 +78,15 @@ pytest
 pytest-benchmark
 pytest-cov
 ")
+if (WIN32)
+  set(PIP_COMMAND ${CMAKE_BINARY_DIR}/venv/Scripts/pip.exe)
+else()
+  set(PIP_COMMAND ${CMAKE_BINARY_DIR}/venv/bin/pip)
+endif()
 add_custom_target(
   venv.stamp
   COMMAND ${Python_EXECUTABLE} -m venv ${CMAKE_BINARY_DIR}/venv
-  COMMAND ${CMAKE_BINARY_DIR}/venv/bin/pip install -r ${CMAKE_BINARY_DIR}/requirements.txt)
+  COMMAND ${PIP_COMMAND} install -r ${CMAKE_BINARY_DIR}/requirements.txt)
 
 # ##################################################################################################
 # for build test and analytics
