@@ -54,6 +54,13 @@ Ppmd8T_decode_run(void *p) {
         PPMD_pthread_mutex_lock(&mutex);
         int c = Ppmd8_DecodeSymbol(cPpmd8);
         PPMD_pthread_mutex_unlock(&mutex);
+        if (c == PPMD8_RESULT_EOF) {
+            result = PPMD8_RESULT_EOF;
+            goto exit;
+        } else if (c == PPMD8_RESULT_ERROR) {
+            result = PPMD8_RESULT_ERROR;
+            goto exit;
+        }
         if (escaped) {
             escaped = False;
             if (c == 0x01) { // escaped character
@@ -62,12 +69,10 @@ Ppmd8T_decode_run(void *p) {
                 PPMD_pthread_mutex_unlock(&mutex);
                 i++;
             } else if (c == 0x00) { // endmark
-                // eof
-                result = -1;
+                result = PPMD8_RESULT_EOF;
                 goto exit;
             } else {
-                // failed
-                result = -2;
+                result = PPMD8_RESULT_ERROR;
                 goto exit;
             }
         } else {

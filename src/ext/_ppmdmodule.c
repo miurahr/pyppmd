@@ -403,20 +403,21 @@ static const char init_twice_msg[] = "__init__ method is called twice.";
 static const char flush_twice_msg[] = "flush method is called twice.";
 
 static inline void
-clamp_max_order(unsigned long *max_order) {
-    if (*max_order < 2) {
-        *max_order = 2;
-    } else if (*max_order > 64) {
-        *max_order = 64;
+clamp_max_order(unsigned long *max_order, unsigned long max) {
+    assert(PPMD8_MIN_ORDER==PPMD7_MIN_ORDER);
+    if (*max_order < PPMD8_MIN_ORDER) {
+        *max_order = PPMD8_MIN_ORDER;
+    } else if (*max_order > max) {
+        *max_order = max;
     }
 }
 
 static inline void
 clamp_memory_size(unsigned long *memorySize) {
-    if (*memorySize < 1 << 11) {
-        *memorySize = 1 << 11;
-    } else if (*memorySize > 0xFFFFFFFF - 12 * 3) {
-        *memorySize = 0xFFFFFFFF - 12 * 3;
+    if (*memorySize < PPMD7_MIN_MEM_SIZE) {
+        *memorySize = PPMD7_MIN_MEM_SIZE;
+    } else if (*memorySize > PPMD7_MAX_MEM_SIZE) {
+        *memorySize = PPMD7_MAX_MEM_SIZE;
     }
 }
 
@@ -502,7 +503,7 @@ Ppmd7Decoder_init(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs)
                 goto error;
             }
         }
-        clamp_max_order(&maximum_order);
+        clamp_max_order(&maximum_order, PPMD7_MAX_ORDER);
     }
 
     if (mem_size != Py_None) {
@@ -960,7 +961,7 @@ Ppmd7Encoder_init(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
                 goto error;
             }
         }
-        clamp_max_order(&maximum_order);
+        clamp_max_order(&maximum_order, PPMD7_MAX_ORDER);
     }
 
     if (mem_size != Py_None) {
@@ -1203,7 +1204,7 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
                 goto error;
             }
         }
-        clamp_max_order(&maximum_order);
+        clamp_max_order(&maximum_order, PPMD8_MAX_ORDER);
     }
 
     if (mem_size != Py_None) {
@@ -1224,7 +1225,6 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
             Ppmd8_Init(self->cPpmd8, maximum_order, PPMD8_RESTORE_METHOD_RESTART);
             self->args = PyMem_Malloc(sizeof(ppmd8_args));
             self->args->cPpmd8 = self->cPpmd8;
-            Ppmd8T_decode_init();
             goto success;
         }
         PyMem_Free(self->cPpmd8);
@@ -1425,16 +1425,16 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
             if (out->pos == out->size) {
                 if (OutputBuffer_Grow(&buffer, out) < 0) {
                     PyErr_SetString(PyExc_ValueError, "L616: Unknown status");
-                    result = -2;
+                    result = PPMD8_RESULT_ERROR;
                     break;
                 }
             }
         }
         Py_END_ALLOW_THREADS
-        if (result == -1) {
+        if (result == PPMD8_RESULT_EOF) {
             self->eof = True;
         }
-        if (result == -2) {
+        if (result == PPMD8_RESULT_ERROR) {
             PyErr_SetString(PyExc_ValueError, "Corrupted input data.");
             goto error;
         }
@@ -1629,7 +1629,7 @@ Ppmd8Encoder_init(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
                 goto error;
             }
         }
-        clamp_max_order(&maximum_order);
+        clamp_max_order(&maximum_order, PPMD8_MAX_ORDER);
     }
 
     if (mem_size != Py_None) {

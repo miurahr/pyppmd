@@ -8,6 +8,9 @@
 #include "Buffer.h"
 #include "threading.h"
 
+#define PPMD8_RESULT_EOF (-1)
+#define PPMD8_RESULT_ERROR (-2)
+
 typedef struct ppmd8_args_s {
     CPpmd8 *cPpmd8;
     InBuffer *in;
