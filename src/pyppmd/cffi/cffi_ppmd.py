@@ -8,9 +8,14 @@ __all__ = ("Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder", "Ppmd
 
 _PPMD7_MIN_ORDER = 2
 _PPMD7_MAX_ORDER = 64
+_PPMD8_MIN_ORDER = 2
+_PPMD8_MAX_ORFER = 16
 
 _PPMD7_MIN_MEM_SIZE = 1 << 11
 _PPMD7_MAX_MEM_SIZE = 0xFFFFFFFF - 12 * 3
+
+_PPMD8_RESULT_EOF = -1
+_PPMD8_RESULT_ERROR = -2
 
 _BLOCK_SIZE = 16384
 _allocated = []
@@ -179,7 +184,7 @@ class PpmdBaseEncoder:
 
     def _setup_inBuffer(self, data):
         # Input buffer
-        in_buf = _new_nonzero("PPMD_inBuffer *")
+        in_buf = _new_nonzero("InBuffer *")
         if in_buf == ffi.NULL:
             raise MemoryError
         in_buf.src = ffi.from_buffer(data)
@@ -189,7 +194,7 @@ class PpmdBaseEncoder:
 
     def _setup_outBuffer(self):
         # Output buffer
-        out_buf = _new_nonzero("PPMD_outBuffer *")
+        out_buf = _new_nonzero("OutBuffer *")
         self.writer.outBuffer = out_buf
         if out_buf == ffi.NULL:
             raise MemoryError
@@ -240,7 +245,7 @@ class PpmdBaseDecoder:
 
     def _setup_inBuffer(self, data):
         # Input buffer
-        in_buf = _new_nonzero("PPMD_inBuffer *")
+        in_buf = _new_nonzero("InBuffer *")
         # Prepare input buffer w/wo unconsumed data
         if self._in_begin == self._in_end:
             # No unconsumed data
@@ -311,7 +316,7 @@ class PpmdBaseDecoder:
 
     def _setup_outBuffer(self):
         # Output buffer
-        out_buf = _new_nonzero("PPMD_outBuffer *")
+        out_buf = _new_nonzero("OutBuffer *")
         if out_buf == ffi.NULL:
             raise MemoryError
         out = _BlocksOutputBuffer()
@@ -530,6 +535,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
     def __init__(self, max_order: int, mem_size: int, end_mark=True):
         self._init_common()
         self.ppmd = ffi.new("CPpmd8 *")
+        self.ppmd8_decode_status = ffi.new("ppmd8_decode_status *")
         self.endmark = end_mark
         lib.Ppmd8_Construct(self.ppmd)
         lib.ppmd8_decompress_init(self.ppmd, self.reader)
@@ -541,6 +547,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
 
     def _init2(self):
         lib.Ppmd8_RangeDec_Init(self.ppmd)
+        self.ppmd8_decode_status.finished = True
 
     def decode(self, data: Union[bytes, bytearray, memoryview], length: int = -1):
         if not isinstance(length, int):
@@ -556,8 +563,8 @@ class Ppmd8Decoder(PpmdBaseDecoder):
                 break
             if out_buf.pos == out_buf.size:
                 out.grow(out_buf)
-            size = lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, -1)
-            if size == -1:
+            size = lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, length, self.ppmd8_decode_status)
+            if size == _PPMD8_RESULT_EOF:
                 self._eof = True
                 self._needs_input = False
                 res = out.finish(out_buf)
@@ -566,7 +573,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
                 ffi.release(self.ppmd)
                 self._release()
                 return res
-            elif size == -2:
+            elif size == _PPMD8_RESULT_ERROR:
                 raise ValueError("Corrupted archive data.")
             if in_buf.pos == in_buf.size:
                 break
@@ -593,5 +600,4 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if not self.flushed:
-            self.flush(0)
+        self._release()
