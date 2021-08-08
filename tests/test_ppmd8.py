@@ -87,3 +87,13 @@ def test_ppmd8_encode_decode(tmp_path, mem_size):
     assert length == 1237262
     thash = m2.digest()
     assert thash == shash
+
+@pytest.mark.parametrize("obj,max_order,mem_size", [(b'\x00', 2, 2048)])
+def test_ppmd8_encode_decode2(obj, max_order, mem_size):
+    enc = pyppmd.Ppmd8Encoder(max_order=max_order, mem_size=mem_size)
+    length = len(obj)
+    compressed = enc.encode(obj)
+    compressed += enc.flush()
+    dec = pyppmd.Ppmd8Decoder(max_order=max_order, mem_size=mem_size)
+    result = dec.decode(compressed, length)
+    assert result == obj
