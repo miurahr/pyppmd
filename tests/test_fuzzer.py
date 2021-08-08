@@ -1,4 +1,7 @@
+import platform
 import sys
+
+import pytest
 
 import psutil
 from hypothesis import given
@@ -26,6 +29,7 @@ def test_ppmd7_fuzzer(obj, max_order, mem_size):
     assert result == obj
 
 
+@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="Known issue")
 @given(
     obj=st.binary(min_size=1),
     max_order=st.integers(min_value=2, max_value=16),
