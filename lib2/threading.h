@@ -93,8 +93,8 @@ int PPMD_pthread_join(PPMD_pthread_t thread, void** value_ptr);
 #define PPMD_pthread_create(a, b, c, d) pthread_create((a), (b), (c), (d))
 #define PPMD_pthread_join(a, b)         pthread_join((a),(b))
 
-int PPMD_pthread_cond_timedwait_1ms(pthread_cond_t *a, pthread_mutex_t *b);
-
 #endif
+
+int PPMD_100nanosleep(long long hns);
 
 #endif /* THREADING_H_938743 */

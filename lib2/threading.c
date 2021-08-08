@@ -31,6 +31,7 @@ int g_ppmd_threading_useless_symbol;
 /* ===  Dependencies  === */
 #include <process.h>
 #include <errno.h>
+#include <windows.h>
 
 
 /* ===  Implementation  === */
@@ -73,22 +74,49 @@ int PPMD_pthread_join(PPMD_pthread_t thread, void **value_ptr)
         return GetLastError();
     }
 }
+
+/* Windows sleep in 100ns units */
+int PPMD_100nanosleep(long long ns){
+	/* Declarations */
+	HANDLE timer;	/* Timer handle */
+	LARGE_INTEGER li;	/* Time defintion */
+	/* Create timer */
+	if(!(timer = CreateWaitableTimer(NULL, TRUE, NULL)))
+		return 0;
+	/* Set timer properties */
+	li.QuadPart = -(LONGLONG)ns;
+	if(!SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE)){
+		CloseHandle(timer);
+		return 0;
+	}
+	/* Start & wait for timer */
+	WaitForSingleObject(timer, INFINITE);
+	/* Clean resources */
+	CloseHandle(timer);
+	/* Slept without problems */
+	return 1;
+}
+
 #else
 #include <time.h>
 
-int PPMD_pthread_cond_timedwait_1ms(pthread_cond_t *a, pthread_mutex_t *b) {
+/**
+ * Sleep hns * 100nsec.
+ * It can take 100 nsec to 19999999 nsec
+ * @param hns
+ * @return
+ */
+int PPMD_100nanosleep(long long hns) {
     struct timespec ts;
-    struct timespec now;
-    clock_gettime(CLOCK_REALTIME, &now);
-    long tv_nsec = now.tv_nsec + 1000000;
-    if (tv_nsec >= 1000000000) {
-        ts.tv_nsec = tv_nsec - 1000000000;
-        ts.tv_sec = now.tv_sec + 1;
+    long ts_nsec = hns * 100;
+    if (ts_nsec >= 1000000000) {
+        ts.tv_nsec = ts_nsec - 1000000000;
+        ts.tv_sec = 1;
     } else {
-        ts.tv_nsec = tv_nsec;
-        ts.tv_sec = now.tv_sec;
+        ts.tv_nsec = ts_nsec;
+        ts.tv_sec = 0;
     }
-    return pthread_cond_timedwait(a, b, &ts);
+    return nanosleep(&ts, NULL);
 }
 
 #endif   /* PPMD_MULTITHREAD */
