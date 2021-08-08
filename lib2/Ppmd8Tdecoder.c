@@ -4,13 +4,13 @@
 
 #include "Ppmd8Tdecoder.h"
 
-PPMD_pthread_mutex_t mutex;
-PPMD_pthread_cond_t finished, inEmpty, notEmpty;
+PPMD_pthread_mutex_t mutex, mutexAddInput;
+PPMD_pthread_cond_t addInput, notEmpty;
 
 Byte TReader(const void *p) {
     BufferReader *bufferReader = (BufferReader *)p;
     if (bufferReader->inBuffer->pos == bufferReader->inBuffer->size) {
-        PPMD_pthread_cond_signal(&inEmpty);
+        PPMD_pthread_cond_signal(&addInput);
         PPMD_pthread_cond_wait(&notEmpty, &mutex);
     }
     return *((const Byte *)bufferReader->inBuffer->src + bufferReader->inBuffer->pos++);
@@ -18,8 +18,8 @@ Byte TReader(const void *p) {
 
 Bool Ppmd8T_decode_init() {
     PPMD_pthread_mutex_init(&mutex, NULL);
-    PPMD_pthread_cond_init(&finished, NULL);
-    PPMD_pthread_cond_init(&inEmpty, NULL);
+    PPMD_pthread_mutex_init(&mutexAddInput, NULL);
+    PPMD_pthread_cond_init(&addInput, NULL);
     PPMD_pthread_cond_init(&notEmpty, NULL);
     return True;
 }
@@ -69,6 +69,7 @@ Ppmd8T_decode_run(void *p) {
     PPMD_pthread_mutex_lock(&mutex);
     args->result = result;
     args->finished = True;
+    PPMD_pthread_cond_signal(&addInput);
     PPMD_pthread_mutex_unlock(&mutex);
     return NULL;
 }
@@ -101,6 +102,7 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
             return -2;  // error
         }
     }
+#if 0
     while(True) {
         PPMD_pthread_mutex_lock(&mutex);
         if (PPMD_pthread_cond_wait1(&inEmpty, &mutex) == 0) {
@@ -114,6 +116,13 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
         }
         PPMD_pthread_mutex_unlock(&mutex);
     }
-    PPMD_pthread_join(args->handle, NULL);
-    return args->result;
+#endif
+    PPMD_pthread_mutex_lock(&mutexAddInput);
+    PPMD_pthread_cond_wait(&addInput, &mutexAddInput);
+    PPMD_pthread_mutex_unlock(&mutexAddInput);
+    if (args->finished) {
+        PPMD_pthread_join(args->handle, NULL);
+        return args->result;
+    }
+    return 0;
 }
