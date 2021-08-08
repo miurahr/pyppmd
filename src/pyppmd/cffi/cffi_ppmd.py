@@ -535,7 +535,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
     def __init__(self, max_order: int, mem_size: int, end_mark=True):
         self._init_common()
         self.ppmd = ffi.new("CPpmd8 *")
-        self.args = ffi.new("ppmd8_args *")
+        self.ppmd8_decode_status = ffi.new("ppmd8_decode_status *")
         self.endmark = end_mark
         lib.Ppmd8_Construct(self.ppmd)
         lib.ppmd8_decompress_init(self.ppmd, self.reader)
@@ -547,7 +547,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
 
     def _init2(self):
         lib.Ppmd8_RangeDec_Init(self.ppmd)
-        self.args.finished = True
+        self.ppmd8_decode_status.finished = True
 
     def decode(self, data: Union[bytes, bytearray, memoryview], length: int = -1):
         if not isinstance(length, int):
@@ -563,7 +563,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
                 break
             if out_buf.pos == out_buf.size:
                 out.grow(out_buf)
-            size = lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, length, self.args)
+            size = lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, length, self.ppmd8_decode_status)
             if size == _PPMD8_RESULT_EOF:
                 self._eof = True
                 self._needs_input = False
