@@ -11,6 +11,7 @@ set(PY_VERSION 3.8)
 # Configuration for python-ext
 set(Python_FIND_STRATEGY VERSION)
 set(Python_FIND_IMPLEMENTATIONS CPython)
+#set(Python_FIND_IMPLEMENTATIONS PyPy)
 find_package(Python ${PY_VERSION}.0...${PY_VERSION}.99 COMPONENTS Interpreter Development)
 set(PY_EXT_FILE _ppmd)
 set(PY_EXT_DIR src/pyppmd/c)
@@ -36,6 +37,7 @@ add_custom_target(
 
 # ##################################################################################################
 # For pytest
+# if(Python_FIND_IMPLEMENTATIONS PyPy)
 file(
   WRITE ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp
   "

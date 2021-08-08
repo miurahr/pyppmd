@@ -28,7 +28,7 @@ def test_ppmd7_fuzzer(obj, max_order, mem_size):
 
 @given(
     obj=st.binary(min_size=1),
-    max_order=st.integers(min_value=2, max_value=64),
+    max_order=st.integers(min_value=2, max_value=16),
     mem_size=st.integers(min_value=1 << 11, max_value=MAX_SIZE),
 )
 def test_ppmd8_fuzzer(obj, max_order, mem_size):
