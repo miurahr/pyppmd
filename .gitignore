@@ -8,3 +8,5 @@ cmake-build-debug
 dist
 *.egg-info
 __pycache__
+*.so
+*.pyd
