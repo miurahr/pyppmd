@@ -4,7 +4,7 @@
 
 #include "Ppmd8Tdecoder.h"
 
-PPMD_pthread_mutex_t mutex, mutexAddInput;
+PPMD_pthread_mutex_t mutex;
 PPMD_pthread_cond_t addInput, notEmpty;
 
 Byte TReader(const void *p) {
@@ -18,7 +18,6 @@ Byte TReader(const void *p) {
 
 Bool Ppmd8T_decode_init() {
     PPMD_pthread_mutex_init(&mutex, NULL);
-    PPMD_pthread_mutex_init(&mutexAddInput, NULL);
     PPMD_pthread_cond_init(&addInput, NULL);
     PPMD_pthread_cond_init(&notEmpty, NULL);
     return True;
@@ -117,9 +116,9 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
         PPMD_pthread_mutex_unlock(&mutex);
     }
 #endif
-    PPMD_pthread_mutex_lock(&mutexAddInput);
-    PPMD_pthread_cond_wait(&addInput, &mutexAddInput);
-    PPMD_pthread_mutex_unlock(&mutexAddInput);
+    PPMD_pthread_mutex_lock(&mutex);
+    PPMD_pthread_cond_wait(&addInput, &mutex);
+    PPMD_pthread_mutex_unlock(&mutex);
     if (args->finished) {
         PPMD_pthread_join(args->handle, NULL);
         return args->result;
