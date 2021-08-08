@@ -4,8 +4,9 @@
 
 #include "Ppmd8Tdecoder.h"
 
-PPMD_pthread_mutex_t mutex;
-PPMD_pthread_cond_t finished, inEmpty, notEmpty;
+PPMD_pthread_mutex_t mutex = PPMD_PTHREAD_MUTEX_INITIALIZER;
+PPMD_pthread_cond_t inEmpty = PPMD_PTHREAD_COND_INITIALIZER;
+PPMD_pthread_cond_t notEmpty = PPMD_PTHREAD_COND_INITIALIZER;
 
 Byte TReader(const void *p) {
     BufferReader *bufferReader = (BufferReader *)p;
@@ -14,14 +15,6 @@ Byte TReader(const void *p) {
         PPMD_pthread_cond_wait(&notEmpty, &mutex);
     }
     return *((const Byte *)bufferReader->inBuffer->src + bufferReader->inBuffer->pos++);
-}
-
-Bool Ppmd8T_decode_init() {
-    PPMD_pthread_mutex_init(&mutex, NULL);
-    PPMD_pthread_cond_init(&finished, NULL);
-    PPMD_pthread_cond_init(&inEmpty, NULL);
-    PPMD_pthread_cond_init(&notEmpty, NULL);
-    return True;
 }
 
 static void *
