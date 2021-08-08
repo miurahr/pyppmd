@@ -12,9 +12,13 @@ Added
 
 Changed
 -------
+* PPMd8(Var.I) decompression is done in seperate thread(#33)
 
 Fixed
 -----
+* When memory_size is less than data file, it crashed with SIGFPE(div by zero)(#28,#33)
+* CMake: support CFFI extension generation(#30)
+* Cmake: support debug flag for extension development(#27)
 
 Deprecated
 ----------
