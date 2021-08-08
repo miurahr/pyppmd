@@ -8,9 +8,14 @@ __all__ = ("Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder", "Ppmd
 
 _PPMD7_MIN_ORDER = 2
 _PPMD7_MAX_ORDER = 64
+_PPMD8_MIN_ORDER = 2
+_PPMD8_MAX_ORFER = 16
 
 _PPMD7_MIN_MEM_SIZE = 1 << 11
 _PPMD7_MAX_MEM_SIZE = 0xFFFFFFFF - 12 * 3
+
+_PPMD8_RESULT_EOF = -1
+_PPMD8_RESULT_ERROR = -2
 
 _BLOCK_SIZE = 16384
 _allocated = []
@@ -542,6 +547,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
 
     def _init2(self):
         lib.Ppmd8_RangeDec_Init(self.ppmd)
+        self.args.finished = True
 
     def decode(self, data: Union[bytes, bytearray, memoryview], length: int = -1):
         if not isinstance(length, int):
@@ -557,8 +563,8 @@ class Ppmd8Decoder(PpmdBaseDecoder):
                 break
             if out_buf.pos == out_buf.size:
                 out.grow(out_buf)
-            size = lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, -1, self.args)
-            if size == -1:
+            size = lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, length, self.args)
+            if size == _PPMD8_RESULT_EOF:
                 self._eof = True
                 self._needs_input = False
                 res = out.finish(out_buf)
@@ -567,7 +573,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
                 ffi.release(self.ppmd)
                 self._release()
                 return res
-            elif size == -2:
+            elif size == _PPMD8_RESULT_ERROR:
                 raise ValueError("Corrupted archive data.")
             if in_buf.pos == in_buf.size:
                 break
@@ -594,5 +600,4 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if not self.flushed:
-            self.flush(0)
+        self._release()
