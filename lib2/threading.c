@@ -76,7 +76,7 @@ int PPMD_pthread_join(PPMD_pthread_t thread, void **value_ptr)
 #else
 #include <time.h>
 
-int PPMD_pthread_cond_wait1(pthread_cond_t *a, pthread_mutex_t *b) {
+int PPMD_pthread_cond_timedwait_1ms(pthread_cond_t *a, pthread_mutex_t *b) {
     struct timespec ts;
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);

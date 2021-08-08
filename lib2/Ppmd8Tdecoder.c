@@ -120,7 +120,7 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
     }
     while(True) {
         PPMD_pthread_mutex_lock(&mutex);
-        if (PPMD_pthread_cond_wait1(&inEmpty, &mutex) == 0) {
+        if (PPMD_pthread_cond_timedwait_1ms(&inEmpty, &mutex) == 0) {
             // inBuffer is empty
             PPMD_pthread_mutex_unlock(&mutex);
             return 0;

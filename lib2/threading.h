@@ -53,7 +53,7 @@
 #define PPMD_pthread_cond_init(a, b)    ((void)(b), InitializeConditionVariable((a)), 0)
 #define PPMD_pthread_cond_destroy(a)    ((void)(a))
 #define PPMD_pthread_cond_wait(a, b)    SleepConditionVariableCS((a), (b), INFINITE)
-#define PPMD_pthread_cond_wait1(a, b)   SleepConditionVariableCS((a), (b), 1)
+#define PPMD_pthread_cond_timedwait_1ms(a, b)   SleepConditionVariableCS((a), (b), 1)
 #define PPMD_pthread_cond_signal(a)     WakeConditionVariable((a))
 #define PPMD_pthread_cond_broadcast(a)  WakeAllConditionVariable((a))
 
@@ -93,7 +93,7 @@ int PPMD_pthread_join(PPMD_pthread_t thread, void** value_ptr);
 #define PPMD_pthread_create(a, b, c, d) pthread_create((a), (b), (c), (d))
 #define PPMD_pthread_join(a, b)         pthread_join((a),(b))
 
-int PPMD_pthread_cond_wait1(pthread_cond_t *a, pthread_mutex_t *b);
+int PPMD_pthread_cond_timedwait_1ms(pthread_cond_t *a, pthread_mutex_t *b);
 
 #endif
 
