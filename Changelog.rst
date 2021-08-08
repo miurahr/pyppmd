@@ -15,6 +15,10 @@ Changed
 
 Fixed
 -----
+* CMake: support CFFI extension generation(#30)
+* CMake: support debug flag for extension development(#27)
+* CMake: support pytest_runner on windows
+* CI: run tox test on pull_request
 
 Deprecated
 ----------
