@@ -1,4 +1,4 @@
-import pyppmd
+import pyppmd_zip as pyppmd
 
 source = "This file is located in a folder.This file is located in the root.\n"
 encoded = (

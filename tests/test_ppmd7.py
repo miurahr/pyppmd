@@ -4,7 +4,7 @@ import pathlib
 
 import pytest
 
-import pyppmd
+import pyppmd_zip as pyppmd
 
 testdata_path = pathlib.Path(os.path.dirname(__file__)).joinpath("data")
 data = b"This file is located in a folder.This file is located in the root."

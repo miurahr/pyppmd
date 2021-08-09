@@ -4,7 +4,7 @@ import psutil
 from hypothesis import given
 from hypothesis import strategies as st
 
-import pyppmd
+import pyppmd_zip as pyppmd
 
 vmem = psutil.virtual_memory()
 MAX_SIZE = min(0xFFFFFFFF - 12 * 3, sys.maxsize, vmem.available >> 2)

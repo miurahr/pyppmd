@@ -4,7 +4,7 @@ import pathlib
 
 import pytest
 
-import pyppmd
+import pyppmd_zip as pyppmd
 
 testdata_path = pathlib.Path(os.path.join(os.path.dirname(__file__), "data"))
 testdata = testdata_path.joinpath("10000SalesRecords.csv")
