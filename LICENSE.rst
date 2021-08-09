@@ -65,7 +65,6 @@ under BSD 3-Clause license.
 
 BSD 3-Clause License
 
-Copyright (c) 2016 Tino Reichard
 Copyright (c) 2020-2021, Ma Lin,
 All rights reserved.
 

@@ -1,7 +1,6 @@
 import hashlib
 import os
 import pathlib
-import platform
 
 import pytest
 
@@ -42,11 +41,9 @@ def test_ppmd8_decoder1():
 def test_ppmd8_decoder2():
     decoder = pyppmd.Ppmd8Decoder(6, 8 << 20)
     result = decoder.decode(encoded[:20])
-    assert not decoder.eof
-    assert decoder.needs_input
     result += decoder.decode(encoded[20:])
-    assert decoder.eof
     assert not decoder.needs_input
+    assert decoder.eof
     assert result == source
 
 
@@ -88,15 +85,3 @@ def test_ppmd8_encode_decode(tmp_path, mem_size):
     assert length == 1237262
     thash = m2.digest()
     assert thash == shash
-
-
-@pytest.mark.parametrize("obj,max_order,mem_size", [(b"\x00", 2, 2048)])
-@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="Known issue")
-def test_ppmd8_encode_decode2(obj, max_order, mem_size):
-    enc = pyppmd.Ppmd8Encoder(max_order=max_order, mem_size=mem_size)
-    length = len(obj)
-    compressed = enc.encode(obj)
-    compressed += enc.flush()
-    dec = pyppmd.Ppmd8Decoder(max_order=max_order, mem_size=mem_size)
-    result = dec.decode(compressed, length)
-    assert result == obj

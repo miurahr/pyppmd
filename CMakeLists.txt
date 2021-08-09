@@ -11,7 +11,6 @@ set(PY_VERSION 3.8)
 # Configuration for python-ext
 set(Python_FIND_STRATEGY VERSION)
 set(Python_FIND_IMPLEMENTATIONS CPython)
-#set(Python_FIND_IMPLEMENTATIONS PyPy)
 find_package(Python ${PY_VERSION}.0...${PY_VERSION}.99 COMPONENTS Interpreter Development)
 set(PY_EXT_FILE _ppmd)
 set(PY_EXT_DIR src/pyppmd/c)
@@ -37,7 +36,6 @@ add_custom_target(
 
 # ##################################################################################################
 # For pytest
-# if(Python_FIND_IMPLEMENTATIONS PyPy)
 file(
   WRITE ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp
   "
@@ -92,27 +90,21 @@ add_custom_target(
 
 # ##################################################################################################
 # for build test and analytics
-include_directories(lib lib2)
+include_directories(lib)
 add_library(
-        pyppmd
-        lib/Arch.h
-        lib/Interface.h
-        lib/Ppmd.h
-        lib/Ppmd7.c
-        lib/Ppmd7.h
-        lib/Ppmd7Dec.c
-        lib/Ppmd7Enc.c
-        lib/Ppmd8.c
-        lib/Ppmd8.h
-        lib/Ppmd8Dec.c
-        lib/Ppmd8Enc.c
-        lib2/Buffer.c
-        lib2/Buffer.h
-        lib2/threading.c
-        lib2/threading.h
-        lib2/Ppmd8Tdecoder.c
-        lib2/Ppmd8Tdecoder.h
-        src/ext/_ppmdmodule.c)
+  pyppmd
+  lib/Arch.h
+  lib/Interface.h
+  lib/Ppmd.h
+  lib/Ppmd7.c
+  lib/Ppmd7.h
+  lib/Ppmd7Dec.c
+  lib/Ppmd7Enc.c
+  lib/Ppmd8.c
+  lib/Ppmd8.h
+  lib/Ppmd8Dec.c
+  lib/Ppmd8Enc.c
+  src/ext/_ppmdmodule.c)
 target_include_directories(pyppmd PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pyppmd PRIVATE ${Python_LIBRARIES})
 # ##################################################################################################

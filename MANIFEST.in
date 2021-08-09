@@ -10,8 +10,6 @@ recursive-include docs Makefile
 recursive-include lib *.h
 recursive-include lib *.c
 recursive-include lib *.txt
-recursive-include lib2 *.h
-recursive-include lib2 *.c
 
 recursive-include src *.py
 recursive-include src *.pyi

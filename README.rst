@@ -24,7 +24,6 @@ Introduction
 ``pyppmd`` module provides classes and functions for compressing and decompressing text data,
 using PPM(Prediction by partial matching) compression algorithm which has several variations of implementations.
 PPMd is the implementation by Dmitry Shkarin.
-PyPPMD use Igor Pavlov's range coder introduced in 7-zip.
 
 The API is similar to Python's bz2/lzma/zlib module.
 
@@ -34,17 +33,27 @@ Some parts of th codes are derived from ``7-zip``, ``pyzstd`` and ``ppmd-cffi``.
 Development status
 ------------------
 
-A development status is considered as ``Beta``.
+A development status is considered as ``Alpha``. 
+There is an known issue for decompressor when data size is larger than memory_size parameter.
+It is considered to be usable within limited conditions.
 
 
-Copyright and License
----------------------
+Copyright
+---------
+
+Some part of this library uses codes from following software.
+
+* ppmd-cffi Copyright (C) 2020-2021 Hiroshi Miura
+* pyzstd    Copyright (C) 2020-2021 Ma Lin
+* 7-Zip     Copyright (C) 1999-2017 Igor Pavlov
+
+
+License
+-------
 
 Copyright (C) 2020-2021 Hiroshi Miura
 
 Copyright (C) 2020-2021 Ma Lin
-
-Copyright (c) 2016 Tino Reichar
 
 Copyright (C) 1999-2017 Igor Pavlov
 
