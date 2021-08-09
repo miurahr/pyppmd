@@ -10,7 +10,7 @@ PPMD_pthread_cond_t inEmpty = PPMD_PTHREAD_COND_INITIALIZER;
 
 Byte TReader(const void *p) {
     BufferReader *bufferReader = (BufferReader *)p;
-    if (bufferReader->inBuffer->pos == bufferReader->inBuffer->size) {
+    while (bufferReader->inBuffer->pos == bufferReader->inBuffer->size) {
         PPMD_pthread_mutex_lock(&mutex);
         PPMD_pthread_cond_signal(&inEmpty);
         PPMD_pthread_cond_wait(&notEmpty, &mutex);
