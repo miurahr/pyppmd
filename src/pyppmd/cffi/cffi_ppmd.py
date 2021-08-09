@@ -520,7 +520,7 @@ class Ppmd8Encoder(PpmdBaseEncoder):
             return
         self.flushed = True
         out, out_buf = self._setup_outBuffer()
-        if (self.endmark):
+        if self.endmark:
             lib.Ppmd8_EncodeSymbol(self.ppmd, 0x01)  # endmark
             lib.Ppmd8_EncodeSymbol(self.ppmd, 0x00)
         lib.Ppmd8_EncodeSymbol(self.ppmd, -1)  # endmark
@@ -545,7 +545,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         self._init_common()
         self.ppmd = ffi.new("CPpmd8 *")
         self.args = ffi.new("ppmd8_args *")
-        self.args.endmark=endmark
+        self.args.endmark = endmark
         lib.Ppmd8_Construct(self.ppmd)
         lib.ppmd8_decompress_init(self.ppmd, self.reader)
         lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator)
