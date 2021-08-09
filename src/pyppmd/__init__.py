@@ -73,8 +73,10 @@ class PpmdCompressor:
 class PpmdDecompressor:
     """Decompressor class to decompress data by PPMd algorithm."""
 
-    def __init__(self, max_order: int = 6, mem_size: int = 8 << 20):
-        self.decoder = Ppmd8Decoder(max_order=max_order, mem_size=mem_size)
+    def __init__(
+        self, max_order: int = 6, mem_size: int = 8 << 20, restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=True
+    ):
+        self.decoder = Ppmd8Decoder(max_order=max_order, mem_size=mem_size, restore_method=restore_method, endmark=endmark)
         self.eof = False
         self.need_input = True
 
