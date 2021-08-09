@@ -41,26 +41,30 @@ def test_ppmd8_decoder1():
 def test_ppmd8_decoder2():
     decoder = pyppmd.Ppmd8Decoder(6, 8 << 20)
     result = decoder.decode(encoded[:20])
+    assert not decoder.eof
+    assert decoder.needs_input
     result += decoder.decode(encoded[20:])
-    assert not decoder.needs_input
     assert decoder.eof
+    assert not decoder.needs_input
     assert result == source
 
 
 # test mem_size less than original file size as well
 @pytest.mark.parametrize(
-    "mem_size",
+    "mem_size, restore_method",
     [
-        (8 << 20),
-        (1 << 20),
+        (8 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART),
+        (8 << 20, pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF),
+        (1 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART),
+        (1 << 20, pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF),
     ],
 )
-def test_ppmd8_encode_decode(tmp_path, mem_size):
+def test_ppmd8_encode_decode(tmp_path, mem_size, restore_method):
     length = 0
     m = hashlib.sha256()
     with testdata_path.joinpath("10000SalesRecords.csv").open("rb") as f:
         with tmp_path.joinpath("target.ppmd").open("wb") as target:
-            enc = pyppmd.Ppmd8Encoder(6, mem_size)
+            enc = pyppmd.Ppmd8Encoder(6, mem_size, restore_method=restore_method)
             data = f.read(READ_BLOCKSIZE)
             while len(data) > 0:
                 m.update(data)
@@ -74,7 +78,7 @@ def test_ppmd8_encode_decode(tmp_path, mem_size):
     length = 0
     with tmp_path.joinpath("target.ppmd").open("rb") as target:
         with tmp_path.joinpath("target.csv").open("wb") as out:
-            dec = pyppmd.Ppmd8Decoder(6, mem_size)
+            dec = pyppmd.Ppmd8Decoder(6, mem_size, restore_method=restore_method)
             data = target.read(READ_BLOCKSIZE)
             while len(data) > 0 or not dec.eof:
                 res = dec.decode(data)

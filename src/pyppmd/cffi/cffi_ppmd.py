@@ -4,7 +4,14 @@ from typing import Union
 
 from ._cffi_ppmd import ffi, lib
 
-__all__ = ("Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder", "PpmdError")
+__all__ = (
+    "Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder", "PpmdError",
+    "PPMD8_RESTORE_METHOD_RESTART", "PPMD8_RESTORE_METHOD_CUT_OFF",
+)
+
+PPMD8_RESTORE_METHOD_RESTART = 0
+PPMD8_RESTORE_METHOD_CUT_OFF = 1
+# PPMD8_RESTORE_METHOD_FREEZE = 2
 
 _PPMD7_MIN_ORDER = 2
 _PPMD7_MAX_ORDER = 64
@@ -179,7 +186,7 @@ class PpmdBaseEncoder:
 
     def _setup_inBuffer(self, data):
         # Input buffer
-        in_buf = _new_nonzero("PPMD_inBuffer *")
+        in_buf = _new_nonzero("InBuffer *")
         if in_buf == ffi.NULL:
             raise MemoryError
         in_buf.src = ffi.from_buffer(data)
@@ -189,7 +196,7 @@ class PpmdBaseEncoder:
 
     def _setup_outBuffer(self):
         # Output buffer
-        out_buf = _new_nonzero("PPMD_outBuffer *")
+        out_buf = _new_nonzero("OutBuffer *")
         self.writer.outBuffer = out_buf
         if out_buf == ffi.NULL:
             raise MemoryError
@@ -240,7 +247,7 @@ class PpmdBaseDecoder:
 
     def _setup_inBuffer(self, data):
         # Input buffer
-        in_buf = _new_nonzero("PPMD_inBuffer *")
+        in_buf = _new_nonzero("InBuffer *")
         # Prepare input buffer w/wo unconsumed data
         if self._in_begin == self._in_end:
             # No unconsumed data
@@ -311,7 +318,7 @@ class PpmdBaseDecoder:
 
     def _setup_outBuffer(self):
         # Output buffer
-        out_buf = _new_nonzero("PPMD_outBuffer *")
+        out_buf = _new_nonzero("OutBuffer *")
         if out_buf == ffi.NULL:
             raise MemoryError
         out = _BlocksOutputBuffer()
@@ -478,7 +485,7 @@ class Ppmd7Decoder(PpmdBaseDecoder):
 
 
 class Ppmd8Encoder(PpmdBaseEncoder):
-    def __init__(self, max_order, mem_size):
+    def __init__(self, max_order, mem_size, restore_method=0):
         self.lock = Lock()
         if mem_size > sys.maxsize:
             raise ValueError("Mem_size exceed to platform limit.")
@@ -488,7 +495,7 @@ class Ppmd8Encoder(PpmdBaseEncoder):
         lib.Ppmd8_Construct(self.ppmd)
         lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator)
         lib.Ppmd8_RangeEnc_Init(self.ppmd)
-        lib.Ppmd8_Init(self.ppmd, max_order, 0)
+        lib.Ppmd8_Init(self.ppmd, max_order, restore_method)
 
     def encode(self, data) -> bytes:
         self.lock.acquire()
@@ -527,20 +534,21 @@ class Ppmd8Encoder(PpmdBaseEncoder):
 
 
 class Ppmd8Decoder(PpmdBaseDecoder):
-    def __init__(self, max_order: int, mem_size: int, end_mark=True):
+    def __init__(self, max_order: int, mem_size: int, restore_method=0):
         self._init_common()
         self.ppmd = ffi.new("CPpmd8 *")
-        self.endmark = end_mark
+        self.args = ffi.new("ppmd8_args *")
         lib.Ppmd8_Construct(self.ppmd)
         lib.ppmd8_decompress_init(self.ppmd, self.reader)
         lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator)
-        lib.Ppmd8_Init(self.ppmd, max_order, 0)
+        lib.Ppmd8_Init(self.ppmd, max_order, restore_method)
         self._inited = False
         self._eof = False
         self._needs_input = True
 
     def _init2(self):
         lib.Ppmd8_RangeDec_Init(self.ppmd)
+        self.args.finished = True
 
     def decode(self, data: Union[bytes, bytearray, memoryview], length: int = -1):
         if not isinstance(length, int):
@@ -551,12 +559,14 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         if not self._inited:
             self._inited = True
             self._init2()
+        if length<0:
+            length = 0x7fffffff
         while True:
             if out_buf.pos == length:
                 break
             if out_buf.pos == out_buf.size:
                 out.grow(out_buf)
-            size = lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, -1)
+            size = lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, length, self.args)
             if size == -1:
                 self._eof = True
                 self._needs_input = False
