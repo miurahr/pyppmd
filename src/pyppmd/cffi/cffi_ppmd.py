@@ -5,8 +5,13 @@ from typing import Union
 from ._cffi_ppmd import ffi, lib
 
 __all__ = (
-    "Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder", "PpmdError",
-    "PPMD8_RESTORE_METHOD_RESTART", "PPMD8_RESTORE_METHOD_CUT_OFF",
+    "Ppmd7Encoder",
+    "Ppmd7Decoder",
+    "Ppmd8Encoder",
+    "Ppmd8Decoder",
+    "PpmdError",
+    "PPMD8_RESTORE_METHOD_RESTART",
+    "PPMD8_RESTORE_METHOD_CUT_OFF",
 )
 
 PPMD8_RESTORE_METHOD_RESTART = 0
@@ -559,8 +564,8 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         if not self._inited:
             self._inited = True
             self._init2()
-        if length<0:
-            length = 0x7fffffff
+        if length < 0:
+            length = 0x7FFFFFFF
         while True:
             if out_buf.pos == length:
                 break
