@@ -54,30 +54,32 @@ Ppmd8T_decode_run(void *p) {
         PPMD_pthread_mutex_lock(&mutex);
         int c = Ppmd8_DecodeSymbol(cPpmd8);
         PPMD_pthread_mutex_unlock(&mutex);
-        if (escaped) {
-            escaped = False;
-            if (c == 0x01) { // escaped character
-                PPMD_pthread_mutex_lock(&mutex);
-                *((Byte *)args->out->dst + args->out->pos++) = c;
-                PPMD_pthread_mutex_unlock(&mutex);
-                i++;
-            } else if (c == 0x00) { // endmark
-                // eof
-                result = -1;
-                goto exit;
+        if (args->endmark) {
+            if (escaped) {
+                escaped = False;
+                if (c == 0x01) { // escaped character
+                    PPMD_pthread_mutex_lock(&mutex);
+                    *((Byte *)args->out->dst + args->out->pos++) = c;
+                    PPMD_pthread_mutex_unlock(&mutex);
+                    i++;
+                } else if (c == 0x00) { // endmark
+                    // eof
+                    result = -1;
+                    goto exit;
+                } else {
+                    // failed
+                    result = -2;
+                    goto exit;
+                }
             } else {
-                // failed
-                result = -2;
-                goto exit;
-            }
-        } else {
-            if (c != 0x01) { // ordinary data
-                PPMD_pthread_mutex_lock(&mutex);
-                *((Byte *)args->out->dst + args->out->pos++) = (Byte) c;
-                PPMD_pthread_mutex_unlock(&mutex);
-                i++;
-            } else { // enter escape sequence
-                escaped = True;
+                if (c != 0x01) { // ordinary data
+                    PPMD_pthread_mutex_lock(&mutex);
+                    *((Byte *)args->out->dst + args->out->pos++) = (Byte) c;
+                    PPMD_pthread_mutex_unlock(&mutex);
+                    i++;
+                } else { // enter escape sequence
+                    escaped = True;
+                }
             }
         }
     }

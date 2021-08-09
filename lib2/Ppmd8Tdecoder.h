@@ -13,6 +13,7 @@ typedef struct ppmd8_args_s {
     InBuffer *in;
     OutBuffer *out;
     int max_length;
+    Bool endmark;
     Bool finished;
     int result;
     PPMD_pthread_t handle;

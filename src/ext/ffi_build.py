@@ -205,6 +205,7 @@ typedef struct ppmd8_args_s {
     InBuffer *in;
     OutBuffer *out;
     int max_length;
+    Bool endmark;
     Bool finished;
     int result;
     PPMD_pthread_t handle;
@@ -256,7 +257,7 @@ void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
 void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
 
 void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer);
-int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf);
+int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, Bool endmark);
 void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader);
 int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd8_args *args);
 
@@ -360,13 +361,15 @@ void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer)
     ppmd->Stream.Out = (IByteOut *) writer;
 }
 
-int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf) {
+int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, Bool endmark) {
     Byte* pos = (Byte *) in_buf->src + in_buf->pos;
     const Byte* in_end = (Byte *)in_buf->src + in_buf->size;
     while (pos < in_end) {
         Byte c = *pos++;
-        if (c == 0x01) {
-            Ppmd8_EncodeSymbol(ppmd, 0x01);
+        if (endmark) {
+            if (c == 0x01) {
+                Ppmd8_EncodeSymbol(ppmd, 0x01);
+            }
         }
         Ppmd8_EncodeSymbol(ppmd, c);
         if (out_buf->pos >= out_buf->size) {

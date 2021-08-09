@@ -1221,12 +1221,14 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
         clamp_memory_size(&memory_size);
     }
 
+    self->endmark = True;
     if ((self->cPpmd8 = PyMem_Malloc(sizeof(CPpmd8))) != NULL) {
         Ppmd8_Construct(self->cPpmd8);
         if (Ppmd8_Alloc(self->cPpmd8, memory_size ,&allocator)) {
             Ppmd8_Init(self->cPpmd8, maximum_order, restore_method);
             self->args = PyMem_Malloc(sizeof(ppmd8_args));
             self->args->cPpmd8 = self->cPpmd8;
+            self->args->endmark = self->endmark;
             Ppmd8T_decode_init();
             goto success;
         }
@@ -1649,6 +1651,7 @@ Ppmd8Encoder_init(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
         clamp_memory_size(&memory_size);
     }
 
+    self->endmark = True;
     if ((self->cPpmd8 =  PyMem_Malloc(sizeof(CPpmd8))) != NULL) {
         Ppmd8_Construct(self->cPpmd8);
         if (Ppmd8_Alloc(self->cPpmd8, (UInt32)memory_size, &allocator)) {
@@ -1698,16 +1701,18 @@ Ppmd8Encoder_encode(Ppmd8Encoder *self,  PyObject *args, PyObject *kwargs) {
     Bool result = True;
     Py_BEGIN_ALLOW_THREADS
     for (UInt32 i = 0; i < data.len; i++){
-        // when endmark mode, escape 0x01.
-        if (*((Byte *)data.buf + i) == 0x01) {
-            Ppmd8_EncodeSymbol(self->cPpmd8, 0x01);
-            if (out.size == out.pos) {
-                if (OutputBuffer_Grow(&buffer, &out) < 0) {
-                    PyErr_SetString(PyExc_ValueError, "No memory.");
-                    result = False;
-                    break;
-                } else {
-                    writer.outBuffer = &out;
+        if (self->endmark) {
+            // when endmark mode, escape 0x01.
+            if (*((Byte *)data.buf + i) == 0x01) {
+                Ppmd8_EncodeSymbol(self->cPpmd8, 0x01);
+                if (out.size == out.pos) {
+                    if (OutputBuffer_Grow(&buffer, &out) < 0) {
+                        PyErr_SetString(PyExc_ValueError, "No memory.");
+                        result = False;
+                        break;
+                    } else {
+                        writer.outBuffer = &out;
+                    }
                 }
             }
         }
@@ -1759,8 +1764,10 @@ Ppmd8Encoder_flush(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
     writer.outBuffer = &out;
     self->cPpmd8->Stream.Out = (IByteOut *) &writer;
 
-    Ppmd8_EncodeSymbol(self->cPpmd8, 0x01);  // endmark sequence
-    Ppmd8_EncodeSymbol(self->cPpmd8, 0x00);
+    if (self->endmark) {
+        Ppmd8_EncodeSymbol(self->cPpmd8, 0x01);  // endmark sequence
+        Ppmd8_EncodeSymbol(self->cPpmd8, 0x00);
+    }
     Ppmd8_EncodeSymbol(self->cPpmd8, -1);  // endmark for encoder
     Ppmd8_RangeEnc_FlushData(self->cPpmd8);
     ret = OutputBuffer_Finish(&buffer, &out);
