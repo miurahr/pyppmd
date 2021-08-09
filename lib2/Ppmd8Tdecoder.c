@@ -4,8 +4,9 @@
 
 #include "Ppmd8Tdecoder.h"
 
-PPMD_pthread_mutex_t mutex;
-PPMD_pthread_cond_t finished, inEmpty, notEmpty;
+PPMD_pthread_mutex_t mutex = PPMD_PTHREAD_MUTEX_INITIALIZER;
+PPMD_pthread_cond_t notEmpty = PPMD_PTHREAD_COND_INITIALIZER;
+PPMD_pthread_cond_t inEmpty = PPMD_PTHREAD_COND_INITIALIZER;
 
 Byte TReader(const void *p) {
     BufferReader *bufferReader = (BufferReader *)p;
@@ -17,10 +18,6 @@ Byte TReader(const void *p) {
 }
 
 Bool Ppmd8T_decode_init() {
-    PPMD_pthread_mutex_init(&mutex, NULL);
-    PPMD_pthread_cond_init(&finished, NULL);
-    PPMD_pthread_cond_init(&inEmpty, NULL);
-    PPMD_pthread_cond_init(&notEmpty, NULL);
     return True;
 }
 
@@ -36,7 +33,7 @@ Ppmd8T_decode_run(void *p) {
 
     Bool escaped = False;
     int i = 0;
-    int result = 0;
+    int result;
     while (i < max_length ) {
         Bool can_break = False;
         PPMD_pthread_mutex_lock(&mutex);
@@ -53,6 +50,17 @@ Ppmd8T_decode_run(void *p) {
         PPMD_pthread_mutex_lock(&mutex);
         int c = Ppmd8_DecodeSymbol(cPpmd8);
         PPMD_pthread_mutex_unlock(&mutex);
+        if (c == PPMD8_RESULT_EOF) {
+            PPMD_pthread_mutex_lock(&mutex);
+            result = PPMD8_RESULT_EOF;
+            PPMD_pthread_mutex_unlock(&mutex);
+            goto exit;
+        } else if (c == PPMD8_RESULT_ERROR) {
+            PPMD_pthread_mutex_lock(&mutex);
+            result = PPMD8_RESULT_ERROR;
+            PPMD_pthread_mutex_unlock(&mutex);
+            goto exit;
+        }
         if (escaped) {
             escaped = False;
             if (c == 0x01) { // escaped character
@@ -62,11 +70,11 @@ Ppmd8T_decode_run(void *p) {
                 i++;
             } else if (c == 0x00) { // endmark
                 // eof
-                result = -1;
+                result = PPMD8_RESULT_EOF;
                 goto exit;
             } else {
                 // failed
-                result = -2;
+                result = PPMD8_RESULT_ERROR;
                 goto exit;
             }
         } else {
