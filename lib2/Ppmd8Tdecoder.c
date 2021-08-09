@@ -30,7 +30,6 @@ Ppmd8T_decode_run(void *p) {
     PPMD_pthread_mutex_lock(&mutex);
     CPpmd8 * cPpmd8 = args->cPpmd8;
     BufferReader *reader = (BufferReader *) cPpmd8->Stream.In;
-    InBuffer *in = reader->inBuffer;
     int max_length = args->max_length;
     args->finished = False;
     PPMD_pthread_mutex_unlock(&mutex);
@@ -41,7 +40,7 @@ Ppmd8T_decode_run(void *p) {
     while (i < max_length ) {
         Bool can_break = False;
         PPMD_pthread_mutex_lock(&mutex);
-        if (in->size == in->pos) {
+        if (reader->inBuffer->size == reader->inBuffer->pos) {
             can_break = True;
         }
         if (args->out->size == args->out->pos) {
@@ -99,7 +98,6 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
     args->out = out;
     BufferReader *reader = (BufferReader *) cPpmd8->Stream.In;
     InBuffer *in = reader->inBuffer;
-    args->in = in;
     args->result = 0;
     Bool exited = args->finished;
     PPMD_pthread_mutex_unlock(&mutex);
