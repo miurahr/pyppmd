@@ -191,8 +191,12 @@ if sys.platform.startswith("win32"):
     } PPMD_pthread_t;
     """
     )
-else:
+elif sys.platform.startswith("darwin"):
+    ffibuilder.cdef(r"typedef void* PPMD_pthread_t;")
+elif sys.platform.startswith("linux"):
     ffibuilder.cdef(r"typedef unsigned long int PPMD_pthread_t;")
+else:
+    pass  # todo
 
 ffibuilder.cdef(
     r"""
