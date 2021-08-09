@@ -19,7 +19,7 @@ sources = [
     "lib2/threading.c",
     "lib2/Ppmd8Tdecoder.c",
 ]
-_ppmd_extension = Extension("pyppmd._ppmd", sources)
+_ppmd_extension = Extension("pyppmd_zip._ppmd", sources)
 kwargs = {"include_dirs": ["lib", "lib2"], "library_dirs": [], "libraries": [], "sources": sources, "define_macros": []}
 
 
@@ -33,10 +33,10 @@ def has_option(option):
 
 if has_option("--cffi") or sys.version_info[0]<3 or platform.python_implementation() == "PyPy":
     # packages
-    packages = ["pyppmd", "pyppmd.cffi"]
+    packages = ["pyppmd_zip", "pyppmd_zip.cffi"]
 
     # binary extension
-    kwargs["module_name"] = "pyppmd.cffi._cffi_ppmd"
+    kwargs["module_name"] = "pyppmd_zip.cffi._cffi_ppmd"
 
     sys.path.append("src/ext")
     import ffi_build
@@ -45,10 +45,10 @@ if has_option("--cffi") or sys.version_info[0]<3 or platform.python_implementati
     binary_extension = ffi_build.ffibuilder.distutils_extension()
 else:  # C implementation
     # packages
-    packages = ["pyppmd", "pyppmd.c"]
+    packages = ["pyppmd_zip", "pyppmd_zip.c"]
 
     # binary extension
-    kwargs["name"] = "pyppmd.c._ppmd"
+    kwargs["name"] = "pyppmd_zip.c._ppmd"
     kwargs["sources"].append("src/ext/_ppmdmodule.c")
 
     binary_extension = Extension(**kwargs)
