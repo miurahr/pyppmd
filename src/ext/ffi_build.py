@@ -202,7 +202,6 @@ ffibuilder.cdef(
     r"""
 typedef struct ppmd8_args_s {
     CPpmd8 *cPpmd8;
-    InBuffer *in;
     OutBuffer *out;
     int max_length;
     Bool finished;

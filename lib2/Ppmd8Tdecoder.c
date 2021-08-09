@@ -4,56 +4,50 @@
 
 #include "Ppmd8Tdecoder.h"
 
-PPMD_pthread_mutex_t mutex;
-PPMD_pthread_cond_t finished, inEmpty, notEmpty;
+PPMD_pthread_mutex_t mutex = PPMD_PTHREAD_MUTEX_INITIALIZER;
+PPMD_pthread_cond_t notEmpty = PPMD_PTHREAD_COND_INITIALIZER;
+PPMD_pthread_cond_t inEmpty = PPMD_PTHREAD_COND_INITIALIZER;
 
 Byte TReader(const void *p) {
     BufferReader *bufferReader = (BufferReader *)p;
     if (bufferReader->inBuffer->pos == bufferReader->inBuffer->size) {
+        PPMD_pthread_mutex_lock(&mutex);
         PPMD_pthread_cond_signal(&inEmpty);
         PPMD_pthread_cond_wait(&notEmpty, &mutex);
+        PPMD_pthread_mutex_unlock(&mutex);
     }
     return *((const Byte *)bufferReader->inBuffer->src + bufferReader->inBuffer->pos++);
 }
 
 Bool Ppmd8T_decode_init() {
-    PPMD_pthread_mutex_init(&mutex, NULL);
-    PPMD_pthread_cond_init(&finished, NULL);
-    PPMD_pthread_cond_init(&inEmpty, NULL);
-    PPMD_pthread_cond_init(&notEmpty, NULL);
     return True;
 }
 
 static void *
 Ppmd8T_decode_run(void *p) {
     ppmd8_args *args = (ppmd8_args *)p;
-    PPMD_pthread_mutex_lock(&mutex);
+    args->finished = False;
     CPpmd8 * cPpmd8 = args->cPpmd8;
     BufferReader *reader = (BufferReader *) cPpmd8->Stream.In;
-    InBuffer *in = reader->inBuffer;
     int max_length = args->max_length;
-    args->finished = False;
-    PPMD_pthread_mutex_unlock(&mutex);
 
     Bool escaped = False;
     int i = 0;
-    int result = 0;
+    int result;
     while (i < max_length ) {
-        Bool can_break = False;
-        PPMD_pthread_mutex_lock(&mutex);
-        if (in->size == in->pos) {
-            can_break = True;
-        }
-        if (args->out->size == args->out->pos) {
-            can_break = True;
-        }
-        PPMD_pthread_mutex_unlock(&mutex);
-        if (can_break) {
+        Bool inbuf_empty = reader->inBuffer->size == reader->inBuffer->pos;
+        Bool outbuf_full = args->out->size == args->out->pos;
+        if (inbuf_empty || outbuf_full) {
             break;
         }
-        PPMD_pthread_mutex_lock(&mutex);
         int c = Ppmd8_DecodeSymbol(cPpmd8);
-        PPMD_pthread_mutex_unlock(&mutex);
+        if (c == PPMD8_RESULT_EOF) {
+            result = PPMD8_RESULT_EOF;
+            goto exit;
+        } else if (c == PPMD8_RESULT_ERROR) {
+            result = PPMD8_RESULT_ERROR;
+            goto exit;
+        }
         if (escaped) {
             escaped = False;
             if (c == 0x01) { // escaped character
@@ -63,11 +57,11 @@ Ppmd8T_decode_run(void *p) {
                 i++;
             } else if (c == 0x00) { // endmark
                 // eof
-                result = -1;
+                result = PPMD8_RESULT_EOF;
                 goto exit;
             } else {
                 // failed
-                result = -2;
+                result = PPMD8_RESULT_ERROR;
                 goto exit;
             }
         } else {
@@ -98,8 +92,6 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
     args->max_length = max_length;
     args->out = out;
     BufferReader *reader = (BufferReader *) cPpmd8->Stream.In;
-    InBuffer *in = reader->inBuffer;
-    args->in = in;
     args->result = 0;
     Bool exited = args->finished;
     PPMD_pthread_mutex_unlock(&mutex);
@@ -112,12 +104,12 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
         PPMD_pthread_mutex_unlock(&mutex);
     } else {
         PPMD_pthread_mutex_lock(&mutex);
-        if (in->pos < in->size) {
+        if (reader->inBuffer->pos < reader->inBuffer->size) {
             PPMD_pthread_cond_signal(&notEmpty);
             PPMD_pthread_mutex_unlock(&mutex);
         } else {
             PPMD_pthread_mutex_unlock(&mutex);
-            return -2;  // error
+            return PPMD8_RESULT_ERROR;  // error
         }
     }
     while(True) {
