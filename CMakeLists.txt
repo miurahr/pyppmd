@@ -6,11 +6,12 @@ set(CMAKE_CXX_STANDARD 11)
 
 # TARGET PYTHON version
 set(PY_VERSION 3.8)
+set(Python_FIND_IMPLEMENTATIONS CPython)
+#set(Python_FIND_IMPLEMENTATIONS PyPy)
 
 # ##################################################################################################
 # Configuration for python-ext
 set(Python_FIND_STRATEGY VERSION)
-set(Python_FIND_IMPLEMENTATIONS CPython)
 find_package(Python ${PY_VERSION}.0...${PY_VERSION}.99 COMPONENTS Interpreter Development)
 set(PY_EXT_FILE _ppmd)
 set(PY_EXT_DIR src/pyppmd/c)
@@ -54,7 +55,16 @@ int main(int argc, char **argv) {
         }
         args.append(\"]\");
     }
-    std::string pycode = \"import sys\\nimport pytest\\nif sys.platform.startswith('win32'):\\n    l='Lib'\\nelse:\\n    l='lib/python${PY_VERSION}'\\nsys.path.append('${CMAKE_BINARY_DIR}/venv/'+l+'/site-packages/')\\nsys.path.append('${CMAKE_SOURCE_DIR}/src')\\npytest.main(\" + args + \")\\n\";
+    std::string pycode =
+        \"import sys\\n\"
+        \"import pytest\\n\"
+        \"if sys.platform.startswith('win32'):\\n\"
+        \"    l='Lib'\\n\"
+        \"else:\\n\"
+        \"    l='lib/python${PY_VERSION}'\\n\"
+        \"sys.path.append('${CMAKE_BINARY_DIR}/venv/'+l+'/site-packages/')\\n\"
+        \"sys.path.append('${CMAKE_SOURCE_DIR}/src')\\n\"
+        \"pytest.main(\" + args + \")\\n\";
     wchar_t * program_name = Py_DecodeLocale(argv[0], NULL);
     Py_SetProgramName(program_name);
     Py_Initialize();
@@ -62,7 +72,28 @@ int main(int argc, char **argv) {
     Py_Finalize();
     return 0;
 }")
-add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
+file(
+    WRITE ${CMAKE_CURRENT_BINARY_DIR}/pypytest_runner.c
+     "
+#include <stdlib.h>
+#include <PyPy.h>
+int main(int argc, char *argv[]) {
+    static char pycode[] =
+       \"import sys\\n\"
+       \"import pytest\\n\"
+       \"sys.path.append('${CMAKE_BINARY_DIR}/venv/lib/python${PY_VERSION}/site-packages/')\\n\"
+       \"sys.path.append('${CMAKE_SOURCE_DIR}/src')\\n\"
+       \"pytest.main()\\n\";
+    rpython_startup_code();
+    pypy_setup_home(NULL, 1);
+    pypy_execute_source((char *)pycode);
+    return 0;
+}")
+if (${Python_INTERPRETER_ID} STREQUAL "PyPy")
+  add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pypytest_runner.c)
+else()
+  add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
+endif()
 target_link_libraries(pytest_runner PUBLIC pyppmd)
 target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
