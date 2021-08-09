@@ -100,7 +100,6 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
     args->max_length = max_length;
     args->out = out;
     BufferReader *reader = (BufferReader *) cPpmd8->Stream.In;
-    InBuffer *in = reader->inBuffer;
     args->result = 0;
     Bool exited = args->finished;
     PPMD_pthread_mutex_unlock(&mutex);
@@ -113,7 +112,7 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
         PPMD_pthread_mutex_unlock(&mutex);
     } else {
         PPMD_pthread_mutex_lock(&mutex);
-        if (in->pos < in->size) {
+        if (reader->inBuffer->pos < reader->inBuffer->size) {
             PPMD_pthread_cond_signal(&notEmpty);
             PPMD_pthread_mutex_unlock(&mutex);
         } else {
