@@ -35,16 +35,11 @@ Ppmd8T_decode_run(void *p) {
     int i = 0;
     int result;
     while (i < max_length ) {
-        Bool can_break = False;
         PPMD_pthread_mutex_lock(&mutex);
-        if (reader->inBuffer->size == reader->inBuffer->pos) {
-            can_break = True;
-        }
-        if (args->out->size == args->out->pos) {
-            can_break = True;
-        }
+        Bool inbuf_empty = reader->inBuffer->size == reader->inBuffer->pos;
+        Bool outbuf_full = args->out->size == args->out->pos;
         PPMD_pthread_mutex_unlock(&mutex);
-        if (can_break) {
+        if (inbuf_empty || outbuf_full) {
             break;
         }
         PPMD_pthread_mutex_lock(&mutex);
