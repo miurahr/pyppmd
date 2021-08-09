@@ -3,15 +3,14 @@
 //
 
 #include "Ppmd8Tdecoder.h"
-int inputEmpty = 0;
 
 PPMD_pthread_mutex_t mutex;
-PPMD_pthread_cond_t finished, inEmpty, notEmpty;
+PPMD_pthread_cond_t addInput, notEmpty;
 
 Byte TReader(const void *p) {
     BufferReader *bufferReader = (BufferReader *)p;
     if (bufferReader->inBuffer->pos == bufferReader->inBuffer->size) {
-        inputEmpty = 1;
+        PPMD_pthread_cond_signal(&addInput);
         PPMD_pthread_cond_wait(&notEmpty, &mutex);
     }
     return *((const Byte *)bufferReader->inBuffer->src + bufferReader->inBuffer->pos++);
@@ -19,8 +18,7 @@ Byte TReader(const void *p) {
 
 Bool Ppmd8T_decode_init() {
     PPMD_pthread_mutex_init(&mutex, NULL);
-    PPMD_pthread_cond_init(&finished, NULL);
-    PPMD_pthread_cond_init(&inEmpty, NULL);
+    PPMD_pthread_cond_init(&addInput, NULL);
     PPMD_pthread_cond_init(&notEmpty, NULL);
     return True;
 }
@@ -70,6 +68,7 @@ Ppmd8T_decode_run(void *p) {
     PPMD_pthread_mutex_lock(&mutex);
     args->result = result;
     args->finished = True;
+    PPMD_pthread_cond_signal(&addInput);
     PPMD_pthread_mutex_unlock(&mutex);
     return NULL;
 }
@@ -86,10 +85,8 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
     Bool exited = args->finished;
     PPMD_pthread_mutex_unlock(&mutex);
 
-    inputEmpty = 0;
     if (exited) {
         PPMD_pthread_t handle;
-        args->finished = False;
         PPMD_pthread_create(&handle, NULL, Ppmd8T_decode_run, args);
         PPMD_pthread_mutex_lock(&mutex);
         args->handle = handle;
@@ -104,8 +101,8 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
             return -2;  // error
         }
     }
-    while(True) {
 #if 0
+    while(True) {
         PPMD_pthread_mutex_lock(&mutex);
         if (PPMD_pthread_cond_wait1(&inEmpty, &mutex) == 0) {
             // inBuffer is empty
@@ -117,12 +114,14 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
             break;
         }
         PPMD_pthread_mutex_unlock(&mutex);
-#endif
-	int finished = args->finished;
-	if(inputEmpty)return 0;
-	if(finished)break;
-	usleep(100);
     }
-    PPMD_pthread_join(args->handle, NULL);
-    return args->result;
+#endif
+    PPMD_pthread_mutex_lock(&mutex);
+    PPMD_pthread_cond_wait(&addInput, &mutex);
+    PPMD_pthread_mutex_unlock(&mutex);
+    if (args->finished) {
+        PPMD_pthread_join(args->handle, NULL);
+        return args->result;
+    }
+    return 0;
 }
