@@ -41,7 +41,6 @@
 
 /* mutex */
 #define PPMD_pthread_mutex_t           CRITICAL_SECTION
-#define PPMD_PTHREAD_MUTEX_INITIALIZER {(void*)-1,-1,0,0,0,0}
 #define PPMD_pthread_mutex_init(a, b)  ((void)(b), InitializeCriticalSection((a)), 0)
 #define PPMD_pthread_mutex_destroy(a)  DeleteCriticalSection((a))
 #define PPMD_pthread_mutex_lock(a)     EnterCriticalSection((a))
@@ -49,11 +48,10 @@
 
 /* condition variable */
 #define PPMD_pthread_cond_t             CONDITION_VARIABLE
-#define PPMD_PTHREAD_COND_INITIALIZER   {0}
 #define PPMD_pthread_cond_init(a, b)    ((void)(b), InitializeConditionVariable((a)), 0)
 #define PPMD_pthread_cond_destroy(a)    ((void)(a))
 #define PPMD_pthread_cond_wait(a, b)    SleepConditionVariableCS((a), (b), INFINITE)
-#define PPMD_pthread_cond_timedwait_1ms(a, b)   SleepConditionVariableCS((a), (b), 1)
+#define PPMD_pthread_cond_wait1(a, b)   SleepConditionVariableCS((a), (b), 1)
 #define PPMD_pthread_cond_signal(a)     WakeConditionVariable((a))
 #define PPMD_pthread_cond_broadcast(a)  WakeAllConditionVariable((a))
 
@@ -75,14 +73,12 @@ int PPMD_pthread_join(PPMD_pthread_t thread, void** value_ptr);
 #  include <time.h>
 
 #define PPMD_pthread_mutex_t            pthread_mutex_t
-#define PPMD_PTHREAD_MUTEX_INITIALIZER  PTHREAD_MUTEX_INITIALIZER
 #define PPMD_pthread_mutex_init(a, b)   pthread_mutex_init((a), (b))
 #define PPMD_pthread_mutex_destroy(a)   pthread_mutex_destroy((a))
 #define PPMD_pthread_mutex_lock(a)      pthread_mutex_lock((a))
 #define PPMD_pthread_mutex_unlock(a)    pthread_mutex_unlock((a))
 
 #define PPMD_pthread_cond_t             pthread_cond_t
-#define PPMD_PTHREAD_COND_INITIALIZER   PTHREAD_COND_INITIALIZER
 #define PPMD_pthread_cond_init(a, b)    pthread_cond_init((a), (b))
 #define PPMD_pthread_cond_destroy(a)    pthread_cond_destroy((a))
 #define PPMD_pthread_cond_wait(a, b)    pthread_cond_wait((a), (b))
@@ -93,8 +89,8 @@ int PPMD_pthread_join(PPMD_pthread_t thread, void** value_ptr);
 #define PPMD_pthread_create(a, b, c, d) pthread_create((a), (b), (c), (d))
 #define PPMD_pthread_join(a, b)         pthread_join((a),(b))
 
-#endif
+int PPMD_pthread_cond_wait1(pthread_cond_t *a, pthread_mutex_t *b);
 
-int PPMD_100nanosleep(long long hns);
+#endif
 
 #endif /* THREADING_H_938743 */

@@ -196,17 +196,19 @@ else:
 
 ffibuilder.cdef(
     r"""
-typedef struct ppmd8_decode_status_s {
+typedef struct ppmd8_args_s {
     CPpmd8 *cPpmd8;
+    InBuffer *in;
     OutBuffer *out;
     int max_length;
     Bool finished;
     int result;
     PPMD_pthread_t handle;
-} ppmd8_decode_status;
+} ppmd8_args;
 
 Byte TReader(const void *p);
-int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_decode_status *statusS);
+Bool Ppmd8T_decode_init();
+int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *args);
 """
 )
 
@@ -252,7 +254,7 @@ void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
 void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer);
 int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf);
 void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader);
-int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd8_decode_status *statusS);
+int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd8_args *args);
 
 void Ppmd8_Construct(CPpmd8 *ppmd);
 Bool Ppmd8_Alloc(CPpmd8 *p, UInt32 size, ISzAlloc *alloc);
@@ -375,11 +377,11 @@ void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader)
 {
     reader->Read = (Byte (*)(void *)) TReader;
     ppmd->Stream.In = (IByteIn *) reader;
+    Ppmd8T_decode_init();
 }
 
-int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd8_decode_status *statusS) {
-    length = (length < 0) ? INT_MAX: length;
-    return Ppmd8T_decode(ppmd, out_buf, length, statusS);
+int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd8_args *args) {
+    return Ppmd8T_decode(ppmd, out_buf, length, args);
 }
 """
 

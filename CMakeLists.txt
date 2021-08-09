@@ -37,7 +37,6 @@ add_custom_target(
 
 # ##################################################################################################
 # For pytest
-# if(Python_FIND_IMPLEMENTATIONS PyPy)
 file(
   WRITE ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp
   "
