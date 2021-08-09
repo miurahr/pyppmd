@@ -41,6 +41,7 @@ ensure_newline_before_comments = true
 line_length = 125
 
 [tool.pytest.ini_options]
+minversion = "6.0"
 testpaths = ["tests"]
 python_files = "test*.py"
 norecursedirs = [".git", "_build", "tmp", ".eggs"]
