@@ -10,7 +10,6 @@
 
 typedef struct ppmd8_args_s {
     CPpmd8 *cPpmd8;
-    InBuffer *in;
     OutBuffer *out;
     int max_length;
     Bool endmark;
@@ -19,6 +18,8 @@ typedef struct ppmd8_args_s {
     PPMD_pthread_t handle;
 } ppmd8_args;
 
+#define PPMD8_RESULT_EOF (-1)
+#define PPMD8_RESULT_ERROR (-2)
 
 Byte TReader(const void *p);
 Bool Ppmd8T_decode_init();
