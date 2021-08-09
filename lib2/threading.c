@@ -102,11 +102,20 @@ int PPMD_100nanosleep(long long ns){
 
 /**
  * Sleep hns * 100nsec.
+ * It can take 100 nsec to 19999999 nsec
  * @param hns
  * @return
  */
 int PPMD_100nanosleep(long long hns) {
-    struct timespec ts = {0, hns * 100};
+    struct timespec ts;
+    long ts_nsec = hns * 100;
+    if (ts_nsec >= 1000000000) {
+        ts.tv_nsec = ts_nsec - 1000000000;
+        ts.tv_sec = 1;
+    } else {
+        ts.tv_nsec = ts_nsec;
+        ts.tv_sec = 0;
+    }
     return nanosleep(&ts, NULL);
 }
 
