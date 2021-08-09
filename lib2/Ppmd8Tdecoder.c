@@ -26,34 +26,26 @@ Bool Ppmd8T_decode_init() {
 static void *
 Ppmd8T_decode_run(void *p) {
     ppmd8_args *args = (ppmd8_args *)p;
-    PPMD_pthread_mutex_lock(&mutex);
+    args->finished = False;
     CPpmd8 * cPpmd8 = args->cPpmd8;
     BufferReader *reader = (BufferReader *) cPpmd8->Stream.In;
     int max_length = args->max_length;
-    args->finished = False;
-    PPMD_pthread_mutex_unlock(&mutex);
 
     Bool escaped = False;
     int i = 0;
     int result;
     while (i < max_length ) {
-        PPMD_pthread_mutex_lock(&mutex);
         Bool inbuf_empty = reader->inBuffer->size == reader->inBuffer->pos;
         Bool outbuf_full = args->out->size == args->out->pos;
-        PPMD_pthread_mutex_unlock(&mutex);
         if (inbuf_empty || outbuf_full) {
             break;
         }
         int c = Ppmd8_DecodeSymbol(cPpmd8);
         if (c == PPMD8_RESULT_EOF) {
-            PPMD_pthread_mutex_lock(&mutex);
             result = PPMD8_RESULT_EOF;
-            PPMD_pthread_mutex_unlock(&mutex);
             goto exit;
         } else if (c == PPMD8_RESULT_ERROR) {
-            PPMD_pthread_mutex_lock(&mutex);
             result = PPMD8_RESULT_ERROR;
-            PPMD_pthread_mutex_unlock(&mutex);
             goto exit;
         }
         if (escaped) {
