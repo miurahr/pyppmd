@@ -11,8 +11,10 @@ PPMD_pthread_cond_t inEmpty = PPMD_PTHREAD_COND_INITIALIZER;
 Byte TReader(const void *p) {
     BufferReader *bufferReader = (BufferReader *)p;
     if (bufferReader->inBuffer->pos == bufferReader->inBuffer->size) {
+        PPMD_pthread_mutex_lock(&mutex);
         PPMD_pthread_cond_signal(&inEmpty);
         PPMD_pthread_cond_wait(&notEmpty, &mutex);
+        PPMD_pthread_mutex_unlock(&mutex);
     }
     return *((const Byte *)bufferReader->inBuffer->src + bufferReader->inBuffer->pos++);
 }
@@ -42,9 +44,7 @@ Ppmd8T_decode_run(void *p) {
         if (inbuf_empty || outbuf_full) {
             break;
         }
-        PPMD_pthread_mutex_lock(&mutex);
         int c = Ppmd8_DecodeSymbol(cPpmd8);
-        PPMD_pthread_mutex_unlock(&mutex);
         if (c == PPMD8_RESULT_EOF) {
             PPMD_pthread_mutex_lock(&mutex);
             result = PPMD8_RESULT_EOF;
@@ -118,7 +118,7 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
             PPMD_pthread_mutex_unlock(&mutex);
         } else {
             PPMD_pthread_mutex_unlock(&mutex);
-            return -2;  // error
+            return PPMD8_RESULT_ERROR;  // error
         }
     }
     while(True) {
