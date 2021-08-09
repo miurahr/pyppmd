@@ -6,26 +6,26 @@ except ImportError:
     from importlib_metadata import PackageNotFoundError, version  # type: ignore  # noqa
 
 try:
-    from .c.c_ppmd import (
+    from .c.c_ppmd import (  # noqa
+        PPMD8_RESTORE_METHOD_CUT_OFF,
+        PPMD8_RESTORE_METHOD_RESTART,
         Ppmd7Decoder,
         Ppmd7Encoder,
         Ppmd8Decoder,
         Ppmd8Encoder,
         PpmdError,
-        PPMD8_RESTORE_METHOD_RESTART,
-        PPMD8_RESTORE_METHOD_CUT_OFF,
-    )  # noqa
+    )
 except ImportError:
     try:
-        from .cffi.cffi_ppmd import (
+        from .cffi.cffi_ppmd import (  # noqa
+            PPMD8_RESTORE_METHOD_CUT_OFF,
+            PPMD8_RESTORE_METHOD_RESTART,
             Ppmd7Decoder,
             Ppmd7Encoder,
             Ppmd8Decoder,
             Ppmd8Encoder,
             PpmdError,
-            PPMD8_RESTORE_METHOD_RESTART,
-            PPMD8_RESTORE_METHOD_CUT_OFF,
-        )  # noqa
+        )
     except ImportError:
         msg = "pyppmd module: Neither C implementation nor CFFI " "implementation can be imported."
         raise ImportError(msg)
