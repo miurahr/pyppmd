@@ -1234,7 +1234,7 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
     if (bufferReader == NULL) {
         PyErr_NoMemory();
         RELEASE_LOCK(self);
-        goto error;
+        return NULL;
     }
 
     blocksOutputBuffer = PyMem_Malloc(sizeof(BlocksOutputBuffer));
@@ -1242,7 +1242,7 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
         PyMem_Free(bufferReader);
         PyErr_NoMemory();
         RELEASE_LOCK(self);
-        goto error;
+        return NULL;
     }
 
     if ((self->cPpmd8 = PyMem_Malloc(sizeof(CPpmd8))) != NULL) {
@@ -1259,8 +1259,6 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
             goto success;
         }
         PyMem_Free(self->cPpmd8);
-        PyMem_Free(blocksOutputBuffer);
-        PyMem_Free(bufferReader);
         PyErr_NoMemory();
     }
 
@@ -1420,7 +1418,7 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
     }
     assert(in->pos == 0);
 
-    BufferReader *bufferReader = (BufferReader *) self->cPpmd8->Stream.In;
+    BufferReader *bufferReader = self->cPpmd8->Stream.In;
     bufferReader->inBuffer = in;
 
     if (OutputBuffer_InitAndGrow(self->blocksOutputBuffer, out, length) < 0) {
