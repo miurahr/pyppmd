@@ -5,10 +5,11 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
 # TARGET PYTHON version
-set(PY_VERSION 3.8)
+set(PY_VERSION 3.9)
 set(Python_FIND_IMPLEMENTATIONS CPython)
 #set(Python_FIND_IMPLEMENTATIONS PyPy)
 set(VENV_PATH "${CMAKE_BINARY_DIR}/venv")
+set(DEBUG_BUILD ON)
 
 # ##################################################################################################
 # Configuration for python-ext
@@ -26,17 +27,31 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 set(PY_EXT ${PY_EXT_DIR}/${PY_EXT_FILE}.${PY_EXT_EXT})
 set(PY_CFFI ${PY_CFFI_DIR}/PY_CFFI_FILE}.${PY_EXT_EXT})
+if(DEBUG_BUILD)
+  if (WIN32)
+    set(BUILD_EXT_PYTHON ${VENV_PATH}/Scripts/python_d.exe)
+    set(BUILD_EXT_OPTION -g)
+  else()
+    set(BUILD_EXT_PYTHON ${Python_EXECUTABLE})
+    set(BUILD_EXT_OPTION -g)
+  endif()
+else()
+  set(BUILD_EXT_PYTHON ${Python_EXECUTABLE})
+  set(BUILD_EXT_OPTION)
+endif()
 add_custom_target(
   generate_ext
   BYPRODUCTS ${PY_EXT}
-  COMMAND ${Python_EXECUTABLE} setup.py build_ext --inplace --debug
+  COMMAND ${BUILD_EXT_PYTHON} setup.py build_ext ${BUILD_EXT_OPTION} --inplace
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  DEPENDS venv.stamp
   SOURCES ${pyppmd_sources})
 add_custom_target(
   generate_cffi
   BYPRODUCTS ${PY_CFFI}
-  COMMAND ${Python_EXECUTABLE} setup.py build_ext --cffi --debug
+  COMMAND ${BUILD_EXT_PYTHON} setup.py build_ext ${BUILD_EXT_OPTION} --cffi
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  DEPENDS venv.stamp
   SOURCES ${pyppmd_sources})
 
 # ##################################################################################################
@@ -46,7 +61,6 @@ file(
         "
 coverage[toml]>=5.2
 hypothesis
-psutil
 pytest>=6.0
 pytest-benchmark
 pytest-cov
@@ -133,12 +147,14 @@ int main(int argc, char **argv) {
     pypy_execute_source(pycode.c_str());
     return 0;
 }")
-if (${Python_INTERPRETER_ID} STREQUAL "PyPy")
+if ("${Python_INTERPRETER_ID}" STREQUAL "PyPy")
   add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pypytest_runner.c)
 else()
   add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
 endif()
-target_link_libraries(pytest_runner PUBLIC pyppmd)
+if (DEBUG_BUILD)
+  target_compile_definitions(pytest_runner PRIVATE -DPy_DEBUG)
+endif()
 target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
 add_dependencies(pytest_runner venv.stamp generate_ext)

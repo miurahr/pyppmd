@@ -1,13 +1,11 @@
 import sys
 
-import psutil
 from hypothesis import given
 from hypothesis import strategies as st
 
 import pyppmd
 
-vmem = psutil.virtual_memory()
-MAX_SIZE = min(0xFFFFFFFF - 12 * 3, sys.maxsize, vmem.available >> 2)
+MAX_SIZE = 1000000000  # 1GB
 
 
 @given(
