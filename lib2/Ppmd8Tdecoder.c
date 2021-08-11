@@ -120,14 +120,16 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
         }
     }
     PPMD_pthread_mutex_lock(&mutex);
+    unsigned long wait = 50000;
     while(True) {
-        if (PPMD_pthread_cond_wait1(&inEmpty, &mutex) == 0) {
-            if (reader->inBuffer->pos == reader->inBuffer->size) {
-                goto inempty;
-            }
+        PPMD_pthread_cond_timedwait(&inEmpty, &mutex, wait);
+        if (args->finished == True) {
+            // when finished, the input buffer will be empty,
+            // so check finished status before checking buffer.
+            goto finished;
         }
-        if (args->finished) {
-            break;
+        if (reader->inBuffer->pos == reader->inBuffer->size) {
+            goto inempty;
         }
     }
     PPMD_pthread_mutex_unlock(&mutex);
