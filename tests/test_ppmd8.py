@@ -33,20 +33,18 @@ def test_ppmd8_encoder2():
 def test_ppmd8_decoder1():
     decoder = pyppmd.Ppmd8Decoder(6, 8 << 20)
     result = decoder.decode(encoded, -1)
+    assert result == source
     assert decoder.eof
     assert not decoder.needs_input
-    assert result == source
 
 
 def test_ppmd8_decoder2():
     decoder = pyppmd.Ppmd8Decoder(6, 8 << 20)
     result = decoder.decode(encoded[:20])
-    assert not decoder.eof
-    assert decoder.needs_input
     result += decoder.decode(encoded[20:])
+    assert result == source
     assert decoder.eof
     assert not decoder.needs_input
-    assert result == source
 
 
 # test mem_size less than original file size as well
@@ -59,6 +57,7 @@ def test_ppmd8_decoder2():
         (1 << 20, pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF),
     ],
 )
+@pytest.mark.timeout(10)
 def test_ppmd8_encode_decode(tmp_path, mem_size, restore_method):
     length = 0
     m = hashlib.sha256()
