@@ -119,19 +119,22 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
             return PPMD8_RESULT_ERROR;  // error
         }
     }
+    PPMD_pthread_mutex_lock(&mutex);
     while(True) {
-        PPMD_pthread_mutex_lock(&mutex);
         if (PPMD_pthread_cond_wait1(&inEmpty, &mutex) == 0) {
-            // inBuffer is empty
-            PPMD_pthread_mutex_unlock(&mutex);
-            return 0;
+            if (reader->inBuffer->pos == reader->inBuffer->size) {
+                goto inempty;
+            }
         }
         if (args->finished) {
-            PPMD_pthread_mutex_unlock(&mutex);
             break;
         }
-        PPMD_pthread_mutex_unlock(&mutex);
     }
+    PPMD_pthread_mutex_unlock(&mutex);
     PPMD_pthread_join(args->handle, NULL);
     return args->result;
+
+inempty:
+    PPMD_pthread_mutex_unlock(&mutex);
+    return 0;
 }

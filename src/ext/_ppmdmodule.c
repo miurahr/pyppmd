@@ -1416,17 +1416,25 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
         self->args->finished = True;
     }
 
-    int result = 0;
     if (data.len  > 0) {
+        int result;
         int remains = length >= 0 ? length : INT_MAX;
-        Py_BEGIN_ALLOW_THREADS
-        while ((result = Ppmd8T_decode(self->cPpmd8, out, remains, self->args)) > 0) {
-             if ((remains -= result) == 0) {
+        while (True) {
+            Py_BEGIN_ALLOW_THREADS
+            result = Ppmd8T_decode(self->cPpmd8, out, remains, self->args);
+            Py_END_ALLOW_THREADS
+            if (result < 0) {
+                break; // error or eof
+            }
+            if (result == 0) {
+                // input empty or no output data
+                if (in->pos == in->size) {
+                    break;
+                }
+            }
+            if ((remains -= result) == 0) {
                  break;
              }
-            if (in->pos == in->size) {
-                break;
-            }
             if (out->pos == out->size) {
                 if (OutputBuffer_Grow(&buffer, out) < 0) {
                     PyErr_SetString(PyExc_ValueError, "L616: Unknown status");
@@ -1435,7 +1443,6 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
                 }
             }
         }
-        Py_END_ALLOW_THREADS
         if (result == -1) {
             self->eof = True;
         }
