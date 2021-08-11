@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(PY_VERSION 3.8)
 set(Python_FIND_IMPLEMENTATIONS CPython)
 #set(Python_FIND_IMPLEMENTATIONS PyPy)
+set(VENV_PATH "${CMAKE_BINARY_DIR}/venv")
 
 # ##################################################################################################
 # Configuration for python-ext
@@ -40,7 +41,6 @@ add_custom_target(
 
 # ##################################################################################################
 # create virtualenv
-set(VENV_PATH "${CMAKE_BINARY_DIR}/venv")
 file(
         WRITE ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt
         "
@@ -60,7 +60,7 @@ add_custom_target(
         venv.stamp
         COMMAND ${Python_EXECUTABLE} -m venv ${VENV_PATH}
         COMMAND ${PIP_COMMAND} install -r ${CMAKE_BINARY_DIR}/requirements.txt)
-set(VPKG_PATH_A "${VENV_PATH}/lib/python${PY_VERSION}/site-packages/")
+set(VPKG_PATH_A "${VENV_PATH}/lib/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/site-packages/")
 set(VPKG_PATH_B "${VENV_PATH}/Lib/site-packages/")
 
 # ##################################################################################################
@@ -84,16 +84,12 @@ int main(int argc, char **argv) {
         }
         args.append(\"]\");
     }
-    std::filesystem::path venv_path = \"${VENV_PATH}\";
-    std::filesystem::path vlib_path = venv_path / \"lib\";
     std::filesystem::path vsite_path_a = \"${VPKG_PATH_A}\";
     std::filesystem::path vsite_path_b = \"${VPKG_PATH_B}\";
     std::string pycode =
         \"import sys\\n\"
         \"import pytest\\n\"
         \"sys.path.append('src')\\n\"
-        \"sys.path.append('\" + venv_path.string() + \"')\\n\"
-        \"sys.path.append('\" + vlib_path.string() + \"')\\n\"
         \"sys.path.append('\" + vsite_path_a.string() + \"')\\n\"
         \"sys.path.append('\" + vsite_path_b.string() + \"')\\n\"
         \"pytest.main(\" + args + \")\\n\";
@@ -123,16 +119,12 @@ int main(int argc, char **argv) {
         }
         args.append(\"]\");
     }
-    std::filesystem::path venv_path = \"${VENV_PATH}\";
-    std::filesystem::path vlib_path = venv_path / \"lib\";
     std::filesystem::path vsite_path_a = \"${VPKG_PATH_A}\";
     std::filesystem::path vsite_path_b = \"${VPKG_PATH_B}\";
     std::string pycode =
         \"import sys\\n\"
         \"import pytest\\n\"
         \"sys.path.append('src')\\n\"
-        \"sys.path.append('\" + venv_path.string() + \"')\\n\"
-        \"sys.path.append('\" + vlib_path.string() + \"')\\n\"
         \"sys.path.append('\" + vsite_path_a.string() + \"')\\n\"
         \"sys.path.append('\" + vsite_path_b.string() + \"')\\n\"
         \"pytest.main(\" + args + \")\\n\";
