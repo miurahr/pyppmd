@@ -103,6 +103,7 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
     BufferReader *reader = (BufferReader *) cPpmd8->Stream.In;
     args->result = 0;
     Bool exited = args->finished;
+    args->finished = False;
     PPMD_pthread_mutex_unlock(&mutex);
 
     if (exited) {
@@ -127,7 +128,7 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
     unsigned long wait = 50000;
     while(True) {
         PPMD_pthread_cond_timedwait(&inEmpty, &mutex, wait);
-        if (args->finished == True) {
+        if (args->finished) {
             // when finished, the input buffer will be empty,
             // so check finished status before checking buffer.
             goto finished;
