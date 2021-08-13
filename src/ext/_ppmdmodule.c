@@ -1283,7 +1283,6 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
             self->args->endmark = endmark;
             self->blocksOutputBuffer = blocksOutputBuffer;
             self->args->out = out;
-            Ppmd8T_decode_init();
             goto success;
         }
         PyMem_Free(self->cPpmd8);

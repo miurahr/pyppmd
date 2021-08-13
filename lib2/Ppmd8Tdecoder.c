@@ -21,10 +21,6 @@ Byte TReader(const void *p) {
     return *((const Byte *)bufferReader->inBuffer->src + bufferReader->inBuffer->pos++);
 }
 
-Bool Ppmd8T_decode_init() {
-    return True;
-}
-
 static void *
 Ppmd8T_decode_run(void *p) {
     ppmd8_args *args = (ppmd8_args *)p;
