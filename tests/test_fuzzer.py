@@ -6,7 +6,7 @@ from hypothesis import strategies as st
 
 import pyppmd
 
-MAX_SIZE = 1000000000  # 1GB
+MAX_SIZE = 1 << 30
 
 
 @given(
@@ -28,16 +28,16 @@ def test_ppmd7_fuzzer(obj, max_order, mem_size):
 
 @given(
     obj=st.binary(min_size=1),
-    max_order=st.integers(min_value=2, max_value=64),
+    max_order=st.integers(min_value=3, max_value=16),
     mem_size=st.integers(min_value=1 << 11, max_value=MAX_SIZE),
 )
 @settings(deadline=timedelta(milliseconds=300))
 def test_ppmd8_fuzzer(obj, max_order, mem_size):
-    enc = pyppmd.Ppmd8Encoder(max_order=max_order, mem_size=mem_size)
+    enc = pyppmd.Ppmd8Encoder(max_order=max_order, mem_size=mem_size, restore_method=pyppmd.PPMD8_RESTORE_METHOD_RESTART, endmark=True)
     length = len(obj)
     compressed = enc.encode(obj)
     compressed += enc.flush()
-    dec = pyppmd.Ppmd8Decoder(max_order=max_order, mem_size=mem_size)
+    dec = pyppmd.Ppmd8Decoder(max_order=max_order, mem_size=mem_size, restore_method=pyppmd.PPMD8_RESTORE_METHOD_RESTART, endmark=True)
     result = dec.decode(compressed, length)
     assert result == obj
 
