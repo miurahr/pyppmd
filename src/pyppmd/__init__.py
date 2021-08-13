@@ -52,8 +52,10 @@ except PackageNotFoundError:  # pragma: no-cover
 class PpmdCompressor:
     """Compressor class to compress data by PPMd algorithm."""
 
-    def __init__(self, max_order: int = 6, mem_size: int = 8 << 20):
-        self.encoder = Ppmd8Encoder(max_order, mem_size)
+    def __init__(
+            self, max_order: int = 6, mem_size: int = 8 << 20, restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=True
+    ):
+        self.encoder = Ppmd8Encoder(max_order, mem_size, restore_method, endmark)
         self.eof = False
 
     def compress(self, data_or_str: Union[bytes, bytearray, memoryview, str]):
