@@ -107,10 +107,8 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
     PPMD_pthread_mutex_unlock(&mutex);
 
     if (exited) {
-        PPMD_pthread_t handle;
-        PPMD_pthread_create(&handle, NULL, Ppmd8T_decode_run, args);
+        PPMD_pthread_create(&(args->handle), NULL, Ppmd8T_decode_run, args);
         PPMD_pthread_mutex_lock(&mutex);
-        args->handle = handle;
         PPMD_pthread_mutex_unlock(&mutex);
     } else {
         PPMD_pthread_mutex_lock(&mutex);
@@ -119,7 +117,7 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
             PPMD_pthread_mutex_unlock(&mutex);
         } else {
             PPMD_pthread_mutex_unlock(&mutex);
-            PPMD_pthread_cancel(args->handle );
+            PPMD_pthread_cancel(args->handle);
             args->finished = True;
             return PPMD8_RESULT_ERROR;  // error
         }
