@@ -63,6 +63,8 @@ int PPMD_pthread_create(PPMD_pthread_t* thread, const void* unused, void* (*star
 
 int PPMD_pthread_join(PPMD_pthread_t thread, void** value_ptr);
 
+void PPMD_pthread_cancel(PPMD_pthread_t thread);
+
 int PPMD_pthread_cond_wait(PPMD_pthread_cond_t *cond, PPMD_pthread_mutex_t *mutex);
 
 int PPMD_pthread_cond_timedwait(PPMD_pthread_cond_t *cond, PPMD_pthread_mutex_t *mutex, unsigned long nsec);
@@ -90,6 +92,7 @@ int PPMD_pthread_cond_timedwait(PPMD_pthread_cond_t *cond, PPMD_pthread_mutex_t 
 #define PPMD_pthread_t                  pthread_t
 #define PPMD_pthread_create(a, b, c, d) pthread_create((a), (b), (c), (d))
 #define PPMD_pthread_join(a, b)         pthread_join((a),(b))
+#define PPMD_pthread_cancel(a)          pthread_cancel((a))
 
 int PPMD_pthread_cond_timedwait(PPMD_pthread_cond_t *cond, PPMD_pthread_mutex_t *mutex, unsigned long nsec);
 

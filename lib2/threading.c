@@ -70,6 +70,10 @@ int PPMD_pthread_join(PPMD_pthread_t thread, void **value_ptr) {
     }
 }
 
+void PPMD_pthread_cancel(PPMD_pthread_t thread) {
+    // nothing can do.
+}
+
 int PPMD_pthread_cond_wait(PPMD_pthread_cond_t *cond, PPMD_pthread_mutex_t *mutex) {
     if (cond == NULL || mutex == NULL)
         return 1;

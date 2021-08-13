@@ -1152,7 +1152,9 @@ Ppmd8Decoder_dealloc(Ppmd8Decoder *self)
     if (self->lock) {
         PyThread_free_lock(self->lock);
     }
-    Ppmd8_Free(self->cPpmd8, &allocator);
+    Ppmd8T_Free(self->cPpmd8, self->args, &allocator);
+    PyMem_Free(self->args);
+    PyMem_Free(self->cPpmd8);
     PyTypeObject *tp = Py_TYPE(self);
     tp->tp_free((PyObject*)self);
     Py_DECREF(tp);
@@ -1232,6 +1234,7 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
             Ppmd8T_decode_init();
             goto success;
         }
+        PyMem_Free(self->args);
         PyMem_Free(self->cPpmd8);
         PyErr_NoMemory();
     }
