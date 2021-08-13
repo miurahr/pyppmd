@@ -553,6 +553,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         self._inited = False
         self._eof = False
         self._needs_input = True
+        self._finished = False
 
     def _init2(self):
         lib.Ppmd8_RangeDec_Init(self.ppmd)
@@ -580,9 +581,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
                 self._needs_input = False
                 res = out.finish(out_buf)
                 self.lock.release()
-                lib.Ppmd8_Free(self.ppmd, self._allocator)
-                ffi.release(self.ppmd)
-                self._release()
+                self._free()
                 return res
             elif size == -2:
                 raise ValueError("Corrupted archive data.")
@@ -599,6 +598,14 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         self.lock.release()
         return res
 
+    def _free(self):
+        if self._finished:
+            return
+        self._finished = True
+        lib.Ppmd8T_Free(self.ppmd, self.args, self._allocator)
+        ffi.release(self.ppmd)
+        self._release()
+
     @property
     def needs_input(self):
         return self._needs_input
@@ -611,5 +618,4 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if not self.flushed:
-            self.flush(0)
+        self._free()
