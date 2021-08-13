@@ -65,7 +65,7 @@ jobs:
             python3 -m pip install -U pip tox
             python3 -m tox -e py38
           env:
-            PYTEST_ADDOPTS: --benchmark-skip
+            PYTEST_ADDOPTS: "--benchmark-skip"
 
   finish:
     name: Indicate completion to coveralls.io
