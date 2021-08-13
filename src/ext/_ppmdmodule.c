@@ -1181,7 +1181,7 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
     PyObject *max_order = Py_None;
     PyObject *mem_size = Py_None;
     int restore_method = PPMD8_RESTORE_METHOD_RESTART;
-    int endmark = False;
+    int endmark = True;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "OO|ii:Ppmd8Decoder.__init__", kwlist,
@@ -1620,7 +1620,7 @@ Ppmd8Encoder_init(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
     PyObject *max_order = Py_None;
     PyObject *mem_size = Py_None;
     int restore_method = PPMD8_RESTORE_METHOD_RESTART;
-    Bool endmark = False;
+    Bool endmark = True;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "OO|ii:Ppmd8Encoder.__init__", kwlist,

@@ -490,7 +490,7 @@ class Ppmd7Decoder(PpmdBaseDecoder):
 
 
 class Ppmd8Encoder(PpmdBaseEncoder):
-    def __init__(self, max_order, mem_size, restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=False):
+    def __init__(self, max_order, mem_size, restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=True):
         self.lock = Lock()
         if mem_size > sys.maxsize:
             raise ValueError("Mem_size exceed to platform limit.")
@@ -541,7 +541,7 @@ class Ppmd8Encoder(PpmdBaseEncoder):
 
 
 class Ppmd8Decoder(PpmdBaseDecoder):
-    def __init__(self, max_order: int, mem_size: int, restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=False):
+    def __init__(self, max_order: int, mem_size: int, restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=True):
         self._init_common()
         self.ppmd = ffi.new("CPpmd8 *")
         self.args = ffi.new("ppmd8_args *")
