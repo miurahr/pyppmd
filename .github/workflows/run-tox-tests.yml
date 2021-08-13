@@ -64,8 +64,8 @@ jobs:
             python3 -c "import platform;print('Machine type:', platform.machine())"
             python3 -m pip install -U pip tox
             python3 -m tox -e py38
-        env:
-          PYTEST_ADDOPTS: "--benchmark-skip"
+          env: |  # YAML, but pipe character is necessary
+            PYTEST_ADDOPTS: "--benchmark-skip"
 
   finish:
     name: Indicate completion to coveralls.io
