@@ -57,7 +57,7 @@ def test_ppmd8_decoder2():
         (1 << 20, pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF),
     ],
 )
-@pytest.mark.timeout(10)
+@pytest.mark.timeout(20)
 def test_ppmd8_encode_decode(tmp_path, mem_size, restore_method):
     length = 0
     m = hashlib.sha256()
