@@ -9,12 +9,18 @@ All notable changes to this project will be documented in this file.
 
 Added
 -----
+* PPMd8: support endmark option(#39)
+* PPMd8: support restore_method option(#24, @cielavenir)
+* Add pthread wrapper for macOS and Windows(#33)
 
 Changed
 -------
+* PPMd8: decompressor use threading(#24,#33)
 
 Fixed
 -----
+* PPMd8: Decompressor become wrong status when memory_size is smaller than file size(#24,#25,#28,#33,#45,#46)
+* PPMd8: Decompressor allocate buffers by PyMem_Malloc() (#42)
 * CMake: support CFFI extension generation(#30)
 * CMake: support debug flag for extension development(#27)
 * CMake: support pytest_runner on windows
@@ -168,7 +174,7 @@ v0.10.0
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.15.2...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.16.0...HEAD
 .. _v0.15.2: https://github.com/miurahr/py7zr/compare/v0.15.1...v0.15.2
 .. _v0.15.1: https://github.com/miurahr/py7zr/compare/v0.15.0...v0.15.1
 .. _v0.15.0: https://github.com/miurahr/py7zr/compare/v0.14.0...v0.15.0
