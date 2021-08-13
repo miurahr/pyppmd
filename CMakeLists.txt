@@ -64,6 +64,8 @@ hypothesis
 pytest>=6.0
 pytest-benchmark
 pytest-cov
+pytest-timeout
+cffi
 ")
 if (WIN32)
   set(PIP_COMMAND ${VENV_PATH}/Scripts/pip.exe)
@@ -72,8 +74,10 @@ else()
 endif()
 add_custom_target(
         venv.stamp
+        BYPRODUCTS venv.stamp
         COMMAND ${Python_EXECUTABLE} -m venv ${VENV_PATH}
-        COMMAND ${PIP_COMMAND} install -r ${CMAKE_BINARY_DIR}/requirements.txt)
+        COMMAND ${PIP_COMMAND} install -r ${CMAKE_BINARY_DIR}/requirements.txt
+        COMMAND ${CMAKE_COMMAND} -E touch venv.stamp)
 set(VPKG_PATH_A "${VENV_PATH}/lib/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/site-packages/")
 set(VPKG_PATH_B "${VENV_PATH}/Lib/site-packages/")
 
@@ -151,9 +155,6 @@ if ("${Python_INTERPRETER_ID}" STREQUAL "PyPy")
   add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pypytest_runner.c)
 else()
   add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
-endif()
-if (DEBUG_BUILD)
-  target_compile_definitions(pytest_runner PRIVATE -DPy_DEBUG)
 endif()
 target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})

@@ -768,7 +768,6 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
     assert(self->inited2 == 1);
 
     Bool result = True;
-    Py_BEGIN_ALLOW_THREADS
     if (data.len  > 0) {
         for (int i = 0; i < length; i++) {
             if (in.pos == in.size) {
@@ -781,10 +780,11 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
                     break;
                 }
             }
+            Py_BEGIN_ALLOW_THREADS
             *((Byte *)out.dst + out.pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
+            Py_END_ALLOW_THREADS
         }
     }
-    Py_END_ALLOW_THREADS
 
     if (!result)
         goto error;
@@ -1026,9 +1026,10 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
     self->rangeEnc->Stream = (IByteOut *) &writer;
 
     Bool result = True;
-    Py_BEGIN_ALLOW_THREADS
     for (UInt32 i = 0; i < data.len; i++){
+        Py_BEGIN_ALLOW_THREADS
         Ppmd7_EncodeSymbol(self->cPpmd7, self->rangeEnc, *((Byte *)data.buf + i));
+        Py_END_ALLOW_THREADS
         if (out.size == out.pos) {
             if (OutputBuffer_Grow(&buffer, &out) < 0) {
                 PyErr_SetString(PyExc_ValueError, "No memory.");
@@ -1039,7 +1040,6 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
             }
         }
     }
-    Py_END_ALLOW_THREADS
     if (!result)
         goto error;
 
@@ -1152,7 +1152,9 @@ Ppmd8Decoder_dealloc(Ppmd8Decoder *self)
     if (self->lock) {
         PyThread_free_lock(self->lock);
     }
-    Ppmd8_Free(self->cPpmd8, &allocator);
+    Ppmd8T_Free(self->cPpmd8, self->args, &allocator);
+    PyMem_Free(self->args);
+    PyMem_Free(self->cPpmd8);
     PyTypeObject *tp = Py_TYPE(self);
     tp->tp_free((PyObject*)self);
     Py_DECREF(tp);
@@ -1232,6 +1234,7 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
             Ppmd8T_decode_init();
             goto success;
         }
+        PyMem_Free(self->args);
         PyMem_Free(self->cPpmd8);
         PyErr_NoMemory();
     }
@@ -1416,17 +1419,25 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
         self->args->finished = True;
     }
 
-    int result = 0;
     if (data.len  > 0) {
+        int result;
         int remains = length >= 0 ? length : INT_MAX;
-        Py_BEGIN_ALLOW_THREADS
-        while ((result = Ppmd8T_decode(self->cPpmd8, out, remains, self->args)) > 0) {
-             if ((remains -= result) == 0) {
+        while (True) {
+            Py_BEGIN_ALLOW_THREADS
+            result = Ppmd8T_decode(self->cPpmd8, out, remains, self->args);
+            Py_END_ALLOW_THREADS
+            if (result < 0) {
+                break; // error or eof
+            }
+            if (result == 0) {
+                // input empty or no output data
+                if (in->pos == in->size) {
+                    break;
+                }
+            }
+            if ((remains -= result) == 0) {
                  break;
              }
-            if (in->pos == in->size) {
-                break;
-            }
             if (out->pos == out->size) {
                 if (OutputBuffer_Grow(&buffer, out) < 0) {
                     PyErr_SetString(PyExc_ValueError, "L616: Unknown status");
@@ -1435,7 +1446,6 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
                 }
             }
         }
-        Py_END_ALLOW_THREADS
         if (result == -1) {
             self->eof = True;
         }
@@ -1700,12 +1710,13 @@ Ppmd8Encoder_encode(Ppmd8Encoder *self,  PyObject *args, PyObject *kwargs) {
     self->cPpmd8->Stream.Out = (IByteOut *)&writer;
 
     Bool result = True;
-    Py_BEGIN_ALLOW_THREADS
     for (UInt32 i = 0; i < data.len; i++){
         if (self->endmark) {
             // when endmark mode, escape 0x01.
             if (*((Byte *)data.buf + i) == 0x01) {
+                Py_BEGIN_ALLOW_THREADS
                 Ppmd8_EncodeSymbol(self->cPpmd8, 0x01);
+                Py_END_ALLOW_THREADS
                 if (out.size == out.pos) {
                     if (OutputBuffer_Grow(&buffer, &out) < 0) {
                         PyErr_SetString(PyExc_ValueError, "No memory.");
@@ -1717,7 +1728,9 @@ Ppmd8Encoder_encode(Ppmd8Encoder *self,  PyObject *args, PyObject *kwargs) {
                 }
             }
         }
+        Py_BEGIN_ALLOW_THREADS
         Ppmd8_EncodeSymbol(self->cPpmd8, *((Byte *)data.buf + i));
+        Py_END_ALLOW_THREADS
         if (out.size == out.pos) {
             if (OutputBuffer_Grow(&buffer, &out) < 0) {
                 PyErr_SetString(PyExc_ValueError, "No memory.");
@@ -1728,7 +1741,6 @@ Ppmd8Encoder_encode(Ppmd8Encoder *self,  PyObject *args, PyObject *kwargs) {
             }
         }
     }
-    Py_END_ALLOW_THREADS
     if (!result)
         goto error;
 

@@ -1,6 +1,7 @@
 import sys
+from datetime import timedelta
 
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 import pyppmd
@@ -13,6 +14,7 @@ MAX_SIZE = 1000000000  # 1GB
     max_order=st.integers(min_value=2, max_value=64),
     mem_size=st.integers(min_value=1 << 11, max_value=MAX_SIZE),
 )
+@settings(deadline=timedelta(milliseconds=300))
 def test_ppmd7_fuzzer(obj, max_order, mem_size):
     enc = pyppmd.Ppmd7Encoder(max_order=max_order, mem_size=mem_size)
     length = len(obj)
@@ -29,6 +31,7 @@ def test_ppmd7_fuzzer(obj, max_order, mem_size):
     max_order=st.integers(min_value=2, max_value=64),
     mem_size=st.integers(min_value=1 << 11, max_value=MAX_SIZE),
 )
+@settings(deadline=timedelta(milliseconds=300))
 def test_ppmd8_fuzzer(obj, max_order, mem_size):
     enc = pyppmd.Ppmd8Encoder(max_order=max_order, mem_size=mem_size)
     length = len(obj)

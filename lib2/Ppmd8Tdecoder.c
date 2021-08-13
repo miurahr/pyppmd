@@ -10,10 +10,12 @@ PPMD_pthread_cond_t inEmpty = PPMD_PTHREAD_COND_INITIALIZER;
 
 Byte TReader(const void *p) {
     BufferReader *bufferReader = (BufferReader *)p;
-    while (bufferReader->inBuffer->pos == bufferReader->inBuffer->size) {
+    if (bufferReader->inBuffer->pos == bufferReader->inBuffer->size) {
         PPMD_pthread_mutex_lock(&mutex);
-        PPMD_pthread_cond_signal(&inEmpty);
-        PPMD_pthread_cond_wait(&notEmpty, &mutex);
+        PPMD_pthread_cond_broadcast(&inEmpty);
+        while (bufferReader->inBuffer->pos == bufferReader->inBuffer->size) {
+            PPMD_pthread_cond_wait(&notEmpty, &mutex);
+        }
         PPMD_pthread_mutex_unlock(&mutex);
     }
     return *((const Byte *)bufferReader->inBuffer->src + bufferReader->inBuffer->pos++);
@@ -112,26 +114,42 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
     } else {
         PPMD_pthread_mutex_lock(&mutex);
         if (reader->inBuffer->pos < reader->inBuffer->size) {
-            PPMD_pthread_cond_signal(&notEmpty);
+            PPMD_pthread_cond_broadcast(&notEmpty);
             PPMD_pthread_mutex_unlock(&mutex);
         } else {
             PPMD_pthread_mutex_unlock(&mutex);
+            PPMD_pthread_cancel(args->handle );
+            args->finished = True;
             return PPMD8_RESULT_ERROR;  // error
         }
     }
+    PPMD_pthread_mutex_lock(&mutex);
+    unsigned long wait = 50000;
     while(True) {
-        PPMD_pthread_mutex_lock(&mutex);
-        if (PPMD_pthread_cond_wait1(&inEmpty, &mutex) == 0) {
-            // inBuffer is empty
-            PPMD_pthread_mutex_unlock(&mutex);
-            return 0;
+        PPMD_pthread_cond_timedwait(&inEmpty, &mutex, wait);
+        if (args->finished == True) {
+            // when finished, the input buffer will be empty,
+            // so check finished status before checking buffer.
+            goto finished;
         }
-        if (args->finished) {
-            PPMD_pthread_mutex_unlock(&mutex);
-            break;
+        if (reader->inBuffer->pos == reader->inBuffer->size) {
+            goto inempty;
         }
-        PPMD_pthread_mutex_unlock(&mutex);
     }
+finished:
+    PPMD_pthread_mutex_unlock(&mutex);
     PPMD_pthread_join(args->handle, NULL);
     return args->result;
+
+inempty:
+    PPMD_pthread_mutex_unlock(&mutex);
+    return 0;
+}
+
+void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd8_args *args, ISzAllocPtr allocator) {
+    if (!(args->finished)) {
+        PPMD_pthread_cancel(args->handle);
+        args->finished = True;
+    }
+    Ppmd8_Free(cPpmd8, allocator);
 }

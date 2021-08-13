@@ -34,10 +34,7 @@
 #  define WIN32_LEAN_AND_MEAN
 #endif
 
-#undef ERROR   /* reported already defined on VS 2015 (Rich Geldreich) */
 #include <windows.h>
-#undef ERROR
-#define ERROR(name) ZSTD_ERROR(name)
 
 /* mutex */
 #define PPMD_pthread_mutex_t           CRITICAL_SECTION
@@ -52,8 +49,6 @@
 #define PPMD_PTHREAD_COND_INITIALIZER   {0}
 #define PPMD_pthread_cond_init(a, b)    ((void)(b), InitializeConditionVariable((a)), 0)
 #define PPMD_pthread_cond_destroy(a)    ((void)(a))
-#define PPMD_pthread_cond_wait(a, b)    SleepConditionVariableCS((a), (b), INFINITE)
-#define PPMD_pthread_cond_wait1(a, b)   SleepConditionVariableCS((a), (b), 1)
 #define PPMD_pthread_cond_signal(a)     WakeConditionVariable((a))
 #define PPMD_pthread_cond_broadcast(a)  WakeAllConditionVariable((a))
 
@@ -64,10 +59,15 @@ typedef struct {
     void* arg;
 } PPMD_pthread_t;
 
-int PPMD_pthread_create(PPMD_pthread_t* thread, const void* unused,
-                   void* (*start_routine) (void*), void* arg);
+int PPMD_pthread_create(PPMD_pthread_t* thread, const void* unused, void* (*start_routine) (void*), void* arg);
 
 int PPMD_pthread_join(PPMD_pthread_t thread, void** value_ptr);
+
+void PPMD_pthread_cancel(PPMD_pthread_t thread);
+
+int PPMD_pthread_cond_wait(PPMD_pthread_cond_t *cond, PPMD_pthread_mutex_t *mutex);
+
+int PPMD_pthread_cond_timedwait(PPMD_pthread_cond_t *cond, PPMD_pthread_mutex_t *mutex, unsigned long nsec);
 
 #else
 /* ===   POSIX Systems   === */
@@ -92,8 +92,9 @@ int PPMD_pthread_join(PPMD_pthread_t thread, void** value_ptr);
 #define PPMD_pthread_t                  pthread_t
 #define PPMD_pthread_create(a, b, c, d) pthread_create((a), (b), (c), (d))
 #define PPMD_pthread_join(a, b)         pthread_join((a),(b))
+#define PPMD_pthread_cancel(a)          pthread_cancel((a))
 
-int PPMD_pthread_cond_wait1(pthread_cond_t *a, pthread_mutex_t *b);
+int PPMD_pthread_cond_timedwait(PPMD_pthread_cond_t *cond, PPMD_pthread_mutex_t *mutex, unsigned long nsec);
 
 #endif
 
