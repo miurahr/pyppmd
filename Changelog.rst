@@ -9,6 +9,27 @@ All notable changes to this project will be documented in this file.
 
 Added
 -----
+
+Changed
+-------
+
+Fixed
+-----
+
+Deprecated
+----------
+
+Removed
+-------
+
+Security
+--------
+
+`v0.16.0`_
+==========
+
+Added
+-----
 * PPMd8: support endmark option(#39)
 * PPMd8: support restore_method option(#24, @cielavenir)
 * Add pthread wrapper for macOS and Windows(#33)
@@ -25,15 +46,6 @@ Fixed
 * CMake: support debug flag for extension development(#27)
 * CMake: support pytest_runner on windows
 * CI: run tox test on pull_request
-
-Deprecated
-----------
-
-Removed
--------
-
-Security
---------
 
 `v0.15.2`_
 ==========
@@ -175,6 +187,7 @@ v0.10.0
 
 .. History links
 .. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.16.0...HEAD
+.. _v0.16.0: https://github.com/miurahr/py7zr/compare/v0.15.2...v0.16.0
 .. _v0.15.2: https://github.com/miurahr/py7zr/compare/v0.15.1...v0.15.2
 .. _v0.15.1: https://github.com/miurahr/py7zr/compare/v0.15.0...v0.15.1
 .. _v0.15.0: https://github.com/miurahr/py7zr/compare/v0.14.0...v0.15.0
