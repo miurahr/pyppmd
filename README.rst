@@ -36,6 +36,12 @@ Development status
 
 A development status is considered as ``Beta``.
 
+WARNING
+-------
+
+* There is several known issues for PPMd8 Decoder that sometimes break resulted output,
+  wrong EOF status detection, and deadlock when setting some parameter combination.
+
 
 Copyright and License
 ---------------------
