@@ -110,7 +110,17 @@ int PPMD_pthread_cond_timedwait(PPMD_pthread_cond_t *cond, PPMD_pthread_mutex_t 
 int PPMD_pthread_cond_timedwait(PPMD_pthread_cond_t *cond, PPMD_pthread_mutex_t *mutex,
                                 unsigned long nsec) {
     struct timespec abstime;
-    clock_gettime(CLOCK_REALTIME, &abstime);
+    //https://gist.github.com/jbenet/1087739
+    #ifdef __MACH__ // OS X does not have clock_gettime, use clock_get_time
+      clock_serv_t cclock;
+      mach_timespec_t mts;
+      host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+      clock_get_time(cclock, &mts);
+      mach_port_deallocate(mach_task_self(), cclock);
+      abstime.tv_sec = mts.tv_sec;
+      abstime.tv_nsec = mts.tv_nsec;
+    #else
+      clock_gettime(CLOCK_REALTIME, &abstime);
     abstime.tv_nsec += nsec;
     if (abstime.tv_nsec >= 1000000000) {
         abstime.tv_nsec = abstime.tv_nsec - 1000000000;
