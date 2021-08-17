@@ -32,11 +32,6 @@ int g_ppmd_threading_useless_symbol;
 #include <process.h>
 #include <errno.h>
 
-#ifdef __MACH__
-#include <mach/clock.h>
-#include <mach/mach.h>
-#endif
-
 /* ===  Implementation  === */
 
 static unsigned __stdcall worker(void *arg) {
@@ -110,6 +105,11 @@ int PPMD_pthread_cond_timedwait(PPMD_pthread_cond_t *cond, PPMD_pthread_mutex_t 
 
 #else
 /* ===   POSIX Systems   === */
+
+#ifdef __MACH__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
 
 int PPMD_pthread_cond_timedwait(PPMD_pthread_cond_t *cond, PPMD_pthread_mutex_t *mutex,
                                 unsigned long nsec) {
