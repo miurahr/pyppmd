@@ -32,6 +32,10 @@ int g_ppmd_threading_useless_symbol;
 #include <process.h>
 #include <errno.h>
 
+#ifdef __MACH__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
 
 /* ===  Implementation  === */
 
