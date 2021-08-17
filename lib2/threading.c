@@ -121,6 +121,7 @@ int PPMD_pthread_cond_timedwait(PPMD_pthread_cond_t *cond, PPMD_pthread_mutex_t 
       abstime.tv_nsec = mts.tv_nsec;
     #else
       clock_gettime(CLOCK_REALTIME, &abstime);
+    #endif
     abstime.tv_nsec += nsec;
     if (abstime.tv_nsec >= 1000000000) {
         abstime.tv_nsec = abstime.tv_nsec - 1000000000;
