@@ -25,6 +25,17 @@ Removed
 Security
 --------
 
+`v0.16.1`_
+==========
+
+Added
+-----
+* CI: add macOS as test matrix(#51)
+
+Fixed
+-----
+* Fix osX bulid error(#49,#50)
+
 `v0.16.0`_
 ==========
 
@@ -186,7 +197,8 @@ v0.10.0
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.16.0...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.16.1...HEAD
+.. _v0.16.1: https://github.com/miurahr/py7zr/compare/v0.16.0...v0.16.1
 .. _v0.16.0: https://github.com/miurahr/py7zr/compare/v0.15.2...v0.16.0
 .. _v0.15.2: https://github.com/miurahr/py7zr/compare/v0.15.1...v0.15.2
 .. _v0.15.1: https://github.com/miurahr/py7zr/compare/v0.15.0...v0.15.1
