@@ -210,7 +210,7 @@ typedef struct ppmd8_args_s {
     PPMD_pthread_t handle;
 } ppmd8_args;
 
-Byte TReader(const void *p);
+Byte Ppmd8Reader(const void *p);
 int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *args);
 void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd8_args *args, ISzAlloc *allocator);
 """
@@ -381,7 +381,7 @@ int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, Bool endm
 
 void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader)
 {
-    reader->Read = (Byte (*)(void *)) TReader;
+    reader->Read = (Byte (*)(void *)) Ppmd8Reader;
     ppmd->Stream.In = (IByteIn *) reader;
 }
 
