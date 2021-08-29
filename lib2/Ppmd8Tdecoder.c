@@ -4,19 +4,19 @@
 
 #include "Ppmd8Tdecoder.h"
 
-PPMD_pthread_mutex_t mutex = PPMD_PTHREAD_MUTEX_INITIALIZER;
-PPMD_pthread_cond_t notEmpty = PPMD_PTHREAD_COND_INITIALIZER;
-PPMD_pthread_cond_t inEmpty = PPMD_PTHREAD_COND_INITIALIZER;
+PPMD_pthread_mutex_t ppmd8mutex = PPMD_PTHREAD_MUTEX_INITIALIZER;
+PPMD_pthread_cond_t ppmd8NotEmpty = PPMD_PTHREAD_COND_INITIALIZER;
+PPMD_pthread_cond_t ppmd8InEmpty = PPMD_PTHREAD_COND_INITIALIZER;
 
-Byte TReader(const void *p) {
+Byte Ppmd8Reader(const void *p) {
     BufferReader *bufferReader = (BufferReader *)p;
     if (bufferReader->inBuffer->pos == bufferReader->inBuffer->size) {
-        PPMD_pthread_mutex_lock(&mutex);
-        PPMD_pthread_cond_broadcast(&inEmpty);
+        PPMD_pthread_mutex_lock(&ppmd8mutex);
+        PPMD_pthread_cond_broadcast(&ppmd8InEmpty);
         while (bufferReader->inBuffer->pos == bufferReader->inBuffer->size) {
-            PPMD_pthread_cond_wait(&notEmpty, &mutex);
+            PPMD_pthread_cond_wait(&ppmd8NotEmpty, &ppmd8mutex);
         }
-        PPMD_pthread_mutex_unlock(&mutex);
+        PPMD_pthread_mutex_unlock(&ppmd8mutex);
     }
     return *((const Byte *)bufferReader->inBuffer->src + bufferReader->inBuffer->pos++);
 }
@@ -50,9 +50,9 @@ Ppmd8T_decode_run(void *p) {
             if (escaped) {
                 escaped = False;
                 if (c == 0x01) { // escaped character
-                    PPMD_pthread_mutex_lock(&mutex);
+                    PPMD_pthread_mutex_lock(&ppmd8mutex);
                     *((Byte *)args->out->dst + args->out->pos++) = c;
-                    PPMD_pthread_mutex_unlock(&mutex);
+                    PPMD_pthread_mutex_unlock(&ppmd8mutex);
                     i++;
                 } else if (c == 0x00) { // endmark
                     // eof
@@ -65,18 +65,18 @@ Ppmd8T_decode_run(void *p) {
                 }
             } else {
                 if (c != 0x01) { // ordinary data
-                    PPMD_pthread_mutex_lock(&mutex);
+                    PPMD_pthread_mutex_lock(&ppmd8mutex);
                     *((Byte *)args->out->dst + args->out->pos++) = (Byte) c;
-                    PPMD_pthread_mutex_unlock(&mutex);
+                    PPMD_pthread_mutex_unlock(&ppmd8mutex);
                     i++;
                 } else { // enter escape sequence
                     escaped = True;
                 }
             }
         } else {
-            PPMD_pthread_mutex_lock(&mutex);
+            PPMD_pthread_mutex_lock(&ppmd8mutex);
             *((Byte *)args->out->dst + args->out->pos++) = (Byte) c;
-            PPMD_pthread_mutex_unlock(&mutex);
+            PPMD_pthread_mutex_unlock(&ppmd8mutex);
             i++;
         }
     }
@@ -84,15 +84,15 @@ Ppmd8T_decode_run(void *p) {
     result = i;
 
     exit:
-    PPMD_pthread_mutex_lock(&mutex);
+    PPMD_pthread_mutex_lock(&ppmd8mutex);
     args->result = result;
     args->finished = True;
-    PPMD_pthread_mutex_unlock(&mutex);
+    PPMD_pthread_mutex_unlock(&ppmd8mutex);
     return NULL;
 }
 
 int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *args) {
-    PPMD_pthread_mutex_lock(&mutex);
+    PPMD_pthread_mutex_lock(&ppmd8mutex);
     args->cPpmd8 = cPpmd8;
     args->max_length = max_length;
     args->out = out;
@@ -100,28 +100,28 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
     args->result = 0;
     Bool exited = args->finished;
     args->finished = False;
-    PPMD_pthread_mutex_unlock(&mutex);
+    PPMD_pthread_mutex_unlock(&ppmd8mutex);
 
     if (exited) {
         PPMD_pthread_create(&(args->handle), NULL, Ppmd8T_decode_run, args);
-        PPMD_pthread_mutex_lock(&mutex);
-        PPMD_pthread_mutex_unlock(&mutex);
+        PPMD_pthread_mutex_lock(&ppmd8mutex);
+        PPMD_pthread_mutex_unlock(&ppmd8mutex);
     } else {
-        PPMD_pthread_mutex_lock(&mutex);
+        PPMD_pthread_mutex_lock(&ppmd8mutex);
         if (reader->inBuffer->pos < reader->inBuffer->size) {
-            PPMD_pthread_cond_broadcast(&notEmpty);
-            PPMD_pthread_mutex_unlock(&mutex);
+            PPMD_pthread_cond_broadcast(&ppmd8NotEmpty);
+            PPMD_pthread_mutex_unlock(&ppmd8mutex);
         } else {
-            PPMD_pthread_mutex_unlock(&mutex);
+            PPMD_pthread_mutex_unlock(&ppmd8mutex);
             PPMD_pthread_cancel(args->handle);
             args->finished = True;
             return PPMD8_RESULT_ERROR;  // error
         }
     }
-    PPMD_pthread_mutex_lock(&mutex);
+    PPMD_pthread_mutex_lock(&ppmd8mutex);
     unsigned long wait = 50000;
     while(True) {
-        PPMD_pthread_cond_timedwait(&inEmpty, &mutex, wait);
+        PPMD_pthread_cond_timedwait(&ppmd8InEmpty, &ppmd8mutex, wait);
         if (args->finished) {
             // when finished, the input buffer will be empty,
             // so check finished status before checking buffer.
@@ -132,12 +132,12 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd8_args *ar
         }
     }
 finished:
-    PPMD_pthread_mutex_unlock(&mutex);
+    PPMD_pthread_mutex_unlock(&ppmd8mutex);
     PPMD_pthread_join(args->handle, NULL);
     return args->result;
 
 inempty:
-    PPMD_pthread_mutex_unlock(&mutex);
+    PPMD_pthread_mutex_unlock(&ppmd8mutex);
     return 0;
 }
 
