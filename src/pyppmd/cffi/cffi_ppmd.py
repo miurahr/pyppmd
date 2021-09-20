@@ -544,11 +544,11 @@ class Ppmd8Decoder(PpmdBaseDecoder):
     def __init__(self, max_order: int, mem_size: int, restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=True):
         self._init_common()
         self.ppmd = ffi.new("CPpmd8 *")
-        self.args = ffi.new("ppmd_thread_info *")
-        self.args.endmark = endmark
+        self.threadInfo = ffi.new("ppmd_thread_info *")
+        self.threadInfo.endmark = endmark
         lib.Ppmd8_Construct(self.ppmd)
-        lib.ppmd8_decompress_init(self.ppmd, self.reader, self.args)
         lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator)
+        lib.ppmd8_decompress_init(self.ppmd, self.reader, self.threadInfo, self._allocator)
         lib.Ppmd8_Init(self.ppmd, max_order, restore_method)
         self._inited = False
         self._eof = False
@@ -557,7 +557,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
 
     def _init2(self):
         lib.Ppmd8_RangeDec_Init(self.ppmd)
-        self.args.finished = True
+        self.threadInfo.finished = True
 
     def decode(self, data: Union[bytes, bytearray, memoryview], length: int = -1):
         if not isinstance(length, int):
@@ -575,7 +575,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
                 break
             if out_buf.pos == out_buf.size:
                 out.grow(out_buf)
-            size = lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, length, self.args)
+            size = lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, length, self.threadInfo)
             if size == -1:
                 self._eof = True
                 self._needs_input = False
@@ -602,7 +602,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         if self._finished:
             return
         self._finished = True
-        lib.Ppmd8T_Free(self.ppmd, self.args, self._allocator)
+        lib.Ppmd8T_Free(self.ppmd, self.threadInfo, self._allocator)
         ffi.release(self.ppmd)
         self._release()
 

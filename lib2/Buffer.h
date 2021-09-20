@@ -27,8 +27,8 @@ typedef struct ppmd_thread_info_s {
     OutBuffer *out;
     int max_length;
     Bool endmark;
-    int result;
     Bool finished;
+    int result;
     void *t;
 } ppmd_thread_info;
 
