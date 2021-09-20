@@ -27,12 +27,9 @@ typedef struct ppmd_thread_info_s {
     OutBuffer *out;
     int max_length;
     Bool endmark;
-    Bool finished;
     int result;
-    PPMD_pthread_t handle;
-    PPMD_pthread_mutex_t mutex;
-    PPMD_pthread_cond_t inEmpty;
-    PPMD_pthread_cond_t notEmpty;
+    Bool finished;
+    void *t;
 } ppmd_thread_info;
 
 typedef struct {
