@@ -180,8 +180,8 @@ add_library(
         lib2/Buffer.h
         lib2/threading.c
         lib2/threading.h
-        lib2/Ppmd8Tdecoder.c
-        lib2/Ppmd8Tdecoder.h
+        lib2/ThreadDecoder.c
+        lib2/ThreadDecoder.h
         src/ext/_ppmdmodule.c)
 target_include_directories(pyppmd PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pyppmd PRIVATE ${Python_LIBRARIES})

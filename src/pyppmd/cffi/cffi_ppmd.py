@@ -544,7 +544,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
     def __init__(self, max_order: int, mem_size: int, restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=True):
         self._init_common()
         self.ppmd = ffi.new("CPpmd8 *")
-        self.args = ffi.new("ppmd8_args *")
+        self.args = ffi.new("ppmd_thread_info *")
         self.args.endmark = endmark
         lib.Ppmd8_Construct(self.ppmd)
         lib.ppmd8_decompress_init(self.ppmd, self.reader)

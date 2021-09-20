@@ -16,7 +16,7 @@ sources = [
     "lib/Ppmd7Dec.c",
     "lib2/Buffer.c",
     "lib2/threading.c",
-    "lib2/Ppmd8Tdecoder.c",
+    "lib2/ThreadDecoder.c",
 ]
 _ppmd_extension = Extension("pyppmd._ppmd", sources)
 kwargs = {"include_dirs": ["lib", "lib2"], "library_dirs": [], "libraries": [], "sources": sources, "define_macros": []}

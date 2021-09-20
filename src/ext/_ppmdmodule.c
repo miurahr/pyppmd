@@ -14,7 +14,7 @@
 #include "Ppmd8.h"
 
 #include "Buffer.h"
-#include "Ppmd8Tdecoder.h"
+#include "ThreadDecoder.h"
 
 #ifndef Py_UNREACHABLE
     #define Py_UNREACHABLE() assert(0)
@@ -385,7 +385,7 @@ typedef struct {
     /* decode has been called with some data*/
     char inited2;
     /* threaded decoder context */
-    ppmd8_args *args;
+    ppmd_thread_info *args;
 } Ppmd8Decoder;
 
 typedef struct {
@@ -1304,7 +1304,7 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
         PyErr_NoMemory();
         goto error;
     }
-    self->args = PyMem_Malloc(sizeof(ppmd8_args));
+    self->args = PyMem_Malloc(sizeof(ppmd_thread_info));
     if (self->args == NULL) {
         PyMem_Free(out);
         PyMem_Free(in);
@@ -1321,7 +1321,7 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
             bufferReader->Read = (Byte (*)(void *)) Ppmd8Reader;
             bufferReader->inBuffer = in;
             self->cPpmd8->Stream.In = (IByteIn *) bufferReader;
-            self->args->cPpmd8 = self->cPpmd8;
+            self->args->cPpmd = (void *) (self->cPpmd8);
             self->args->endmark = endmark;
             self->blocksOutputBuffer = blocksOutputBuffer;
             self->args->out = out;
