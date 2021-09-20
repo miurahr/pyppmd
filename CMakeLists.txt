@@ -106,10 +106,10 @@ int main(int argc, char **argv) {
     std::filesystem::path vsite_path_b = \"${VPKG_PATH_B}\";
     std::string pycode =
         \"import sys\\n\"
-        \"import pytest\\n\"
         \"sys.path.append('src')\\n\"
         \"sys.path.append('\" + vsite_path_a.string() + \"')\\n\"
         \"sys.path.append('\" + vsite_path_b.string() + \"')\\n\"
+        \"import pytest\\n\"
         \"pytest.main(\" + args + \")\\n\";
     wchar_t * program_name = Py_DecodeLocale(argv[0], NULL);
     Py_SetProgramName(program_name);
