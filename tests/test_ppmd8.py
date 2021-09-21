@@ -96,7 +96,7 @@ def test_ppmd8_encode_decode(tmp_path, mem_size, restore_method):
         with tmp_path.joinpath("target.csv").open("wb") as out:
             dec = pyppmd.Ppmd8Decoder(6, mem_size, restore_method=restore_method, endmark=True)
             data = target.read(READ_BLOCKSIZE)
-            while len(data) > 0 or not dec.eof:
+            while not dec.eof:
                 res = dec.decode(data)
                 m2.update(res)
                 out.write(res)
