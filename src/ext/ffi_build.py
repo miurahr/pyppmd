@@ -382,10 +382,11 @@ int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, Bool endm
     return in_buf->size - in_buf->pos;
 }
 
-void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader, ppmd_thread_info *threadInfo, ISzAlloc *allocator)
+void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader, ppmd_thread_info *threadInfo, ISzAllocPtr allocator)
 {
     reader->Read = (Byte (*)(void *)) Ppmd8Reader;
     ppmd->Stream.In = (IByteIn *) reader;
+    threadInfo->in = reader->inBuffer;
     Ppmd_thread_decode_init(threadInfo, allocator);
 }
 

@@ -548,7 +548,6 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         self.threadInfo.endmark = endmark
         lib.Ppmd8_Construct(self.ppmd)
         lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator)
-        lib.ppmd8_decompress_init(self.ppmd, self.reader, self.threadInfo, self._allocator)
         lib.Ppmd8_Init(self.ppmd, max_order, restore_method)
         self._inited = False
         self._eof = False
@@ -556,6 +555,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         self._finished = False
 
     def _init2(self):
+        lib.ppmd8_decompress_init(self.ppmd, self.reader, self.threadInfo, self._allocator)
         lib.Ppmd8_RangeDec_Init(self.ppmd)
         self.threadInfo.finished = True
 
