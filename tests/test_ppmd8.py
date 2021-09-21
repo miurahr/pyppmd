@@ -80,7 +80,7 @@ def test_ppmd8_encode_decode(tmp_path, mem_size, restore_method):
     m = hashlib.sha256()
     with testdata_path.joinpath("10000SalesRecords.csv").open("rb") as f:
         with tmp_path.joinpath("target.ppmd").open("wb") as target:
-            enc = pyppmd.Ppmd8Encoder(6, mem_size, restore_method=restore_method, endmark=True)
+            enc = pyppmd.Ppmd8Encoder(6, mem_size, restore_method=restore_method, endmark=False)
             data = f.read(READ_BLOCKSIZE)
             while len(data) > 0:
                 m.update(data)
@@ -94,7 +94,7 @@ def test_ppmd8_encode_decode(tmp_path, mem_size, restore_method):
     length = 0
     with tmp_path.joinpath("target.ppmd").open("rb") as target:
         with tmp_path.joinpath("target.csv").open("wb") as out:
-            dec = pyppmd.Ppmd8Decoder(6, mem_size, restore_method=restore_method, endmark=True)
+            dec = pyppmd.Ppmd8Decoder(6, mem_size, restore_method=restore_method, endmark=False)
             data = target.read(READ_BLOCKSIZE)
             while not dec.eof:
                 res = dec.decode(data)
