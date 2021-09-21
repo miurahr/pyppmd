@@ -1235,7 +1235,7 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
     BufferReader *bufferReader;
     InBuffer *in;
     OutBuffer *out;
-    ppmd_thread_info *threadInfo;
+    ppmd_info *threadInfo;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "OO|ii:Ppmd8Decoder.__init__", kwlist,
@@ -1304,7 +1304,7 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
         PyErr_NoMemory();
         goto error;
     }
-    threadInfo = PyMem_Malloc(sizeof(ppmd_thread_info));
+    threadInfo = PyMem_Malloc(sizeof(ppmd_info));
     if (threadInfo == NULL) {
         PyMem_Free(out);
         PyMem_Free(in);
@@ -1384,7 +1384,7 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
     int length = -1;
     PyObject *ret = NULL;
     char use_input_buffer;
-    ppmd_thread_info *threadInfo;
+    ppmd_info *threadInfo;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "y*|i:Ppmd8Decoder.decode", kwlist,

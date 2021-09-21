@@ -6,7 +6,6 @@
 #define PYPPMD_BUFFER_H
 
 #include "Ppmd8.h"
-#include "threading.h"
 
 typedef struct InBuffer_s {
     const void* src;    /**< start of input buffer */
@@ -20,7 +19,7 @@ typedef struct OutBuffer_s {
     size_t pos;         /**< position where writing stopped. Will be updated. Necessarily 0 <= pos <= size */
 } OutBuffer;
 
-typedef struct ppmd_thread_info_s {
+typedef struct ppmd_info_s {
     /* hold CPpmd8 or CPpmd7 struct pointer */
     void *cPpmd;
     InBuffer *in;
@@ -30,20 +29,20 @@ typedef struct ppmd_thread_info_s {
     Bool finished;
     int result;
     void *t;
-} ppmd_thread_info;
+} ppmd_info;
 
 typedef struct {
     /* Inherits from IByteOut */
     void (*Write)(void *p, Byte b);
     OutBuffer *outBuffer;
-    ppmd_thread_info *t;
+    ppmd_info *t;
 } BufferWriter;
 
 typedef struct {
     /* Inherits from IByteIn */
     Byte (*Read)(void *p);
     InBuffer *inBuffer;
-    ppmd_thread_info *t;
+    ppmd_info *t;
 } BufferReader;
 
 

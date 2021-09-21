@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
 # TARGET PYTHON version
-set(PY_VERSION 3.9)
+set(PY_VERSION 3.8)
 set(Python_FIND_IMPLEMENTATIONS CPython)
 #set(Python_FIND_IMPLEMENTATIONS PyPy)
 set(VENV_PATH "${CMAKE_BINARY_DIR}/venv")
@@ -49,7 +49,7 @@ add_custom_target(
 add_custom_target(
   generate_cffi
   BYPRODUCTS ${PY_CFFI}
-  COMMAND ${BUILD_EXT_PYTHON} setup.py build_ext ${BUILD_EXT_OPTION} --cffi
+  COMMAND ${BUILD_EXT_PYTHON} setup.py build_ext ${BUILD_EXT_OPTION} --cffi --inplace
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS venv.stamp
   SOURCES ${pyppmd_sources})
@@ -158,7 +158,7 @@ else()
 endif()
 target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
-add_dependencies(pytest_runner venv.stamp generate_ext)
+add_dependencies(pytest_runner venv.stamp generate_ext generate_cffi)
 
 # ##################################################################################################
 # for build test and analytics

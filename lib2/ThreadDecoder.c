@@ -7,7 +7,7 @@
 
 Byte Ppmd8Reader(const void *p) {
     BufferReader *bufferReader = (BufferReader *)p;
-    ppmd_thread_info *threadInfo = bufferReader->t;
+    ppmd_info *threadInfo = bufferReader->t;
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
     InBuffer *inBuffer = threadInfo->in;
     if (inBuffer->pos == inBuffer->size) {
@@ -21,7 +21,7 @@ Byte Ppmd8Reader(const void *p) {
     return *((const Byte *)inBuffer->src + inBuffer->pos++);
 }
 
-Bool Ppmd_thread_decode_init(ppmd_thread_info *threadInfo, ISzAllocPtr allocator) {
+Bool Ppmd_thread_decode_init(ppmd_info *threadInfo, ISzAllocPtr allocator) {
     threadInfo->t = ISzAlloc_Alloc(allocator, sizeof(ppmd_thread_control_t));
     if (threadInfo->t != NULL) {
         ppmd_thread_control_t *threadControl = (ppmd_thread_control_t *)threadInfo->t;
@@ -35,7 +35,7 @@ Bool Ppmd_thread_decode_init(ppmd_thread_info *threadInfo, ISzAllocPtr allocator
 
 static void *
 Ppmd8T_decode_run(void *p) {
-    ppmd_thread_info *threadInfo = (ppmd_thread_info *)p;
+    ppmd_info *threadInfo = (ppmd_info *)p;
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
     threadInfo->finished = False;
     CPpmd8 * cPpmd8 = (CPpmd8 *)(threadInfo->cPpmd);
@@ -104,7 +104,7 @@ Ppmd8T_decode_run(void *p) {
     return NULL;
 }
 
-int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_thread_info *threadInfo) {
+int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *threadInfo) {
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
     PPMD_pthread_mutex_lock(&tc->mutex);
     BufferReader *reader = (BufferReader *) cPpmd8->Stream.In;
@@ -155,7 +155,7 @@ inempty:
     return 0;
 }
 
-void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_thread_info *threadInfo, ISzAllocPtr allocator) {
+void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *threadInfo, ISzAllocPtr allocator) {
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
     if (!(threadInfo->finished)) {
         PPMD_pthread_cancel(tc->handle);
