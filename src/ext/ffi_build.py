@@ -386,6 +386,7 @@ void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader, ppmd_thread_info 
 {
     reader->Read = (Byte (*)(void *)) Ppmd8Reader;
     ppmd->Stream.In = (IByteIn *) reader;
+    reader->t = threadInfo;
     threadInfo->in = reader->inBuffer;
     Ppmd_thread_decode_init(threadInfo, allocator);
 }
