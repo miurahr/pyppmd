@@ -121,7 +121,8 @@ int main(int argc, char **argv) {
 file(
     WRITE ${CMAKE_CURRENT_BINARY_DIR}/pypytest_runner.cpp
      "
-#include <stdlib>
+#include <string>
+#include <cstring>
 #include <filesystem>
 #include <PyPy.h>
 int main(int argc, char **argv) {
@@ -141,18 +142,20 @@ int main(int argc, char **argv) {
     std::filesystem::path vsite_path_b = \"${VPKG_PATH_B}\";
     std::string pycode =
         \"import sys\\n\"
-        \"import pytest\\n\"
         \"sys.path.append('src')\\n\"
         \"sys.path.append('\" + vsite_path_a.string() + \"')\\n\"
         \"sys.path.append('\" + vsite_path_b.string() + \"')\\n\"
+        \"import pytest\\n\"
         \"pytest.main(\" + args + \")\\n\";
     rpython_startup_code();
     pypy_setup_home(NULL, 1);
-    pypy_execute_source(pycode.c_str());
+    char * cstr = new char [pycode.length()+1];
+    std::strcpy (cstr, pycode.c_str());
+    pypy_execute_source(cstr);
     return 0;
 }")
 if ("${Python_INTERPRETER_ID}" STREQUAL "PyPy")
-  add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pypytest_runner.c)
+  add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pypytest_runner.cpp)
 else()
   add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
 endif()
