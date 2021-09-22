@@ -104,6 +104,8 @@ def test_ppmd8_encode_decode(tmp_path, mem_size, restore_method):
                 m2.update(res)
                 out.write(res)
                 length += len(res)
+                if len(data) < READ_BLOCKSIZE:
+                    break
                 data = target.read(READ_BLOCKSIZE)
     assert length == 1237262
     thash = m2.digest()
