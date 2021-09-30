@@ -233,12 +233,12 @@ class PpmdBaseDecoder:
     def __init__(self):
         pass
 
-    def _init_common(self):
+    def _init_common(self, reader_func="BufferReader *"):
         self.lock = Lock()
         self._allocator = ffi.new("ISzAlloc *")
         self._allocator.Alloc = lib.raw_alloc
         self._allocator.Free = lib.raw_free
-        self.reader = ffi.new("BufferReader *")
+        self.reader = ffi.new(reader_func)
         self._input_buffer = ffi.NULL
         self._input_buffer_size = 0
         self._in_begin = 0
@@ -419,7 +419,7 @@ class Ppmd7Decoder(PpmdBaseDecoder):
             raise ValueError("Mem_size exceed to platform limit.")
         if _PPMD7_MIN_ORDER <= max_order <= _PPMD7_MAX_ORDER and _PPMD7_MIN_MEM_SIZE <= mem_size <= _PPMD7_MAX_MEM_SIZE:
             self.lock = Lock()
-            self._init_common()
+            self._init_common("BufferReader *")
             self.ppmd = ffi.new("CPpmd7 *")
             self.rc = ffi.new("CPpmd7z_RangeDec *")
             self.flushed = False
@@ -517,7 +517,7 @@ class Ppmd8Encoder(PpmdBaseEncoder):
         self.lock.acquire()
         if self.flushed:
             self.lock.release()
-            return
+            return b""
         self.flushed = True
         out, out_buf = self._setup_outBuffer()
         if self.endmark:
@@ -542,7 +542,7 @@ class Ppmd8Encoder(PpmdBaseEncoder):
 
 class Ppmd8Decoder(PpmdBaseDecoder):
     def __init__(self, max_order: int, mem_size: int, restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=True):
-        self._init_common()
+        self._init_common("Ppmd8Reader *")
         self.ppmd = ffi.new("CPpmd8 *")
         self.args = ffi.new("ppmd8_args *")
         self.args.endmark = endmark
