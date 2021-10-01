@@ -211,7 +211,7 @@ typedef struct ppmd_info_s {
     void *t;
 } ppmd_info;
 
-Byte Ppmd8Reader(const void *p);
+Byte Ppmd_thread_Reader(const void *p);
 int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *args);
 void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *args, ISzAlloc *allocator);
 """
@@ -384,7 +384,7 @@ int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, Bool endm
 
 void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader, ppmd_info *info, ISzAllocPtr allocator)
 {
-    reader->Read = (Byte (*)(void *)) Ppmd8Reader;
+    reader->Read = (Byte (*)(void *)) Ppmd_thread_Reader;
     ppmd->Stream.In = (IByteIn *) reader;
     reader->t = info;
     info->in = reader->inBuffer;

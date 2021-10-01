@@ -18,7 +18,7 @@ typedef struct ppmd_thread_control_s {
     PPMD_pthread_cond_t notEmpty;
 } ppmd_thread_control_t;
 
-Byte Ppmd8Reader(const void *p);
+Byte Ppmd_thread_Reader(const void *p);
 int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *threadInfo);
 void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *args, ISzAllocPtr allocator);
 Bool Ppmd_thread_decode_init(ppmd_info *t, ISzAllocPtr allocator);

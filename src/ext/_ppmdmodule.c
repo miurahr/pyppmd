@@ -1318,7 +1318,7 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
         if (Ppmd8_Alloc(self->cPpmd8, memory_size ,&allocator)) {
             if (Ppmd_thread_decode_init(threadInfo, &allocator)) {
                 Ppmd8_Init(self->cPpmd8, maximum_order, restore_method);
-                bufferReader->Read = (Byte (*)(void *)) Ppmd8Reader;
+                bufferReader->Read = (Byte (*)(void *)) Ppmd_thread_Reader;
                 bufferReader->inBuffer = in;
                 bufferReader->t = threadInfo;
                 self->cPpmd8->Stream.In = (IByteIn *) bufferReader;

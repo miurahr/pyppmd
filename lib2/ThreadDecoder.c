@@ -5,7 +5,7 @@
 #include "ThreadDecoder.h"
 #include "Buffer.h"
 
-Byte Ppmd8Reader(const void *p) {
+Byte Ppmd_thread_Reader(const void *p) {
     BufferReader *bufferReader = (BufferReader *)p;
     ppmd_info *threadInfo = bufferReader->t;
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
