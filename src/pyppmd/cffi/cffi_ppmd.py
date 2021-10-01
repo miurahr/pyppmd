@@ -239,6 +239,8 @@ class PpmdBaseDecoder:
         self._allocator.Alloc = lib.raw_alloc
         self._allocator.Free = lib.raw_free
         self.reader = ffi.new("BufferReader *")
+        self._in_buf = _new_nonzero("InBuffer *")
+        self.reader.inBuffer = self._in_buf
         self._input_buffer = ffi.NULL
         self._input_buffer_size = 0
         self._in_begin = 0
@@ -247,12 +249,13 @@ class PpmdBaseDecoder:
         self.inited = False
 
     def _release(self):
+        ffi.release(self._in_buf)
         ffi.release(self.reader)
         ffi.release(self._allocator)
 
     def _setup_inBuffer(self, data):
         # Input buffer
-        in_buf = _new_nonzero("InBuffer *")
+        in_buf = self.reader.inBuffer
         # Prepare input buffer w/wo unconsumed data
         if self._in_begin == self._in_end:
             # No unconsumed data
@@ -317,8 +320,6 @@ class PpmdBaseDecoder:
             in_buf.pos = 0
 
         # Now in_buf.pos == 0
-
-        self.reader.inBuffer = in_buf
         return in_buf, use_input_buffer
 
     def _setup_outBuffer(self):
@@ -575,7 +576,9 @@ class Ppmd8Decoder(PpmdBaseDecoder):
                 break
             if out_buf.pos == out_buf.size:
                 out.grow(out_buf)
+            self.lock.release()
             size = lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, length, self.threadInfo)
+            self.lock.acquire()
             if size == -1:
                 self._eof = True
                 self._needs_input = False
