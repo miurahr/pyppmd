@@ -6,15 +6,11 @@ Ppmd8 Objects
 Ppmd8Encoder and Ppmd8Decoder classes are intend to use
 general purpose text compression.
 
-It uses `end mark` of source, when output text has ``\x01\x00``,
-decompression is end, and ``\x01`` raw data is escaped as ``\x01\x01``.
-This is a similar way with RAR archiver but is not compatible.
-
 .. class:: Ppmd8Encoder
 
-    Encoder for PPMd Var.I.
+    Encoder for PPMd Variant I version 2.
 
-.. py:method:: __init__(max_order: int, mem_size: int)
+.. py:method:: __init__(max_order: int, mem_size: int, restore_method)
 
     The ``max_order`` parameter is between 2 to 64.
     ``mem_size`` is a memory size in bytes which the encoder use.
@@ -36,9 +32,9 @@ This is a similar way with RAR archiver but is not compatible.
 
 .. py:class:: Ppmd8Decoder
 
-    Decoder for PPMd Var.I.
+    Decoder for PPMd Variant I version 2.
 
-.. py:method:: __init__(max_order: int, mem_size: int)
+.. py:method:: __init__(max_order: int, mem_size: int, restore_method)
 
     The ``max_order`` parameter is between 2 to 64.
     ``mem_size`` is a memory size in bytes which the encoder use.

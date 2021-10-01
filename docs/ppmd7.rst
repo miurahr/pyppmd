@@ -11,7 +11,7 @@ that use the range coder from 7z.
 
 .. py:class:: Ppmd7Encoder
 
-   Encoder for PPMd Var.H.
+   Encoder for PPMd Variant H.
 
 .. py:method:: __init__(max_order: int, mem_size: int)
 
@@ -34,7 +34,7 @@ that use the range coder from 7z.
 
 .. py:class:: Ppmd7Decoder
 
-   Decoder for PPMd Var.H.
+   Decoder for PPMd Variant H.
 
 .. py:method:: __init__(max_order: int, mem_size: int)
 

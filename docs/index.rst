@@ -13,6 +13,8 @@ The library has a bare function and no metadata/header handling functions.
 This means you should know compression parameters and input/output data
 sizes.
 
+This library implements PPMd Variant H, and PPMd Variant I Version 2.
+
 
 .. toctree::
    :maxdepth: 2
