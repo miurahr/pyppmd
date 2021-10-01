@@ -34,7 +34,7 @@ jobs:
         run: |
           tox
         env:
-          PYTEST_ADDOPTS: "--cov-config=pyproject.toml --cov --cov-append --benchmark-skip -p no:faulthandler"
+          PYTEST_ADDOPTS: "--cov-config=pyproject.toml --cov --cov-append --benchmark-skip"
       - name: Send coverage to coveralls
         run: |
           coveralls --service=github
