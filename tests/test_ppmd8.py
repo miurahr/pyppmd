@@ -22,7 +22,7 @@ READ_BLOCKSIZE = 16384
 
 
 def test_ppmd8_encoder1():
-    encoder = pyppmd.Ppmd8Encoder(6, 8 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART, False)
+    encoder = pyppmd.Ppmd8Encoder(6, 8 << 20,  pyppmd.PPMD8_RESTORE_METHOD_RESTART, False)
     result = encoder.encode(source)
     result += encoder.flush()
     assert result == encoded
@@ -113,13 +113,15 @@ def test_ppmd8_encode_decode(tmp_path, mem_size, restore_method):
 
 
 def test_ppmdcompress():
-    compressor = pyppmd.PpmdCompressor(6, 8 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART, False)
+    compressor = pyppmd.PpmdCompressor(6, 8 << 20, restore_method=pyppmd.PPMD8_RESTORE_METHOD_RESTART,
+                                       endmark=False, variant = "I")
     result = compressor.compress(source)
     result += compressor.flush()
     assert result == encoded
 
 
 def test_ppmddecompress():
-    decomp = pyppmd.PpmdDecompressor(6, 8 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART, False)
+    decomp = pyppmd.PpmdDecompressor(6, 8 << 20, restore_method=pyppmd.PPMD8_RESTORE_METHOD_RESTART,
+                                     endmark=False, variant = "I")
     result = decomp.decompress(encoded)
     assert result == source

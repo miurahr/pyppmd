@@ -57,9 +57,9 @@ class PpmdCompressor:
             *,
             restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=False, variant: str = "I"
     ):
-        if variant != "H" or variant != "I":
+        if variant not in ["H", "I", "h", "i"]:
             raise ValueError("Unsupported PPMd variant")
-        if variant == "I":
+        if variant in ["I", "i"]:
             self.encoder = Ppmd8Encoder(max_order, mem_size, restore_method, endmark)
         else:
             self.encoder = Ppmd7Encoder(max_order, mem_size)
@@ -87,9 +87,9 @@ class PpmdDecompressor:
             *,
             restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=False, variant: str = "I"
     ):
-        if variant != "H" or variant != "I":
+        if variant not in ["H", "I", "h", "i"]:
             raise ValueError("Unsupported PPMd variant")
-        if variant == "I":
+        if variant in ["I", "i"]:
             self.decoder = Ppmd8Decoder(max_order=max_order, mem_size=mem_size, restore_method=restore_method,
                                         endmark=endmark)
         else:
@@ -121,7 +121,7 @@ def compress(
     mem_size:    An integer object represent memory size to use.
     variant:   A variant name of PPMd compression algorithms, accept only "H" or "I"
     """
-    if variant != "H" or variant != "I":
+    if variant not in ["H", "I", "h", "i"]:
         raise ValueError("Unsupported PPMd variant")
     if type(data_or_str) == str:
         data = data_or_str.encode("UTF-8")
@@ -129,7 +129,7 @@ def compress(
         data = data_or_str
     else:
         raise ValueError("Argument data_or_str is neither bytes-like object nor str.")
-    if variant == "I":
+    if variant in ["I", "i"]:
         comp = Ppmd8Encoder(max_order, mem_size)
     else:
         comp = Ppmd7Encoder(max_order, mem_size)
@@ -156,9 +156,9 @@ def decompress_str(
     """
     if not _is_bytelike(data):
         raise ValueError("Argument data should be bytes-like object.")
-    if variant != "H" or variant != "I":
+    if variant not in ["H", "I", "h", "i"]:
         raise ValueError("Unsupported PPMd variant")
-    if variant == "I":
+    if variant in ["I", "i"]:
         return _decompress8(data, max_order, mem_size).decode(encoding)
     else:
         return _decompress7(data, max_order, mem_size).decode(encoding)
@@ -181,9 +181,9 @@ def decompress(
     """
     if not _is_bytelike(data):
         raise ValueError("Argument data should be bytes-like object.")
-    if variant != "H" or variant != "I":
+    if variant not in ["H", "I", "h", "i"]:
         raise ValueError("Unsupported PPMd variant")
-    if variant == "I":
+    if variant in ["I", "i"]:
         return _decompress8(data, max_order, mem_size)
     else:
         return _decompress7(data, max_order, mem_size)
