@@ -58,13 +58,12 @@ class PpmdCompressor:
         mem_size: int = 8 << 20,
         *,
         restore_method=PPMD8_RESTORE_METHOD_RESTART,
-        endmark=False,
         variant: str = "I",
     ):
         if variant not in ["H", "I", "h", "i"]:
             raise ValueError("Unsupported PPMd variant")
         if variant in ["I", "i"]:
-            self.encoder = Ppmd8Encoder(max_order, mem_size, restore_method, endmark)
+            self.encoder = Ppmd8Encoder(max_order, mem_size, restore_method)
         else:
             self.encoder = Ppmd7Encoder(max_order, mem_size)
         self.eof = False
@@ -92,15 +91,12 @@ class PpmdDecompressor:
         mem_size: int = 8 << 20,
         *,
         restore_method=PPMD8_RESTORE_METHOD_RESTART,
-        endmark=False,
         variant: str = "I",
     ):
         if variant not in ["H", "I", "h", "i"]:
             raise ValueError("Unsupported PPMd variant")
         if variant in ["I", "i"]:
-            self.decoder = Ppmd8Decoder(
-                max_order=max_order, mem_size=mem_size, restore_method=restore_method, endmark=endmark
-            )
+            self.decoder = Ppmd8Decoder(max_order=max_order, mem_size=mem_size, restore_method=restore_method)
         else:
             self.decoder = Ppmd7Decoder(max_order=max_order, mem_size=mem_size)
         self.eof = False
