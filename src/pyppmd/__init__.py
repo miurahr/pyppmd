@@ -53,9 +53,13 @@ class PpmdCompressor:
     """Compressor class to compress data by PPMd algorithm."""
 
     def __init__(
-        self, max_order: int = 6, mem_size: int = 8 << 20,
-            *,
-            restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=False, variant: str = "I"
+        self,
+        max_order: int = 6,
+        mem_size: int = 8 << 20,
+        *,
+        restore_method=PPMD8_RESTORE_METHOD_RESTART,
+        endmark=False,
+        variant: str = "I",
     ):
         if variant not in ["H", "I", "h", "i"]:
             raise ValueError("Unsupported PPMd variant")
@@ -83,15 +87,20 @@ class PpmdDecompressor:
     """Decompressor class to decompress data by PPMd algorithm."""
 
     def __init__(
-        self, max_order: int = 6, mem_size: int = 8 << 20,
-            *,
-            restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=False, variant: str = "I"
+        self,
+        max_order: int = 6,
+        mem_size: int = 8 << 20,
+        *,
+        restore_method=PPMD8_RESTORE_METHOD_RESTART,
+        endmark=False,
+        variant: str = "I",
     ):
         if variant not in ["H", "I", "h", "i"]:
             raise ValueError("Unsupported PPMd variant")
         if variant in ["I", "i"]:
-            self.decoder = Ppmd8Decoder(max_order=max_order, mem_size=mem_size, restore_method=restore_method,
-                                        endmark=endmark)
+            self.decoder = Ppmd8Decoder(
+                max_order=max_order, mem_size=mem_size, restore_method=restore_method, endmark=endmark
+            )
         else:
             self.decoder = Ppmd7Decoder(max_order=max_order, mem_size=mem_size)
         self.eof = False
@@ -109,7 +118,10 @@ class PpmdDecompressor:
 
 
 def compress(
-    data_or_str: Union[bytes, bytearray, memoryview, str], *, max_order: int = 6, mem_size: int = 16 << 20,
+    data_or_str: Union[bytes, bytearray, memoryview, str],
+    *,
+    max_order: int = 6,
+    mem_size: int = 16 << 20,
     variant: str = "I",
 ) -> bytes:
     """Compress a block of data, return a bytes object.
