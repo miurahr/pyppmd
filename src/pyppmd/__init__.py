@@ -53,9 +53,20 @@ class PpmdCompressor:
     """Compressor class to compress data by PPMd algorithm."""
 
     def __init__(
-        self, max_order: int = 6, mem_size: int = 8 << 20, restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=True
+        self,
+        max_order: int = 6,
+        mem_size: int = 8 << 20,
+        *,
+        restore_method=PPMD8_RESTORE_METHOD_RESTART,
+        endmark=False,
+        variant: str = "I",
     ):
-        self.encoder = Ppmd8Encoder(max_order, mem_size, restore_method, endmark)
+        if variant not in ["H", "I", "h", "i"]:
+            raise ValueError("Unsupported PPMd variant")
+        if variant in ["I", "i"]:
+            self.encoder = Ppmd8Encoder(max_order, mem_size, restore_method, endmark)
+        else:
+            self.encoder = Ppmd7Encoder(max_order, mem_size)
         self.eof = False
 
     def compress(self, data_or_str: Union[bytes, bytearray, memoryview, str]):
@@ -76,9 +87,22 @@ class PpmdDecompressor:
     """Decompressor class to decompress data by PPMd algorithm."""
 
     def __init__(
-        self, max_order: int = 6, mem_size: int = 8 << 20, restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=True
+        self,
+        max_order: int = 6,
+        mem_size: int = 8 << 20,
+        *,
+        restore_method=PPMD8_RESTORE_METHOD_RESTART,
+        endmark=False,
+        variant: str = "I",
     ):
-        self.decoder = Ppmd8Decoder(max_order=max_order, mem_size=mem_size, restore_method=restore_method, endmark=endmark)
+        if variant not in ["H", "I", "h", "i"]:
+            raise ValueError("Unsupported PPMd variant")
+        if variant in ["I", "i"]:
+            self.decoder = Ppmd8Decoder(
+                max_order=max_order, mem_size=mem_size, restore_method=restore_method, endmark=endmark
+            )
+        else:
+            self.decoder = Ppmd7Decoder(max_order=max_order, mem_size=mem_size)
         self.eof = False
         self.need_input = True
 
@@ -94,7 +118,11 @@ class PpmdDecompressor:
 
 
 def compress(
-    data_or_str: Union[bytes, bytearray, memoryview, str], *, max_order: int = 6, mem_size: int = 16 << 20
+    data_or_str: Union[bytes, bytearray, memoryview, str],
+    *,
+    max_order: int = 6,
+    mem_size: int = 16 << 20,
+    variant: str = "I",
 ) -> bytes:
     """Compress a block of data, return a bytes object.
     When pass `str` object, encoding "UTF-8" first, then compress it.
@@ -103,14 +131,20 @@ def compress(
     data_or_str: A bytes-like object or string data to be compressed.
     max_order:   An integer object represent compression level.
     mem_size:    An integer object represent memory size to use.
+    variant:   A variant name of PPMd compression algorithms, accept only "H" or "I"
     """
-    comp = Ppmd8Encoder(max_order, mem_size)
+    if variant not in ["H", "I", "h", "i"]:
+        raise ValueError("Unsupported PPMd variant")
     if type(data_or_str) == str:
         data = data_or_str.encode("UTF-8")
     elif _is_bytelike(data_or_str):
         data = data_or_str
     else:
         raise ValueError("Argument data_or_str is neither bytes-like object nor str.")
+    if variant in ["I", "i"]:
+        comp = Ppmd8Encoder(max_order, mem_size)
+    else:
+        comp = Ppmd7Encoder(max_order, mem_size)
     result = comp.encode(data)
     return result + comp.flush()
 
@@ -120,7 +154,8 @@ def decompress_str(
     *,
     max_order: int = 6,
     mem_size: int = 16 << 20,
-    encoding: str = None,
+    encoding: str = "UTF-8",
+    variant: str = "I",
 ) -> Union[bytes, str]:
     """Decompress a PPMd data, return a bytes object.
 
@@ -129,13 +164,16 @@ def decompress_str(
     max_order: An integer object represent max order of PPMd.
     mem_size:  An integer object represent memory size to use.
     encoding:  Encoding of compressed text data, when it is None return as bytes. Default is UTF-8
+    variant:   A variant name of PPMd compression algorithms, accept only "H" or "I"
     """
     if not _is_bytelike(data):
         raise ValueError("Argument data should be bytes-like object.")
-    if encoding is None:
-        return _decompress(data, max_order, mem_size).decode("UTF-8")
+    if variant not in ["H", "I", "h", "i"]:
+        raise ValueError("Unsupported PPMd variant")
+    if variant in ["I", "i"]:
+        return _decompress8(data, max_order, mem_size).decode(encoding)
     else:
-        return _decompress(data, max_order, mem_size).decode(encoding)
+        return _decompress7(data, max_order, mem_size).decode(encoding)
 
 
 def decompress(
@@ -143,6 +181,7 @@ def decompress(
     *,
     max_order: int = 6,
     mem_size: int = 16 << 20,
+    variant: str = "I",
 ) -> Union[bytes, str]:
     """Decompress a PPMd data, return a bytes object.
 
@@ -150,13 +189,25 @@ def decompress(
     data:      A bytes-like object, compressed data.
     max_order: An integer object represent max order of PPMd.
     mem_size:  An integer object represent memory size to use.
+    variant:   A variant name of PPMd compression algorithms, accept only "H" or "I"
     """
     if not _is_bytelike(data):
         raise ValueError("Argument data should be bytes-like object.")
-    return _decompress(data, max_order, mem_size)
+    if variant not in ["H", "I", "h", "i"]:
+        raise ValueError("Unsupported PPMd variant")
+    if variant in ["I", "i"]:
+        return _decompress8(data, max_order, mem_size)
+    else:
+        return _decompress7(data, max_order, mem_size)
 
 
-def _decompress(data: Union[bytes, bytearray, memoryview], max_order: int, mem_size: int):
+def _decompress7(data: Union[bytes, bytearray, memoryview], max_order: int, mem_size: int):
+    decomp = Ppmd7Decoder(max_order, mem_size)
+    res = decomp.decode(data)
+    return res
+
+
+def _decompress8(data: Union[bytes, bytearray, memoryview], max_order: int, mem_size: int):
     decomp = Ppmd8Decoder(max_order, mem_size)
     res = decomp.decode(data)
     return res
