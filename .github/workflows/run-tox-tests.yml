@@ -32,7 +32,7 @@ jobs:
       - name: Test project with tox
         timeout-minutes: 7
         run: |
-          tox
+          python -X faulthandler -m tox
         env:
           PYTEST_ADDOPTS: "--cov-config=pyproject.toml --cov --cov-append --benchmark-skip -p no:faulthandler"
       - name: Send coverage to coveralls
