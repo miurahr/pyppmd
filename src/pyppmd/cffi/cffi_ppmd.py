@@ -491,13 +491,12 @@ class Ppmd7Decoder(PpmdBaseDecoder):
 
 
 class Ppmd8Encoder(PpmdBaseEncoder):
-    def __init__(self, max_order, mem_size, restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=True):
+    def __init__(self, max_order, mem_size, restore_method=PPMD8_RESTORE_METHOD_RESTART):
         self.lock = Lock()
         if mem_size > sys.maxsize:
             raise ValueError("Mem_size exceed to platform limit.")
         self._init_common()
         self.ppmd = ffi.new("CPpmd8 *")
-        self.endmark = endmark
         lib.ppmd8_compress_init(self.ppmd, self.writer)
         lib.Ppmd8_Construct(self.ppmd)
         lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator)
@@ -508,7 +507,7 @@ class Ppmd8Encoder(PpmdBaseEncoder):
         self.lock.acquire()
         in_buf = self._setup_inBuffer(data)
         out, out_buf = self._setup_outBuffer()
-        while lib.ppmd8_compress(self.ppmd, out_buf, in_buf, self.endmark) > 0:
+        while lib.ppmd8_compress(self.ppmd, out_buf, in_buf) > 0:
             if out_buf.pos == out_buf.size:
                 out.grow(out_buf)
         self.lock.release()
@@ -521,10 +520,7 @@ class Ppmd8Encoder(PpmdBaseEncoder):
             return
         self.flushed = True
         out, out_buf = self._setup_outBuffer()
-        if self.endmark:
-            lib.Ppmd8_EncodeSymbol(self.ppmd, 0x01)  # endmark
-            lib.Ppmd8_EncodeSymbol(self.ppmd, 0x00)
-        lib.Ppmd8_EncodeSymbol(self.ppmd, -1)  # endmark
+        lib.Ppmd8_EncodeSymbol(self.ppmd, -1)
         lib.Ppmd8_RangeEnc_FlushData(self.ppmd)
         res = out.finish(out_buf)
         lib.Ppmd8_Free(self.ppmd, self._allocator)
@@ -542,11 +538,10 @@ class Ppmd8Encoder(PpmdBaseEncoder):
 
 
 class Ppmd8Decoder(PpmdBaseDecoder):
-    def __init__(self, max_order: int, mem_size: int, restore_method=PPMD8_RESTORE_METHOD_RESTART, endmark=True):
+    def __init__(self, max_order: int, mem_size: int, restore_method=PPMD8_RESTORE_METHOD_RESTART):
         self._init_common()
         self.ppmd = ffi.new("CPpmd8 *")
         self.threadInfo = ffi.new("ppmd_info *")
-        self.threadInfo.endmark = endmark
         lib.Ppmd8_Construct(self.ppmd)
         lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator)
         lib.Ppmd8_Init(self.ppmd, max_order, restore_method)

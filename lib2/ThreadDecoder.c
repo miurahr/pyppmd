@@ -42,7 +42,6 @@ Ppmd8T_decode_run(void *p) {
     BufferReader *reader = (BufferReader *) cPpmd8->Stream.In;
     int max_length = threadInfo->max_length;
 
-    Bool escaped = False;
     int i = 0;
     int result;
     while (i < max_length ) {
@@ -59,39 +58,10 @@ Ppmd8T_decode_run(void *p) {
             result = PPMD8_RESULT_ERROR;
             goto exit;
         }
-        if (threadInfo->endmark) {
-            if (escaped) {
-                escaped = False;
-                if (c == 0x01) { // escaped character
-                    PPMD_pthread_mutex_lock(&tc->mutex);
-                    *((Byte *)threadInfo->out->dst + threadInfo->out->pos++) = c;
-                    PPMD_pthread_mutex_unlock(&tc->mutex);
-                    i++;
-                } else if (c == 0x00) { // endmark
-                    // eof
-                    result = PPMD8_RESULT_EOF;
-                    goto exit;
-                } else {
-                    // failed
-                    result = PPMD8_RESULT_ERROR;
-                    goto exit;
-                }
-            } else {
-                if (c != 0x01) { // ordinary data
-                    PPMD_pthread_mutex_lock(&tc->mutex);
-                    *((Byte *)threadInfo->out->dst + threadInfo->out->pos++) = (Byte) c;
-                    PPMD_pthread_mutex_unlock(&tc->mutex);
-                    i++;
-                } else { // enter escape sequence
-                    escaped = True;
-                }
-            }
-        } else {
-            PPMD_pthread_mutex_lock(&tc->mutex);
-            *((Byte *)threadInfo->out->dst + threadInfo->out->pos++) = (Byte) c;
-            PPMD_pthread_mutex_unlock(&tc->mutex);
-            i++;
-        }
+        PPMD_pthread_mutex_lock(&tc->mutex);
+        *((Byte *)threadInfo->out->dst + threadInfo->out->pos++) = (Byte) c;
+        PPMD_pthread_mutex_unlock(&tc->mutex);
+        i++;
     }
     // when success return produced size
     result = i;
