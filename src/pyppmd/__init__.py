@@ -5,19 +5,11 @@ try:
 except ImportError:
     from importlib_metadata import PackageNotFoundError, version  # type: ignore  # noqa
 
-try:
-    from .c.c_ppmd import (  # noqa
-        PPMD8_RESTORE_METHOD_CUT_OFF,
-        PPMD8_RESTORE_METHOD_RESTART,
-        Ppmd7Decoder,
-        Ppmd7Encoder,
-        Ppmd8Decoder,
-        Ppmd8Encoder,
-        PpmdError,
-    )
-except ImportError:
+_force_cffi = False
+
+if not _force_cffi:
     try:
-        from .cffi.cffi_ppmd import (  # noqa
+        from .c.c_ppmd import (  # noqa
             PPMD8_RESTORE_METHOD_CUT_OFF,
             PPMD8_RESTORE_METHOD_RESTART,
             Ppmd7Decoder,
@@ -27,8 +19,29 @@ except ImportError:
             PpmdError,
         )
     except ImportError:
-        msg = "pyppmd module: Neither C implementation nor CFFI " "implementation can be imported."
-        raise ImportError(msg)
+        try:
+            from .cffi.cffi_ppmd import (  # noqa
+                PPMD8_RESTORE_METHOD_CUT_OFF,
+                PPMD8_RESTORE_METHOD_RESTART,
+                Ppmd7Decoder,
+                Ppmd7Encoder,
+                Ppmd8Decoder,
+                Ppmd8Encoder,
+                PpmdError,
+            )
+        except ImportError:
+            msg = "pyppmd module: Neither C implementation nor CFFI " "implementation can be imported."
+            raise ImportError(msg)
+else:
+    from .cffi.cffi_ppmd import (  # noqa
+        PPMD8_RESTORE_METHOD_CUT_OFF,
+        PPMD8_RESTORE_METHOD_RESTART,
+        Ppmd7Decoder,
+        Ppmd7Encoder,
+        Ppmd8Decoder,
+        Ppmd8Encoder,
+        PpmdError,
+    )
 
 __all__ = ("compress", "decompress", "Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder", "PpmdError")
 
