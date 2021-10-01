@@ -49,7 +49,7 @@ add_custom_target(
 add_custom_target(
   generate_cffi
   BYPRODUCTS ${PY_CFFI}
-  COMMAND ${BUILD_EXT_PYTHON} setup.py build_ext ${BUILD_EXT_OPTION} --cffi
+  COMMAND ${BUILD_EXT_PYTHON} setup.py build_ext ${BUILD_EXT_OPTION} --cffi --inplace
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS venv.stamp
   SOURCES ${pyppmd_sources})
@@ -183,8 +183,8 @@ add_library(
         lib2/Buffer.h
         lib2/threading.c
         lib2/threading.h
-        lib2/Ppmd8Tdecoder.c
-        lib2/Ppmd8Tdecoder.h
+        lib2/ThreadDecoder.c
+        lib2/ThreadDecoder.h
         src/ext/_ppmdmodule.c)
 target_include_directories(pyppmd PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pyppmd PRIVATE ${Python_LIBRARIES})

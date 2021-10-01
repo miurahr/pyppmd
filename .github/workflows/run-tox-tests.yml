@@ -30,6 +30,7 @@ jobs:
           pip install -U pip
           pip install tox tox-gh-actions coveralls
       - name: Test project with tox
+        timeout-minutes: 7
         run: |
           tox
         env:

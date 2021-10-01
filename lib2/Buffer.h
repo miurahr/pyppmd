@@ -19,16 +19,30 @@ typedef struct OutBuffer_s {
     size_t pos;         /**< position where writing stopped. Will be updated. Necessarily 0 <= pos <= size */
 } OutBuffer;
 
+typedef struct ppmd_info_s {
+    /* hold CPpmd8 or CPpmd7 struct pointer */
+    void *cPpmd;
+    InBuffer *in;
+    OutBuffer *out;
+    int max_length;
+    Bool endmark;
+    Bool finished;
+    int result;
+    void *t;
+} ppmd_info;
+
 typedef struct {
     /* Inherits from IByteOut */
     void (*Write)(void *p, Byte b);
     OutBuffer *outBuffer;
+    ppmd_info *t;
 } BufferWriter;
 
 typedef struct {
     /* Inherits from IByteIn */
     Byte (*Read)(void *p);
     InBuffer *inBuffer;
+    ppmd_info *t;
 } BufferReader;
 
 
