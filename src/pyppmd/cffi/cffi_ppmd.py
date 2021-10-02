@@ -490,6 +490,14 @@ class Ppmd7Decoder(PpmdBaseDecoder):
         self.lock.release()
         return res
 
+    @property
+    def needs_input(self):
+        return self._needs_input
+
+    @property
+    def eof(self):
+        return self._eof
+
     def __enter__(self):
         return self
 
