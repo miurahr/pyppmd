@@ -180,15 +180,32 @@ typedef struct
 """
 )
 
-# Ppmd8Tdecoder.h
 if sys.platform.startswith("win32"):
     ffibuilder.cdef(
         r"""
-    typedef struct {
-        HANDLE handle;
-        void* (*start_routine)(void*);
-        void* arg;
-    } pthread_t;
+typedef struct _pthread_cleanup _pthread_cleanup;
+struct _pthread_cleanup
+{
+	void (*func)(void *);
+	void *arg;
+	_pthread_cleanup *next;
+};
+struct _pthread_v
+{
+	void *ret_arg;
+	void *(* func)(void *);
+	_pthread_cleanup *clean;
+	HANDLE h;
+	int cancelled;
+	unsigned p_state;
+	int keymax;
+	void **keyval;
+
+	jmp_buf jb;
+};
+
+typedef struct _pthread_v *pthread_t;
+
     """
     )
 elif sys.platform.startswith("darwin"):
