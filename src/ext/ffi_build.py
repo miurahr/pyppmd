@@ -245,7 +245,7 @@ int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader);
 void ppmd7_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *write);
 
 int ppmd7_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, OutBuffer *out_buf, InBuffer *in_buf);
-void ppmd7_compress_flush(CPpmd7z_RangeEnc *rc);
+void ppmd7_compress_flush(CPpmd7 *p, CPpmd7z_RangeEnc *rc, Bool endmark);
 int ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc, OutBuffer *out_buf, InBuffer *in_buf, size_t length);
 void ppmd7_decompress_flush(CPpmd7 *p, CPpmd7z_RangeDec *rc, OutBuffer *out_buf, InBuffer *in_buf, size_t length);
 
@@ -329,7 +329,10 @@ int ppmd7_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, OutBuffer *out_buf, InBuffer
     return in_buf->size - in_buf->pos;
 }
 
-void ppmd7_compress_flush(CPpmd7z_RangeEnc *rc){
+void ppmd7_compress_flush(CPpmd7 *p, CPpmd7z_RangeEnc *rc, Bool endmark){
+    if (endmark) {
+        Ppmd7_EncodeSymbol(p, rc, -1);
+    }
     Ppmd7z_RangeEnc_FlushData(rc);
 }
 

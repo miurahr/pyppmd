@@ -25,12 +25,13 @@ that use the range coder from 7z.
    the output produced by any preceding calls to the encode() method.
    Some input may be kept in internal buffers for later processing.
 
-.. py:method:: Ppmd7Encoder.flush()
+.. py:method:: Ppmd7Encoder.flush(endmark: boolean)
 
    All pending input is processed, and bytes object containing the remaining
    compressed output is returned. After calling flush(), the encode() method
    cannot be called again; the only realistic action is to delete the object.
-
+   When ``endmark`` is true, flush write endmark(-1) to end of archive, otherwise
+   do not write (default).
 
 .. py:class:: Ppmd7Decoder
 
