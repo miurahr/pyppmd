@@ -97,9 +97,9 @@ Streaming compression
 
     A streaming compressor. It's thread-safe at method level.
 
-    .. py:method:: __init__(self, max_order: int, mem_size: int, variant: str)
+    .. py:method:: __init__(self, max_order: int, mem_size: int, variant: str, restore_method: int)
 
-        Initialize a PpmdCompressor object.
+        Initialize a PpmdCompressor object. restore_method param is affected only when variant is "I".
 
         :param max_order: maximum order of PPMd algorithm
         :type max_order: int
@@ -107,6 +107,8 @@ Streaming compression
         :type mem_size: int
         :param variant: PPMd variant name, only accept "H" or "I"
         :type variant: str
+        :param restore_method: PPMD8_RESTORE_METHOD_RESTART(0) or PPMD8_RESTORE_METHOD_CUTOFF(1)
+        :type restore_method: int
 
     .. py:method:: compress(self, data)
 
@@ -139,9 +141,9 @@ Streaming decompression
 
 .. py:class:: PpmdDecompressor
 
-    A streaming decompressor. Thread-safe at method level.
+    A streaming decompressor. Thread-safe at method level. A restore_method param is affected only when variant is "I".
 
-    .. py:method:: __init__(self, max_order: int, mem_size: int, variant: str)
+    .. py:method:: __init__(self, max_order: int, mem_size: int, variant: str, restore_method: int)
 
         Initialize a PpmdDecompressor object.
 
@@ -151,6 +153,8 @@ Streaming decompression
         :type mem_size: int
         :param variant: PPMd variant name, only accept "H" or "I"
         :type variant: str
+        :param restore_method: PPMD8_RESTORE_METHOD_RESTART(0) or PPMD8_RESTORE_METHOD_CUTOFF(1)
+        :type restore_method: int
 
     .. py:method:: decompress(self, data, max_length=-1)
 

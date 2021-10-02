@@ -129,11 +129,12 @@ Dependency
 - GCC or CLang C/C++ compiler
 - CMake 3.19 or later
 
-When you want to change target python version, please edit CMakeLists.txt#L8
+When you want to change target python variation and version, please edit CMakeLists.txt#L8-L9
 
 .. code-block:: cmake
 
     set(PY_VERSION 3.8)
+    set(Python_FIND_IMPLEMENTATIONS PyPy)
 
 
 Manual build and run
