@@ -50,7 +50,7 @@ Copyright (C) 2020-2021 Hiroshi Miura
 
 Copyright (C) 2020-2021 Ma Lin
 
-Copyright (c) 2016 Tino Reichar
+Copyright (C) 2010-2012 Lockless Inc.
 
 Copyright (C) 1999-2017 Igor Pavlov
 
