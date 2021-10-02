@@ -62,7 +62,6 @@ jobs:
           path: |
             wheelhouse/*.whl
             !wheelhouse/*-cp*manylinux2014_i686*
-            !wheelhouse/*-pp*manylinux2010_x86_64*
 
 
   # Build source distribution & manylinux1_x86_64
@@ -103,7 +102,6 @@ jobs:
           name: ppmd-files
           path: |
             wheelhouse/*.whl
-            !wheelhouse/*manylinux2010_x86_64*
 
   # Upload to PyPI
   upload_pypi:
