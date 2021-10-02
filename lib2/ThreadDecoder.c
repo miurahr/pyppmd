@@ -75,8 +75,8 @@ Byte Ppmd_thread_Reader(const void *p) {
     return *((const Byte *)inBuffer->src + inBuffer->pos++);
 }
 
-Bool Ppmd_thread_decode_init(ppmd_info *threadInfo, ISzAllocPtr allocator) {
-    threadInfo->t = ISzAlloc_Alloc(allocator, sizeof(ppmd_thread_control_t));
+Bool Ppmd_thread_decode_init(ppmd_info *threadInfo, IAllocPtr allocator) {
+    threadInfo->t = IAlloc_Alloc(allocator, sizeof(ppmd_thread_control_t));
     if (threadInfo->t != NULL) {
         ppmd_thread_control_t *threadControl = (ppmd_thread_control_t *)threadInfo->t;
         pthread_mutex_init(&threadControl->mutex, NULL);
@@ -105,11 +105,11 @@ Ppmd8T_decode_run(void *p) {
             break;
         }
         int c = Ppmd8_DecodeSymbol(cPpmd8);
-        if (c == PPMD8_RESULT_EOF) {
-            result = PPMD8_RESULT_EOF;
+        if (c == PPMD_RESULT_EOF) {
+            result = PPMD_RESULT_EOF;
             goto exit;
-        } else if (c == PPMD8_RESULT_ERROR) {
-            result = PPMD8_RESULT_ERROR;
+        } else if (c == PPMD_RESULT_ERROR) {
+            result = PPMD_RESULT_ERROR;
             goto exit;
         }
         pthread_mutex_lock(&tc->mutex);
@@ -179,12 +179,12 @@ inempty:
     return 0;
 }
 
-void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *threadInfo, ISzAllocPtr allocator) {
+void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *threadInfo, IAllocPtr allocator) {
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
     if (!(threadInfo->finished)) {
         pthread_cancel(tc->handle);
         threadInfo->finished = True;
     }
-    ISzAlloc_Free(allocator, tc);
+    IAlloc_Free(allocator, tc);
     Ppmd8_Free(cPpmd8, allocator);
 }

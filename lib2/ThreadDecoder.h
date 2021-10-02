@@ -6,10 +6,15 @@
 #define PYPPMD_THREADDECODER_H
 
 #include "Buffer.h"
-#include "threading.h"
 
-#define PPMD8_RESULT_EOF (-1)
-#define PPMD8_RESULT_ERROR (-2)
+#ifdef _MSC_VER
+#include "win_pthreads.h"
+#else
+#include <pthread.h>
+#endif
+
+#define PPMD_RESULT_EOF (-1)
+#define PPMD_RESULT_ERROR (-2)
 
 typedef struct ppmd_thread_control_s {
     pthread_t handle;
@@ -20,7 +25,7 @@ typedef struct ppmd_thread_control_s {
 
 Byte Ppmd_thread_Reader(const void *p);
 int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *threadInfo);
-void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *args, ISzAllocPtr allocator);
-Bool Ppmd_thread_decode_init(ppmd_info *t, ISzAllocPtr allocator);
+void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *args, IAllocPtr allocator);
+Bool Ppmd_thread_decode_init(ppmd_info *t, IAllocPtr allocator);
 
 #endif //PYPPMD_THREADDECODER_H

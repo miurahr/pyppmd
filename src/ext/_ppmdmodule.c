@@ -285,7 +285,7 @@ OutputBuffer_OnError(BlocksOutputBuffer *buffer)
    End of BlocksOutputBuffer code
    ------------------------------ */
 
-static ISzAlloc allocator = {
+static IAlloc allocator = {
         PyMem_Malloc,
         PyMem_Free
 };
@@ -669,9 +669,9 @@ Ppmd7Decoder_flush(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs) {
             }
         }
         result = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
-        if (result == -1) {
+        if (result == PPMD_RESULT_EOF) {
             break;
-        } else if (result == -2) {
+        } else if (result == PPMD_RESULT_ERROR) {
             self->eof = True;
             PyErr_SetString(PyExc_ValueError, "Decompression failed.");
             goto error;
@@ -851,10 +851,10 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
             Py_BEGIN_ALLOW_THREADS
             result = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
             Py_END_ALLOW_THREADS
-            if (result == -1) {
+            if (result == PPMD_RESULT_EOF) {
                 self->eof = True;
                 break;
-            } else if (result == -2) {
+            } else if (result == PPMD_RESULT_ERROR) {
                 PyErr_SetString(PyExc_ValueError, "Failed to decode PPMd7.");
                 self->eof = True;
                 goto error;

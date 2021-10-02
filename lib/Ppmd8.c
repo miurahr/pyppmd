@@ -84,14 +84,14 @@ void Ppmd8_Construct(CPpmd8 *p)
   }
 }
 
-void Ppmd8_Free(CPpmd8 *p, ISzAllocPtr alloc)
+void Ppmd8_Free(CPpmd8 *p, IAllocPtr alloc)
 {
-  ISzAlloc_Free(alloc, p->Base);
+  IAlloc_Free(alloc, p->Base);
   p->Size = 0;
   p->Base = 0;
 }
 
-Bool Ppmd8_Alloc(CPpmd8 *p, UInt32 size, ISzAllocPtr alloc)
+Bool Ppmd8_Alloc(CPpmd8 *p, UInt32 size, IAllocPtr alloc)
 {
   if (!p->Base || p->Size != size)
   {
@@ -102,7 +102,7 @@ Bool Ppmd8_Alloc(CPpmd8 *p, UInt32 size, ISzAllocPtr alloc)
       #else
         4 - (size & 3);
       #endif
-    if ((p->Base = (Byte *)ISzAlloc_Alloc(alloc, p->AlignOffset + size)) == 0)
+    if ((p->Base = (Byte *)IAlloc_Alloc(alloc, p->AlignOffset + size)) == 0)
       return False;
     p->Size = size;
   }

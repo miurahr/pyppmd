@@ -185,7 +185,7 @@ class PpmdBaseEncoder:
         self.closed = False
         self.flushed = False
         self.writer = ffi.new("BufferWriter *")
-        self._allocator = ffi.new("ISzAlloc *")
+        self._allocator = ffi.new("IAlloc *")
         self._allocator.Alloc = lib.raw_alloc
         self._allocator.Free = lib.raw_free
 
@@ -235,7 +235,7 @@ class PpmdBaseDecoder:
 
     def _init_common(self):
         self.lock = Lock()
-        self._allocator = ffi.new("ISzAlloc *")
+        self._allocator = ffi.new("IAlloc *")
         self._allocator.Alloc = lib.raw_alloc
         self._allocator.Free = lib.raw_free
         self.reader = ffi.new("BufferReader *")

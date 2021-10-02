@@ -86,14 +86,14 @@ void Ppmd7_Construct(CPpmd7 *p)
   memset(p->HB2Flag + 0x40, 8, 0x100 - 0x40);
 }
 
-void Ppmd7_Free(CPpmd7 *p, ISzAllocPtr alloc)
+void Ppmd7_Free(CPpmd7 *p, IAllocPtr alloc)
 {
-  ISzAlloc_Free(alloc, p->Base);
+  IAlloc_Free(alloc, p->Base);
   p->Size = 0;
   p->Base = 0;
 }
 
-Bool Ppmd7_Alloc(CPpmd7 *p, UInt32 size, ISzAllocPtr alloc)
+Bool Ppmd7_Alloc(CPpmd7 *p, UInt32 size, IAllocPtr alloc)
 {
   if (!p->Base || p->Size != size)
   {
@@ -110,7 +110,7 @@ Bool Ppmd7_Alloc(CPpmd7 *p, UInt32 size, ISzAllocPtr alloc)
       #else
         4 - (size & 3);
       #endif
-    if ((p->Base = (Byte *)ISzAlloc_Alloc(alloc, p->AlignOffset + size + size2)) == 0)
+    if ((p->Base = (Byte *)IAlloc_Alloc(alloc, p->AlignOffset + size + size2)) == 0)
       return False;
     p->Size = size;
   }

@@ -26,16 +26,16 @@ struct IByteOut
 };
 #define IByteOut_Write(p, b) (p)->Write(p, b)
 
-typedef struct ISzAlloc ISzAlloc;
-typedef const ISzAlloc * ISzAllocPtr;
+typedef struct IAlloc IAlloc;
+typedef const IAlloc * IAllocPtr;
 
-struct ISzAlloc
+struct IAlloc
 {
     void *(*Alloc)(size_t size);
     void (*Free)(void *address); /* address can be NULL */
 };
 
-#define ISzAlloc_Alloc(p, size) (p)->Alloc(size)
-#define ISzAlloc_Free(p, a) (p)->Free(a)
+#define IAlloc_Alloc(p, size) (p)->Alloc(size)
+#define IAlloc_Free(p, a) (p)->Free(a)
 
 #endif //PPMD_INTERFACE_H

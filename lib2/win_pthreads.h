@@ -1680,6 +1680,4 @@ static int pthread_rwlockattr_setpshared(pthread_rwlockattr_t *a, int s)
 
 #pragma warning(pop)
 #endif /* WIN_PTHREADS */
-#else
-#include <pthread.h>
 #endif /* _MSC_VER */
