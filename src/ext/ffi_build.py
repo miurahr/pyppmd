@@ -201,11 +201,10 @@ struct _pthread_v
 	int keymax;
 	void **keyval;
 
-	jmp_buf jb;
+    // hide it
+	// jmp_buf jb;
 };
-
 typedef struct _pthread_v *pthread_t;
-
     """
     )
 elif sys.platform.startswith("darwin"):
