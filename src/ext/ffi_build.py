@@ -188,13 +188,13 @@ if sys.platform.startswith("win32"):
         HANDLE handle;
         void* (*start_routine)(void*);
         void* arg;
-    } PPMD_pthread_t;
+    } pthread_t;
     """
     )
 elif sys.platform.startswith("darwin"):
-    ffibuilder.cdef(r"typedef void* PPMD_pthread_t;")
+    ffibuilder.cdef(r"typedef void* pthread_t;")
 elif sys.platform.startswith("linux"):
-    ffibuilder.cdef(r"typedef unsigned long int PPMD_pthread_t;")
+    ffibuilder.cdef(r"typedef unsigned long int pthread_t;")
 else:
     pass  # todo
 
