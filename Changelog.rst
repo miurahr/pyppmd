@@ -12,15 +12,21 @@ Added
 
 Changed
 -------
+* Unified API to use Variant H, and Varant I version 2 from simple API.
+  User can provide ``variant`` argument to the constractor. (#59)
+* Allocate PPMD7Decompressor buffer variables from heap(#52) 
 
 Fixed
 -----
+* More robust PPMd8Decompressor by taking thread control variables and buffers from heap,
+  and remove global variables.(#54)
 
 Deprecated
 ----------
 
 Removed
 -------
+* End-mark mode(#62)
 
 Security
 --------
