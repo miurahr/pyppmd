@@ -181,7 +181,6 @@ add_library(
         lib/Ppmd8Enc.c
         lib2/Buffer.c
         lib2/Buffer.h
-        lib2/threading.c
         lib2/threading.h
         lib2/ThreadDecoder.c
         lib2/ThreadDecoder.h
