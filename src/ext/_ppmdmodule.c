@@ -10,6 +10,10 @@
 #include "pythread.h"   /* For Python 3.6 */
 #include "structmember.h"
 
+#if defined(_WIN32) && defined(timezone)
+#undef timezone
+#endif
+
 #include "Ppmd7.h"
 #include "Ppmd8.h"
 

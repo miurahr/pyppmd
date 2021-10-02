@@ -12,10 +12,10 @@
 #define PPMD8_RESULT_ERROR (-2)
 
 typedef struct ppmd_thread_control_s {
-    PPMD_pthread_t handle;
-    PPMD_pthread_mutex_t mutex;
-    PPMD_pthread_cond_t inEmpty;
-    PPMD_pthread_cond_t notEmpty;
+    pthread_t handle;
+    pthread_mutex_t mutex;
+    pthread_cond_t inEmpty;
+    pthread_cond_t notEmpty;
 } ppmd_thread_control_t;
 
 Byte Ppmd_thread_Reader(const void *p);

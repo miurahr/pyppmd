@@ -15,7 +15,6 @@ sources = [
     "lib/Ppmd8Enc.c",
     "lib/Ppmd7Dec.c",
     "lib2/Buffer.c",
-    "lib2/threading.c",
     "lib2/ThreadDecoder.c",
 ]
 _ppmd_extension = Extension("pyppmd._ppmd", sources)
