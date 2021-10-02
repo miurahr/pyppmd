@@ -34,7 +34,7 @@ def test_ppmd8_encoder2():
 def test_ppmd8_decoder1():
     decoder = pyppmd.Ppmd8Decoder(6, 8 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART)
     result = decoder.decode(encoded, -1)
-    result += decoder.decode(b'', -1)
+    result += decoder.decode(b"", -1)
     assert result == source
     # assert decoder.eof and not decoder.needs_input
 
@@ -43,7 +43,7 @@ def test_ppmd8_decoder2():
     decoder = pyppmd.Ppmd8Decoder(6, 8 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART)
     result = decoder.decode(encoded[:20])
     result += decoder.decode(encoded[20:])
-    result += decoder.decode(b'', -1)
+    result += decoder.decode(b"", -1)
     assert result == source
     # assert decoder.eof and not decoder.needs_input
 
