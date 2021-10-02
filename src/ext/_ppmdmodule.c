@@ -452,11 +452,14 @@ Ppmd7Decoder_dealloc(Ppmd7Decoder *self)
     if (self->lock) {
         PyThread_free_lock(self->lock);
     }
-    Ppmd7_Free(self->cPpmd7, &allocator);
-    BufferReader *bufferReader = (BufferReader *)self->rangeDec->Stream;
-    PyMem_Free(bufferReader->inBuffer);
-    PyMem_Free(bufferReader);
-    PyMem_Free(self->blocksOutputBuffer);
+    if (self->cPpmd7 != NULL) {
+        Ppmd7_Free(self->cPpmd7, &allocator);
+        BufferReader *bufferReader = (BufferReader *) self->rangeDec->Stream;
+        PyMem_Free(bufferReader->inBuffer);
+        PyMem_Free(bufferReader);
+        PyMem_Free(self->blocksOutputBuffer);
+        PyMem_Free(self->rangeDec);
+    }
     PyTypeObject *tp = Py_TYPE(self);
     tp->tp_free((PyObject*)self);
     Py_DECREF(tp);
