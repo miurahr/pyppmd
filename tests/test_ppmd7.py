@@ -34,6 +34,8 @@ def test_ppmd7_decoder():
     result = decoder.decode(encoded, 66)
     result += decoder.flush(66 - len(result))
     assert result == data
+    assert decoder.eof
+    assert not decoder.needs_input
 
 
 def test_ppmd7_decoder2():
