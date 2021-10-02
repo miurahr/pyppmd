@@ -186,23 +186,22 @@ if sys.platform.startswith("win32"):
 typedef struct _pthread_cleanup _pthread_cleanup;
 struct _pthread_cleanup
 {
-	void (*func)(void *);
-	void *arg;
-	_pthread_cleanup *next;
+    void (*func)(void *);
+    void *arg;
+    _pthread_cleanup *next;
 };
 struct _pthread_v
 {
-	void *ret_arg;
-	void *(* func)(void *);
-	_pthread_cleanup *clean;
-	HANDLE h;
-	int cancelled;
-	unsigned p_state;
-	int keymax;
-	void **keyval;
-
+    void *ret_arg;
+    void *(* func)(void *);
+    _pthread_cleanup *clean;
+    HANDLE h;
+    int cancelled;
+    unsigned p_state;
+    int keymax;
+    void **keyval;
     // hide it
-	// jmp_buf jb;
+    // jmp_buf jb;
 };
 typedef struct _pthread_v *pthread_t;
     """
