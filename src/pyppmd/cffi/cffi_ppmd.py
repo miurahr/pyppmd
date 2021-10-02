@@ -457,6 +457,8 @@ class Ppmd7Decoder(PpmdBaseDecoder):
         self._unconsumed_in(in_buf, use_input_buffer)
         res = out.finish(out_buf)
         self.lock.release()
+        if self._eof:
+            self._needs_input = False
         return res
 
     def flush(self, length: int) -> bytes:
@@ -487,6 +489,7 @@ class Ppmd7Decoder(PpmdBaseDecoder):
         ffi.release(self.rc)
         self._release()
         self.flushed = True
+        self._needs_input = False
         self.lock.release()
         return res
 
