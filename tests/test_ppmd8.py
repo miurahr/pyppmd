@@ -34,6 +34,7 @@ def test_ppmd8_encoder2():
 def test_ppmd8_decoder1():
     decoder = pyppmd.Ppmd8Decoder(6, 8 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART)
     result = decoder.decode(encoded, -1)
+    result += decoder.decode(b'', -1)
     assert result == source
     # assert decoder.eof and not decoder.needs_input
 
@@ -42,6 +43,7 @@ def test_ppmd8_decoder2():
     decoder = pyppmd.Ppmd8Decoder(6, 8 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART)
     result = decoder.decode(encoded[:20])
     result += decoder.decode(encoded[20:])
+    result += decoder.decode(b'', -1)
     assert result == source
     # assert decoder.eof and not decoder.needs_input
 
@@ -83,7 +85,7 @@ def test_ppmd8_encode_decode(tmp_path, mem_size, restore_method):
                 m2.update(res)
                 out.write(res)
                 length += len(res)
-                if len(data) < READ_BLOCKSIZE:
+                if len(data) == 0:
                     break
                 data = target.read(READ_BLOCKSIZE)
     assert length == 1237262

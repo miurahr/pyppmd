@@ -822,7 +822,6 @@ static int pthread_setcanceltype(int type, int *oldtype)
 static int pthread_create_wrapper(void *args)
 {
 	struct _pthread_v *tv = (struct _pthread_v *)args;
-	int i, j;
 
 	_pthread_once_raw(&_pthread_tls_once, pthread_tls_init);
 
