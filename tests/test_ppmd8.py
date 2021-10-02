@@ -69,7 +69,7 @@ def test_ppmd8_encode_decode(tmp_path, mem_size, restore_method):
                 length += len(data)
                 target.write(enc.encode(data))
                 data = f.read(READ_BLOCKSIZE)
-            target.write(enc.flush())
+            target.write(enc.flush(endmark=True))
     shash = m.digest()
     m2 = hashlib.sha256()
     assert length == 1237262

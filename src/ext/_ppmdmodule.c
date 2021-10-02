@@ -1102,6 +1102,14 @@ Ppmd7Encoder_flush(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
     OutBuffer out;
     BlocksOutputBuffer buffer;
     BufferWriter writer;
+    static char *kwlist[] = {"endmark", NULL};
+    Bool endmark = False;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                                     "|p:Ppmd7Encoder.flush", kwlist,
+                                     &endmark)) {
+        goto error;
+    }
 
     ACQUIRE_LOCK(self);
     if (self->flushed) {
@@ -1118,6 +1126,9 @@ Ppmd7Encoder_flush(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
     writer.outBuffer = &out;
     rc->Stream = (IByteOut *) &writer;
 
+    if (endmark) {
+        Ppmd7_EncodeSymbol(self->cPpmd7, rc, -1);
+    }
     Ppmd7z_RangeEnc_FlushData(rc);
 
     ret = OutputBuffer_Finish(&buffer, &out);
@@ -1824,6 +1835,14 @@ Ppmd8Encoder_flush(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
     OutBuffer out;
     BlocksOutputBuffer buffer;
     BufferWriter writer;
+    static char *kwlist[] = {"endmark", NULL};
+    Bool endmark = True;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                                     "|p:Ppmd8Encoder.flush", kwlist,
+                                     &endmark)) {
+        goto error;
+    }
 
     ACQUIRE_LOCK(self);
 
@@ -1835,8 +1854,9 @@ Ppmd8Encoder_flush(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
     writer.Write = (void (*)(void *, Byte)) Writer;
     writer.outBuffer = &out;
     self->cPpmd8->Stream.Out = (IByteOut *) &writer;
-
-    Ppmd8_EncodeSymbol(self->cPpmd8, -1);
+    if (endmark) {
+        Ppmd8_EncodeSymbol(self->cPpmd8, -1);
+    }
     Ppmd8_RangeEnc_FlushData(self->cPpmd8);
     ret = OutputBuffer_Finish(&buffer, &out);
 

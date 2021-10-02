@@ -391,13 +391,13 @@ class Ppmd7Encoder(PpmdBaseEncoder):
         self.lock.release()
         return out.finish(out_buf)
 
-    def flush(self) -> bytes:
+    def flush(self, *, endmark=False) -> bytes:
         if self.flushed:
             raise ("Ppmd7Encoder: Double flush error.")
         self.lock.acquire()
         self.flushed = True
         out, out_buf = self._setup_outBuffer()
-        lib.ppmd7_compress_flush(self.rc)
+        lib.ppmd7_compress_flush(self.ppmd, self.rc, endmark)
         res = out.finish(out_buf)
         lib.ppmd7_state_close(self.ppmd, self._allocator)
         ffi.release(self.ppmd)
@@ -513,14 +513,15 @@ class Ppmd8Encoder(PpmdBaseEncoder):
         self.lock.release()
         return out.finish(out_buf)
 
-    def flush(self) -> bytes:
+    def flush(self, endmark=True) -> bytes:
         self.lock.acquire()
         if self.flushed:
             self.lock.release()
             return
         self.flushed = True
         out, out_buf = self._setup_outBuffer()
-        lib.Ppmd8_EncodeSymbol(self.ppmd, -1)
+        if endmark:
+            lib.Ppmd8_EncodeSymbol(self.ppmd, -1)
         lib.Ppmd8_RangeEnc_FlushData(self.ppmd)
         res = out.finish(out_buf)
         lib.Ppmd8_Free(self.ppmd, self._allocator)
