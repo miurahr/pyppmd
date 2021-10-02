@@ -337,8 +337,16 @@ int ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc, OutBuffer *out_buf, InBuff
     Byte* c = (Byte *) out_buf->dst + out_buf->pos;
     const size_t out_start = out_buf->pos;
     const Byte* out_end = (Byte *)out_buf->dst + length;
+    int result;
     while (c < out_end) {
-        *c++ = Ppmd7_DecodeSymbol(p, rc);
+         result = Ppmd7_DecodeSymbol(p, rc);
+         if (result == -1) {
+             break;  // detect eof
+         } else if (result == -2) {
+             return -2;  // error
+         } else {
+             *c++ = result;
+         }
         if (in_buf->pos == in_buf->size) {
             break;
         }

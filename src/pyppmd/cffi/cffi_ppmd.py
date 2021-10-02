@@ -424,6 +424,8 @@ class Ppmd7Decoder(PpmdBaseDecoder):
             self.ppmd = ffi.new("CPpmd7 *")
             self.rc = ffi.new("CPpmd7z_RangeDec *")
             self.flushed = False
+            self._eof = False
+            self._needs_input = True
             lib.ppmd7_state_init(self.ppmd, max_order, mem_size, self._allocator)
         else:
             raise ValueError("PPMd wrong parameters.")
@@ -441,6 +443,12 @@ class Ppmd7Decoder(PpmdBaseDecoder):
         while remaining > 0:
             size = min(out_buf.size, remaining)
             out_size = lib.ppmd7_decompress(self.ppmd, self.rc, out_buf, in_buf, size)
+            if out_size == -2:
+                self.lock.release()
+                raise PpmdError("DecodeError.")
+            if self.rc.Code == 0:
+                self._eof = True
+                break
             if out_buf.pos == out_buf.size:
                 out.grow(out_buf)
             elif in_buf.pos == in_buf.size:

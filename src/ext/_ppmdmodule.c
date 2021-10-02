@@ -323,6 +323,16 @@ typedef struct {
 
     /* Output Buffer */
     BlocksOutputBuffer *blocksOutputBuffer;
+
+    /* Unused data */
+    PyObject *unused_data;
+
+    /* 0 if decompressor has (or may has) unconsumed input data, 0 or 1. */
+    char needs_input;
+
+    /* 1 when end mark observed */
+    char eof;
+
     OutBuffer *out;
 
     /* __init__ has been called, 0 or 1. */
@@ -562,6 +572,8 @@ Ppmd7Decoder_init(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs)
                 self->out = out;
                 self->rangeDec->Stream = (IByteIn *) bufferReader;
                 self->blocksOutputBuffer = blocksOutputBuffer;
+                self->eof = False;
+                self->needs_input = True;
                 goto success;
             }
             PyMem_Free(self->cPpmd7);
@@ -641,7 +653,7 @@ Ppmd7Decoder_flush(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs) {
         RELEASE_LOCK(self);
         return NULL;
     }
-
+    int result;
     for (int i = 0; i < length; i++) {
         if (self->out->pos == self->out->size) {
             if (OutputBuffer_Grow(buffer, self->out) < 0) {
@@ -649,13 +661,26 @@ Ppmd7Decoder_flush(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs) {
                 goto error;
             }
         }
-        *((Byte *)self->out->dst + self->out->pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
+        result = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
+        if (result == -1) {
+            break;
+        } else if (result == -2) {
+            self->eof = True;
+            PyErr_SetString(PyExc_ValueError, "Decompression failed.");
+            goto error;
+        } else {
+            *((Byte *) self->out->dst + self->out->pos++) = (Byte) result;
+        }
     }
     if (!Ppmd7z_RangeDec_IsFinishedOK(self->rangeDec)) {
         PyErr_SetString(PyExc_ValueError, "Decompression failed.");
         goto error;
+    } else {
+        self->eof = True;
     }
     ret = OutputBuffer_Finish(buffer, self->out);
+    self->eof = True;
+    self->needs_input = False;
     goto success;
 
 error:
@@ -804,7 +829,7 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
     }
     assert(self->inited2 == 1);
 
-    Bool result = True;
+    int result;
     if (data.len  > 0) {
         for (int i = 0; i < length; i++) {
             if (in->pos == in->size) {
@@ -813,18 +838,24 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
             if (out->pos == out->size) {
                 if (OutputBuffer_Grow(buffer, out) < 0) {
                     PyErr_SetString(PyExc_ValueError, "No Memory.");
-                    result = False;
-                    break;
+                    goto error;
                 }
             }
             Py_BEGIN_ALLOW_THREADS
-            *((Byte *)out->dst + out->pos++) = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
+            result = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
             Py_END_ALLOW_THREADS
+            if (result == -1) {
+                self->eof = True;
+                break;
+            } else if (result == -2) {
+                PyErr_SetString(PyExc_ValueError, "Failed to decode PPMd7.");
+                self->eof = True;
+                goto error;
+            } else {
+                *((Byte *)out->dst + out->pos++) = result;
+            }
         }
     }
-
-    if (!result)
-        goto error;
 
     ret = OutputBuffer_Finish(buffer, out);
 
@@ -835,6 +866,7 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
             self->in_begin = 0;
             self->in_end = 0;
         }
+        self->needs_input = True;
     } else {
         const size_t data_size = in->size - in->pos;
 
@@ -866,6 +898,10 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
             /* Use input buffer */
             self->in_begin += in->pos;
         }
+        self->needs_input = False;
+    }
+    if (self->eof) {
+        self->needs_input = False;
     }
     goto success;
 
@@ -903,11 +939,25 @@ static PyMethodDef Ppmd7Decoder_methods[] = {
         {NULL, NULL, 0, NULL}
 };
 
+PyDoc_STRVAR(Ppmd7Decoder_eof__doc, "True if the end-of-stream marker has been reached.");
+PyDoc_STRVAR(Ppmd7Decoder_needs_input_doc, "True if more input is needed before more decompressed data can be produced.");
+
+static PyMemberDef Ppmd7Decoder_members[] = {
+        {"eof", T_BOOL, offsetof(Ppmd7Decoder, eof),
+                READONLY, Ppmd7Decoder_eof__doc},
+
+        {"needs_input", T_BOOL, offsetof(Ppmd7Decoder, needs_input),
+                READONLY, Ppmd7Decoder_needs_input_doc},
+
+        {NULL}
+};
+
 static PyType_Slot Ppmd7Decoder_slots[] = {
     {Py_tp_new, Ppmd7Decoder_new},
     {Py_tp_dealloc, Ppmd7Decoder_dealloc},
     {Py_tp_init, Ppmd7Decoder_init},
     {Py_tp_methods, Ppmd7Decoder_methods},
+    {Py_tp_members, Ppmd7Decoder_members},
     {Py_tp_doc, (char *)Ppmd7Decoder_doc},
     {0, 0}
 };
@@ -1508,19 +1558,15 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
                 break; // error or eof
             }
             if (result == 0) {
-                // input empty or no output data
-                if (in->pos == in->size) {
-                    break;
-                }
+                break;  // no output data
             }
             if ((remains -= result) == 0) {
-                 break;
+                 break;  // filled expected
              }
             if (out->pos == out->size) {
                 if (OutputBuffer_Grow(self->blocksOutputBuffer, out) < 0) {
                     PyErr_SetString(PyExc_ValueError, "L616: Unknown status");
-                    result = -2;
-                    break;
+                    goto error;
                 }
             }
         }
