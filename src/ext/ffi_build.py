@@ -220,7 +220,6 @@ typedef struct ppmd_info_s {
     InBuffer *in;
     OutBuffer *out;
     int max_length;
-    Bool finished;
     int result;
     void *t;
 } ppmd_info;

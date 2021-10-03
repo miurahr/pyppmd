@@ -132,7 +132,6 @@ Ppmd8T_decode_run(void *p) {
 
 int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *threadInfo) {
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
-    BufferReader *reader = (BufferReader *) cPpmd8->Stream.In;
     pthread_mutex_lock(&tc->mutex);
     threadInfo->cPpmd = (void *) cPpmd8;
     threadInfo->max_length = max_length;
