@@ -7,26 +7,35 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+`v0.17.0`_
+==========
+
 Added
 -----
+* unified API for variation H and I
+* ppmd7, ppmd8: flag to control endmark(-1) addtions.
+  defaults:  ppmd7 without endmark, ppmd8: with endmark.
 
 Changed
 -------
 * Unified API to use Variant H, and Varant I version 2 from simple API.
   User can provide ``variant`` argument to the constractor. (#59)
-* Allocate PPMD7Decompressor buffer variables from heap(#52) 
+* Allocate PPMD7Decompressor buffer variables from heap(#52)
+* Replace pthread wrapper library to the verison of one made by Lockless. Inc. (#67)
+* Refactoring internal variable namees, move thread shared variable into ThreadControl structure.
 
 Fixed
 -----
 * More robust PPMd8Decompressor by taking thread control variables and buffers from heap,
   and remove global variables.(#54)
+* PPMD8Decoder: Deadlock on Windows(#67 and more)
 
 Deprecated
 ----------
 
 Removed
 -------
-* End-mark mode(#62)
+* End-mark (0x01 0x00) mode(#62)
 
 Security
 --------
@@ -203,7 +212,8 @@ v0.10.0
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.16.1...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.17.0...HEAD
+.. _v0.17.0: https://github.com/miurahr/py7zr/compare/v0.16.1...v0.17.0
 .. _v0.16.1: https://github.com/miurahr/py7zr/compare/v0.16.0...v0.16.1
 .. _v0.16.0: https://github.com/miurahr/py7zr/compare/v0.15.2...v0.16.0
 .. _v0.15.2: https://github.com/miurahr/py7zr/compare/v0.15.1...v0.15.2
