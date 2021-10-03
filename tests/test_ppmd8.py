@@ -54,7 +54,7 @@ def test_ppmd8_decoder2():
     [
         (8 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART),
         (8 << 20, pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF),
-        # (1 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART),
+        (1 << 20, pyppmd.PPMD8_RESTORE_METHOD_RESTART),
         (1 << 20, pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF),
     ],
 )
