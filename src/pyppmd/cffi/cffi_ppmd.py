@@ -580,7 +580,7 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         self.lock.acquire()
         in_buf, use_input_buffer = self._setup_inBuffer(data)
         out, out_buf = self._setup_outBuffer()
-        self.threadInfo.out = out_buf;
+        self.threadInfo.out = out_buf
         if not self._inited:
             self._inited = True
             self._init2()
