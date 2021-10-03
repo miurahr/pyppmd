@@ -294,14 +294,16 @@ source = r"""
 #include "Ppmd8.h"
 #include "Buffer.h"
 #include "ThreadDecoder.h"
-#include "threading.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #ifdef _WIN32
+#include "win_pthreads.h"
 #define getc_unlocked fgetc
 #define putc_unlocked fputc
+#else
+#include <pthread.h>
 #endif
 
 void ppmd7_state_init(CPpmd7 *p, unsigned int maxOrder, unsigned int memSize, IAlloc *allocator)

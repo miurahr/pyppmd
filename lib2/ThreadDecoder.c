@@ -88,10 +88,12 @@ static void *
 Ppmd8T_decode_run(void *p) {
     ppmd_info *threadInfo = (ppmd_info *)p;
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
+    pthread_mutex_lock(&tc->mutex);
     threadInfo->finished = False;
     CPpmd8 * cPpmd8 = (CPpmd8 *)(threadInfo->cPpmd);
     BufferReader *reader = (BufferReader *) cPpmd8->Stream.In;
     int max_length = threadInfo->max_length;
+    pthread_mutex_unlock(&tc->mutex);
 
     int i = 0;
     int result;
@@ -127,19 +129,17 @@ Ppmd8T_decode_run(void *p) {
 
 int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *threadInfo) {
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
-    pthread_mutex_lock(&tc->mutex);
     BufferReader *reader = (BufferReader *) cPpmd8->Stream.In;
+    pthread_mutex_lock(&tc->mutex);
     threadInfo->cPpmd = (void *) cPpmd8;
     threadInfo->max_length = max_length;
-    threadInfo->out = out;
     threadInfo->result = 0;
     Bool exited = threadInfo->finished;
-    threadInfo->finished = False;
     pthread_mutex_unlock(&tc->mutex);
 
     if (exited) {
-        pthread_create(&(tc->handle), NULL, Ppmd8T_decode_run, threadInfo);
         pthread_mutex_lock(&tc->mutex);
+        pthread_create(&(tc->handle), NULL, Ppmd8T_decode_run, threadInfo);
         pthread_mutex_unlock(&tc->mutex);
     } else {
         pthread_mutex_lock(&tc->mutex);
@@ -147,9 +147,9 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *thr
             pthread_cond_broadcast(&tc->notEmpty);
             pthread_mutex_unlock(&tc->mutex);
         } else {
-            pthread_mutex_unlock(&tc->mutex);
             pthread_cancel(tc->handle);
             threadInfo->finished = True;
+            pthread_mutex_unlock(&tc->mutex);
             return PPMD_RESULT_ERROR;  // error
         }
     }
