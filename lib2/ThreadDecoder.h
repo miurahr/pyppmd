@@ -21,6 +21,8 @@ typedef struct ppmd_thread_control_s {
     pthread_mutex_t mutex;
     pthread_cond_t inEmpty;
     pthread_cond_t notEmpty;
+    Bool empty;
+    Bool finished;
 } ppmd_thread_control_t;
 
 Byte Ppmd_thread_Reader(const void *p);

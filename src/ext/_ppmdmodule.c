@@ -1548,7 +1548,7 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
     assert(in->pos == 0);
 
     if (OutputBuffer_InitAndGrow(self->blocksOutputBuffer, out, length) < 0) {
-        PyErr_SetString(PyExc_ValueError, "No Memory.");
+        PyErr_SetString(PyExc_ValueError, "L1551: No Memory.");
         RELEASE_LOCK(self);
         return NULL;
     }
@@ -1561,8 +1561,6 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
             return NULL;
         }
         self->inited2++;
-        // first time to call `decode`
-        threadInfo->finished = True;
     }
 
     if (data.len  > 0) {
@@ -1583,7 +1581,7 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
              }
             if (out->pos == out->size) {
                 if (OutputBuffer_Grow(self->blocksOutputBuffer, out) < 0) {
-                    PyErr_SetString(PyExc_ValueError, "L616: Unknown status");
+                    PyErr_SetString(PyExc_ValueError, "L1586: Unknown status");
                     goto error;
                 }
             }
@@ -1592,7 +1590,7 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
             self->eof = True;
         }
         if (result == -2) {
-            PyErr_SetString(PyExc_ValueError, "Corrupted input data.");
+            PyErr_SetString(PyExc_ValueError, "L1595: Corrupted input data.");
             goto error;
         }
     }

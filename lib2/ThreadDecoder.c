@@ -63,10 +63,11 @@ Byte Ppmd_thread_Reader(const void *p) {
     InBuffer *inBuffer = threadInfo->in;
     if (inBuffer->pos == inBuffer->size) {
         pthread_mutex_lock(&tc->mutex);
+        tc->empty = True;
         pthread_cond_broadcast(&tc->inEmpty);
-        while (inBuffer->pos == inBuffer->size) {
+        do {
             pthread_cond_wait(&tc->notEmpty, &tc->mutex);
-        }
+        } while (tc->empty);
         pthread_mutex_unlock(&tc->mutex);
     }
     return *((const Byte *)inBuffer->src + inBuffer->pos++);
@@ -79,6 +80,8 @@ Bool Ppmd_thread_decode_init(ppmd_info *threadInfo, IAllocPtr allocator) {
         pthread_mutex_init(&threadControl->mutex, NULL);
         pthread_cond_init(&threadControl->inEmpty, NULL);
         pthread_cond_init(&threadControl->notEmpty, NULL);
+        threadControl->empty = False;
+        threadControl->finished = True;
         return True;
     }
     return False;
@@ -89,7 +92,7 @@ Ppmd8T_decode_run(void *p) {
     ppmd_info *threadInfo = (ppmd_info *)p;
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
     pthread_mutex_lock(&tc->mutex);
-    threadInfo->finished = False;
+    tc->finished = False;
     CPpmd8 * cPpmd8 = (CPpmd8 *)(threadInfo->cPpmd);
     BufferReader *reader = (BufferReader *) cPpmd8->Stream.In;
     int max_length = threadInfo->max_length;
@@ -122,7 +125,7 @@ Ppmd8T_decode_run(void *p) {
     exit:
     pthread_mutex_lock(&tc->mutex);
     threadInfo->result = result;
-    threadInfo->finished = True;
+    tc->finished = True;
     pthread_mutex_unlock(&tc->mutex);
     return NULL;
 }
@@ -134,53 +137,46 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *thr
     threadInfo->cPpmd = (void *) cPpmd8;
     threadInfo->max_length = max_length;
     threadInfo->result = 0;
-    Bool exited = threadInfo->finished;
+    Bool exited = tc->finished;
     pthread_mutex_unlock(&tc->mutex);
+    unsigned long wait = 50000;
 
     if (exited) {
         pthread_mutex_lock(&tc->mutex);
+        tc->finished = False;
         pthread_create(&(tc->handle), NULL, Ppmd8T_decode_run, threadInfo);
         pthread_mutex_unlock(&tc->mutex);
     } else {
         pthread_mutex_lock(&tc->mutex);
-        if (reader->inBuffer->pos < reader->inBuffer->size) {
-            pthread_cond_broadcast(&tc->notEmpty);
-            pthread_mutex_unlock(&tc->mutex);
-        } else {
-            pthread_cancel(tc->handle);
-            threadInfo->finished = True;
-            pthread_mutex_unlock(&tc->mutex);
-            return PPMD_RESULT_ERROR;  // error
-        }
+        tc->empty = False;
+        pthread_cond_broadcast(&tc->notEmpty);
+        pthread_mutex_unlock(&tc->mutex);
     }
     pthread_mutex_lock(&tc->mutex);
-    unsigned long wait = 50000;
     while(True) {
         ppmd_timedwait(&tc->inEmpty, &tc->mutex, wait);
-        if (threadInfo->finished) {
-            // when finished, the input buffer will be empty,
-            // so check finished status before checking buffer.
-            goto finished;
-        }
-        if (reader->inBuffer->pos == reader->inBuffer->size) {
+        if (tc->empty) {
+            pthread_mutex_unlock(&tc->mutex);
             goto inempty;
+        }
+        if (tc->finished) {
+            pthread_mutex_unlock(&tc->mutex);
+            goto finished;
         }
     }
 finished:
-    pthread_mutex_unlock(&tc->mutex);
     pthread_join(tc->handle, NULL);
     return threadInfo->result;
 
 inempty:
-    pthread_mutex_unlock(&tc->mutex);
     return 0;
 }
 
 void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *threadInfo, IAllocPtr allocator) {
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
-    if (!(threadInfo->finished)) {
+    if (!(tc->finished)) {
         pthread_cancel(tc->handle);
-        threadInfo->finished = True;
+        tc->finished = True;
     }
     IAlloc_Free(allocator, tc);
     Ppmd8_Free(cPpmd8, allocator);
