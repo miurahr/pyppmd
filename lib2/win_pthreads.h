@@ -190,7 +190,7 @@ struct _pthread_v
 	HANDLE h;
 	int cancelled;
 	unsigned p_state;
-	int keymax;
+	unsigned keymax;
 	void **keyval;
 
 	jmp_buf jb;
@@ -239,8 +239,8 @@ DWORD _pthread_tls;
 
 /* Pthread Key */
 pthread_rwlock_t _pthread_key_lock;
-long _pthread_key_max;
-long _pthread_key_sch;
+unsigned long _pthread_key_max;
+unsigned long _pthread_key_sch;
 void (**_pthread_key_dest)(void *);
 
 #define pthread_cleanup_push(F, A)\
@@ -414,7 +414,7 @@ static int pthread_rwlock_unlock(pthread_rwlock_t *l);
 
 static void _pthread_cleanup_dest(pthread_t t)
 {
-	int i, j;
+	unsigned i, j;
 
 	for (j = 0; j < PTHREAD_DESTRUCTOR_ITERATIONS; j++)
 	{
@@ -538,7 +538,7 @@ static unsigned long long _pthread_time_in_ms(void)
 {
 	struct __timeb64 tb;
 
-	_ftime64(&tb);
+	_ftime64_s(&tb);
 
 	return tb.time * 1000 + tb.millitm;
 }
@@ -852,7 +852,7 @@ static int pthread_create_wrapper(void *args)
 static int pthread_create(pthread_t *th, pthread_attr_t *attr, void *(* func)(void *), void *arg)
 {
 	struct _pthread_v *tv = (struct _pthread_v *)malloc(sizeof(struct _pthread_v));
-	unsigned ssize = 0;
+	size_t ssize = 0;
 
 	if (!tv) return 1;
 
@@ -877,7 +877,7 @@ static int pthread_create(pthread_t *th, pthread_attr_t *attr, void *(* func)(vo
 	/* Make sure tv->h has value of -1 */
 	_ReadWriteBarrier();
 
-	tv->h = (HANDLE) _beginthreadex(NULL, ssize, pthread_create_wrapper, tv, 0, NULL);
+	tv->h = (HANDLE) _beginthreadex(NULL, (unsigned)ssize, pthread_create_wrapper, tv, 0, NULL);
 
 	/* Failed */
 	if (!tv->h) return 1;
@@ -1027,7 +1027,7 @@ static int pthread_mutex_timedlock(pthread_mutex_t *m, struct timespec *ts)
 		if (ct > t) return ETIMEDOUT;
 
 		/* Wait on semaphore within critical section */
-		WaitForSingleObject(((struct _pthread_crit_t *)m)->sem, t - ct);
+		WaitForSingleObject(((struct _pthread_crit_t *)m)->sem, (DWORD)(t - ct));
 
 		/* Try to grab lock */
 		if (!pthread_mutex_trylock(m)) return 0;
@@ -1142,7 +1142,7 @@ static int pthread_barrierattr_getpshared(void **attr, int *s)
 
 static int pthread_key_create(pthread_key_t *key, void (* dest)(void *))
 {
-	int i;
+	unsigned long i;
 	long nmax;
 	void (**d)(void *);
 
@@ -1367,7 +1367,7 @@ static int pthread_cond_timedwait(pthread_cond_t *c, pthread_mutex_t *m, struct 
 
 	pthread_testcancel();
 
-	if (!SleepConditionVariableCS(c, m, tm)) return ETIMEDOUT;
+	if (!SleepConditionVariableCS(c, m, (DWORD)tm)) return ETIMEDOUT;
 
 	/* We can have a spurious wakeup after the timeout */
 	if (!_pthread_rel_time_in_ms(t)) return ETIMEDOUT;

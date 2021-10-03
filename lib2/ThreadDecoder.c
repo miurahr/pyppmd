@@ -51,10 +51,7 @@ int ppmd_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, unsigned long n
     if (cond == NULL || mutex == NULL ) {
         return 1;
     }
-
 	if (!SleepConditionVariableCS(cond, mutex, nsec_to_ms(nsec))) return ETIMEDOUT;
-	/* We can have a spurious wakeup after the timeout */
-	if (!_pthread_rel_time_in_ms(mutex)) return ETIMEDOUT;
 	return 0;
 }
 #endif
@@ -153,7 +150,7 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *thr
             pthread_mutex_unlock(&tc->mutex);
             pthread_cancel(tc->handle);
             threadInfo->finished = True;
-            return PPMD8_RESULT_ERROR;  // error
+            return PPMD_RESULT_ERROR;  // error
         }
     }
     pthread_mutex_lock(&tc->mutex);
