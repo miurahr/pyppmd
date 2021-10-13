@@ -49,7 +49,7 @@ norecursedirs = [".git", "_build", "tmp", ".eggs"]
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = check, py{36,37,38,39}, pypy3, docs, coveralls
+envlist = check, py{36,37,38,39,310}, pypy3, docs, coveralls
 
 [testenv]
 passenv = TRAVIS TRAVIS_* APPVEYOR APPVEYOR_* GITHUB_* PYTEST_ADDOPTS COVERALLS_*
@@ -78,5 +78,6 @@ python =
     3.7: py37
     3.8: py38, check, docs
     3.9: py39
+    3.10: py310
     pypy-3: pypy3
 """
