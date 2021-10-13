@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+`v0.17.1`_
+==========
+
+Added
+-----
+* Wheels for python 3.10
+
 `v0.17.0`_
 ==========
 
@@ -212,7 +219,8 @@ v0.10.0
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.17.0...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.17.1...HEAD
+.. _v0.17.1: https://github.com/miurahr/py7zr/compare/v0.17.0...v0.17.1
 .. _v0.17.0: https://github.com/miurahr/py7zr/compare/v0.16.1...v0.17.0
 .. _v0.16.1: https://github.com/miurahr/py7zr/compare/v0.16.0...v0.16.1
 .. _v0.16.0: https://github.com/miurahr/py7zr/compare/v0.15.2...v0.16.0
