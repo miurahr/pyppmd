@@ -10,7 +10,7 @@ on:
       - v*
 
 env:
-  CIBW_BUILD: "cp36-* cp37-* cp38-* cp39-* pp36-* pp37-*"
+  CIBW_BUILD: "cp36-* cp37-* cp38-* cp39-* cp310-* pp36-* pp37-*"
 
 jobs:
   build_wheels:
