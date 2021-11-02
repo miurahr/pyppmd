@@ -82,17 +82,21 @@ jobs:
           update: true
           install: >-
             base-devel
+            mingw-w64-x86_64-python
+            mingw-w64-x86_64-python-pip
+            mingw-w64-x86_64-gcc
             git
-            python
-            python-pip
       - name: Checkout 🛎️
         uses: actions/checkout@v2
         with:
           fetch-depth: 20
-      - name: Install dependencies
+      - name: Install python tox
         run: |
           pip install -U tox
-          python -m tox -e py39
+      - name: Run test
+        run: |
+          pip install -U tox
+           python -m tox -e py39
         env:
           PYTEST_ADDOPTS: "--benchmark-skip"
 
