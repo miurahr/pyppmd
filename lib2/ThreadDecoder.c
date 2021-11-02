@@ -9,7 +9,7 @@
 #include <mach/mach.h>
 #endif
 
-#ifndef _WIN32
+#ifndef _MSC_VER
 int ppmd_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, unsigned long nsec) {
     //https://gist.github.com/jbenet/1087739
     struct timespec abstime;

@@ -70,6 +70,36 @@ jobs:
           env: |  # YAML, but pipe character is necessary
             PYTEST_ADDOPTS: "--benchmark-skip"
 
+  test_on_msys2_mingw:
+   name: Test on Mingw32/Windows
+   runs-on: windows-2022
+   defaults:
+     run:
+       shell: msys2 {0}
+   steps:
+      - uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >-
+            base-devel
+            mingw-w64-x86_64-python
+            mingw-w64-x86_64-python-pip
+            mingw-w64-x86_64-gcc
+            git
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 20
+      - name: Install python tox
+        run: |
+          pip install -U tox
+      - name: Run test
+        run: |
+          pip install -U tox
+           python -m tox -e py39
+        env:
+          PYTEST_ADDOPTS: "--benchmark-skip"
+
   finish:
     name: Indicate completion to coveralls.io
     runs-on: ubuntu-latest
@@ -77,6 +107,7 @@ jobs:
     needs:
       - build
       - test_on_aarch64
+      - test_on_msys2_mingw
     steps:
       - name: Tell Coveralls that the parallel build is finished
         run: |
