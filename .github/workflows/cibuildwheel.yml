@@ -9,24 +9,13 @@ on:
     tags:
       - v*
 
-env:
-  CIBW_BUILD: "cp36-* cp37-* cp38-* cp39-* cp310-* pp36-* pp37-*"
-
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.platform }}
     runs-on: ${{ matrix.platform }}
-
     strategy:
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
-
-    env:
-      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-      CIBW_MANYLINUX_I686_IMAGE: manylinux2014
-      CIBW_ARCHS_LINUX: "auto aarch64"
-      CIBW_ARCHS_MACOS: "x86_64 arm64"
-
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v2
