@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+`v0.17.2`_
+==========
+
+Fixed
+-----
+* Build on MingW/MSYS2(#68,#69)
+
 `v0.17.1`_
 ==========
 
