@@ -7,6 +7,14 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+Changed
+-------
+* Bump versions
+  - CI: pypa/ciwheelbuild@2.2.2
+  - CI: run-on-arch@2.1.1
+  - CI: actions/stale@4
+* CI: exclude pypy on windows
+
 `v0.17.2`_
 ==========
 
