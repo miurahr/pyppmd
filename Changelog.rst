@@ -7,17 +7,8 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
-Changed
--------
-* Bump versions
-  - CI: pypa/ciwheelbuild@2.2.2
-  - CI: run-on-arch@2.1.1
-  - CI: actions/stale@4
-* CI: exclude pypy on windows
-
-`v0.17.2`_
+`v0.17.3`_
 ==========
-
 Fixed
 -----
 * Build on MingW/MSYS2(#68,#69)
@@ -30,6 +21,14 @@ Changed
 -------
 * CI: use pypa/ciwheelbuild(#70)
 * CI: add dependabot(#70)
+* Bump versions
+  - CI: pypa/ciwheelbuild@2.2.2
+  - CI: run-on-arch@2.1.1
+  - CI: actions/stale@4
+* CI: exclude pypy on windows
+* CI: exclude cp310-macos because python 3.10 for macos is superceded
+* CI: publish musllinux wheel
+* CI: improve cibuildwheel performance
 
 `v0.17.1`_
 ==========
@@ -243,8 +242,8 @@ v0.10.0
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.17.2...HEAD
-.. _v0.17.2: https://github.com/miurahr/py7zr/compare/v0.17.1...v0.17.2
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.17.3...HEAD
+.. _v0.17.3: https://github.com/miurahr/py7zr/compare/v0.17.1...v0.17.3
 .. _v0.17.1: https://github.com/miurahr/py7zr/compare/v0.17.0...v0.17.1
 .. _v0.17.0: https://github.com/miurahr/py7zr/compare/v0.16.1...v0.17.0
 .. _v0.16.1: https://github.com/miurahr/py7zr/compare/v0.16.0...v0.16.1
