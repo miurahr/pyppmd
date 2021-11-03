@@ -14,6 +14,15 @@ Fixed
 -----
 * Build on MingW/MSYS2(#68,#69)
 
+Added
+-----
+* Test on Python 3.10.0, PyPY-3.6 and PyPy-3.7 (#71)
+
+Changed
+-------
+* CI: use pypa/ciwheelbuild(#70)
+* CI: add dependabot(#70)
+
 `v0.17.1`_
 ==========
 
@@ -226,7 +235,8 @@ v0.10.0
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.17.1...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.17.2...HEAD
+.. _v0.17.2: https://github.com/miurahr/py7zr/compare/v0.17.1...v0.17.2
 .. _v0.17.1: https://github.com/miurahr/py7zr/compare/v0.17.0...v0.17.1
 .. _v0.17.0: https://github.com/miurahr/py7zr/compare/v0.16.1...v0.17.0
 .. _v0.16.1: https://github.com/miurahr/py7zr/compare/v0.16.0...v0.16.1
