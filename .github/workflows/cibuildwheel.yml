@@ -38,23 +38,17 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
-
       - name: Set up QEMU
         if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v1
         with:
           platforms: arm64
-
-      - name: Install cibuildwheel & build wheels
-        run: |
-          python -m pip install -U pip
-          python -m pip install -U cibuildwheel
-          python -m cibuildwheel --output-dir wheelhouse
-
-      # Should upload:
-      #  cp*manylinux2014_x86_64
-      #  cp*manylinux1_i686
-      #  pp*manylinux1_x86_64
+      - name: Update pip
+        run: python -m pip install -U pip
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v1.12.0
+        with:
+          output-dir: wheelhouse
       - name: Upload wheels
         uses: actions/upload-artifact@v2
         with:
@@ -83,13 +77,14 @@ jobs:
         run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Set up Python 🐍
         uses: actions/setup-python@v2
-      - name: Build source distribution & wheels
-        run: |
-          python setup.py sdist --formats=gztar
-          python -m pip install -U pip
-          python -m pip install -U cibuildwheel
-          python -m cibuildwheel --output-dir wheelhouse
-
+      - name: Update pip
+        run: python -m pip install -U pip
+      - name: Build source distribution
+        run: python setup.py sdist --formats=gztar
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v1.12.0
+        with:
+          output-dir: wheelhouse
       - name: Upload source distribution
         uses: actions/upload-artifact@v2
         with:
