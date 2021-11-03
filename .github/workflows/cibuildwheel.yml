@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CIBW_ARCHS_LINUX: "aarch64"
-      CIBW_SKIP: "*-muslinux*"
+      CIBW_SKIP: "*-musllinux*"
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v2
