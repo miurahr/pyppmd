@@ -48,6 +48,19 @@ def test_ppmd8_decoder2():
     # assert decoder.eof and not decoder.needs_input
 
 
+def test_ppmd8_encode_decode_basic():
+    obj = b"\xa5\xb6\xa2\xa5"
+    max_order = 3
+    mem_size = 2048
+    enc = pyppmd.Ppmd8Encoder(max_order=max_order, mem_size=mem_size, restore_method=pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF)
+    length = len(obj)
+    compressed = enc.encode(obj)
+    compressed += enc.flush()
+    dec = pyppmd.Ppmd8Decoder(max_order=max_order, mem_size=mem_size, restore_method=pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF)
+    result = dec.decode(compressed, length)
+    assert result == obj
+
+
 # test mem_size less than original file size as well
 @pytest.mark.parametrize(
     "mem_size, restore_method",

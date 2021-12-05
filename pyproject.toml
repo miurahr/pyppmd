@@ -1,9 +1,77 @@
 [project]
 requires-python = ">=3.6"
+name = "pyppmd"
+description = "PPMd compression/decompression library"
+readme = "README.rst"
+long_description = {file = "README.rst"}
+long_description_content_type = "text/x-rst"
+keywords = ["ppmd", "7-zip", "compression"]
+license = {file = "LICENSE.rst"}
+authors = [
+    {email = "miurahar@linux.com"},
+    {name = "Hirohsi Miura"}
+]
+classifiers = [
+      "Development Status :: 4 - Beta",
+      "License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)",
+      "Operating System :: MacOS :: MacOS X",
+      "Operating System :: Microsoft :: Windows",
+      "Operating System :: POSIX",
+      "Operating System :: POSIX :: Linux",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.6",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: Implementation :: CPython",
+      "Programming Language :: Python :: Implementation :: PyPy",
+      "Topic :: Software Development :: Libraries :: Python Modules"
+]
+dependencies = [
+      "setuptools-scm>=6.0.1",
+      "setuptools>=45.0"
+]
 
 [build-system]
 requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.0.1"]
 build-backend = "setuptools.build_meta"
+
+[project.urls]
+homepage = "http://github.com/miurahr/pyppmd"
+documentation = "pyppmd.readthedocs.org"
+repository = "github.com"
+changelog = "github.com/miurahr/pyppmd/blob/master/Changelog.rst"
+
+[project.optional-dependencies]
+test = [
+      "pytest>=6.0",
+      "pytest-benchmark",
+      "pytest-cov",
+      "pytest-timeout",
+      "hypothesis",
+      "coverage[toml]>=5.2"
+]
+check = [
+      "mypy>=0.812",
+      "mypy_extensions>=0.4.3",
+      "check-manifest",
+      "flake8",
+      "flake8-black",
+      "readme-renderer",
+      "pygments",
+      "isort>=5.0.3"
+]
+docs = [
+      "sphinx>=2.3",
+      "sphinx_rtd_theme"
+]
+fuzzer = [
+      "atheris",
+      "hypothesis"
+]
 
 [tools.setuptools_scm]
 local_scheme = "no-local-version"
