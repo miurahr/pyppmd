@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -U pip
-          pip install tox tox-gh-actions coveralls
+          pip install tox tox-gh-actions coverage[toml] coveralls
       - name: Test project with tox
         timeout-minutes: 7
         run: |
