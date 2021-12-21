@@ -96,6 +96,9 @@ jobs:
             mingw-w64-x86_64-python-pip
             mingw-w64-x86_64-gcc
             git
+      - name: Check python files
+        run: |
+          pacman -Fl mingw-w64-x86_64-python
       - name: Checkout 🛎️
         uses: actions/checkout@v2
         with:
@@ -106,7 +109,7 @@ jobs:
       - name: Run test
         run: |
           pip install -U tox
-           python -m tox -e py39
+          python -m tox -e py39
         env:
           PYTEST_ADDOPTS: "--benchmark-skip"
 
