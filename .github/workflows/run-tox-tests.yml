@@ -97,7 +97,7 @@ jobs:
             mingw-w64-x86_64-gcc
             git
       - name: Check python header
-        run: ls -l D:/a/_temp/msys64/mingw64/include/Python.h
+        run: ls -l D:/a/_temp/msys64/mingw64/include/python*/Python.h
       - name: Checkout 🛎️
         uses: actions/checkout@v2
         with:
