@@ -94,22 +94,25 @@ jobs:
             base-devel
             mingw-w64-x86_64-python
             mingw-w64-x86_64-python-pip
+            mingw-w64-x86_64-python-wheel
             mingw-w64-x86_64-gcc
             git
       - name: Check python header
         run: |
           python --version
+          D:/a/_temp/msys64/mingw64/bin/python.exe --version
           ls -l D:/a/_temp/msys64/mingw64/include/python*/Python.h
+          which python
       - name: Checkout 🛎️
         uses: actions/checkout@v2
         with:
           fetch-depth: 20
       - name: Install python tox
         run: |
-          pip install -U tox
+          D:/a/_temp/msys64/mingw64/bin/python -m pip install -U tox
       - name: Run test
         run: |
-          python -m tox -e py39
+          D:/a/_temp/msys64/mingw64/bin/python -m tox -e py39
         env:
           PYTEST_ADDOPTS: "--benchmark-skip"
 
