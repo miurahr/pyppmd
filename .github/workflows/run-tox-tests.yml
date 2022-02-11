@@ -97,7 +97,9 @@ jobs:
             mingw-w64-x86_64-gcc
             git
       - name: Check python header
-        run: ls -l D:/a/_temp/msys64/mingw64/include/python*/Python.h
+        run: |
+          python --version
+          ls -l D:/a/_temp/msys64/mingw64/include/python*/Python.h
       - name: Checkout 🛎️
         uses: actions/checkout@v2
         with:
@@ -107,8 +109,7 @@ jobs:
           pip install -U tox
       - name: Run test
         run: |
-          pip install -U tox
-           python -m tox -e py39
+          python -m tox -e py39
         env:
           PYTEST_ADDOPTS: "--benchmark-skip"
 
