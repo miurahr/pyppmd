@@ -4,7 +4,7 @@ import cffi  # type: ignore  # noqa
 
 
 def is_64bit() -> bool:
-    return sys.maxsize > 2 ** 32
+    return sys.maxsize > 1 << 32
 
 
 ffibuilder = cffi.FFI()
