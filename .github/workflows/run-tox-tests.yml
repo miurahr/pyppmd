@@ -95,6 +95,7 @@ jobs:
             mingw-w64-x86_64-python-pip
             mingw-w64-x86_64-python-wheel
             mingw-w64-x86_64-python-setuptools
+            mingw-w64-x86_64-python-tox
             mingw-w64-x86_64-gcc
             git
       - name: Check python header
@@ -105,9 +106,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 20
-      - name: Install python tox
-        run: |
-          D:/a/_temp/msys64/mingw64/bin/python -m pip install -U tox
       - name: Run test
         run: |
           D:/a/_temp/msys64/mingw64/bin/python -m tox -e py39
