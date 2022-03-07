@@ -27,7 +27,7 @@ jobs:
     name: Test on Python ${{ matrix.python-version }} (${{ matrix.os }})
     steps:
       - name: Checkout 🛎️
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 20
       - name: Set up Python 🐍
@@ -62,7 +62,7 @@ jobs:
         distro: [ubuntu20.04]
     steps:
       - name: Checkout 🛎️
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 20
       - uses: uraimo/run-on-arch-action@v2.1.1
@@ -99,7 +99,7 @@ jobs:
       - name: Check python header
         run: ls -l D:/a/_temp/msys64/mingw64/include/python*/Python.h
       - name: Checkout 🛎️
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 20
       - name: Install python tox
