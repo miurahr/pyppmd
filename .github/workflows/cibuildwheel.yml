@@ -22,7 +22,7 @@ jobs:
       CIBW_SKIP: "cp310-macosx*"
     steps:
       - name: Checkout 🛎️
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 20
       - name: Fetch release tags
@@ -53,7 +53,7 @@ jobs:
       CIBW_SKIP: "*-musllinux*"
     steps:
       - name: Checkout 🛎️
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 20
       - name: Fetch release tags
@@ -92,7 +92,7 @@ jobs:
 
     steps:
       - name: Checkout 🛎️
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 20
       - name: Fetch release tags
