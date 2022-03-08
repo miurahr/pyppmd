@@ -80,3 +80,71 @@ def test_ppmd7_encode_decode(tmp_path, mem_size):
             assert remaining == 0
         thash = m2.digest()
     assert thash == shash
+
+
+chunk_sizes = [
+    189703,
+    198694,
+    189694,
+    189742,
+    189776,
+    189823,
+    189690,
+    189723,
+    189724,
+    189766,
+    189751,
+    189778,
+    189825,
+    189835,
+    189805,
+    189820,
+    189810,
+    189776,
+    189779,
+    189776,
+    189833,
+    189880,
+    189857,
+    189823,
+    189846,
+    189848,
+    189887,
+    189847,
+    189870,
+    189857,
+    189888,
+    189943,
+    189900,
+    189915,
+    189940,
+    189932,
+    189912,
+    189970,
+    189943,
+    189967,
+    189999,
+    189990,
+    189947,
+    189944,
+    189982,
+    189987,
+    189962,
+    189956,
+    189953,
+    189960,
+]
+
+
+def test_ppmd7_decode_chunks():
+    with testdata_path.joinpath("testdata2.ppmd").open("rb") as f:
+        dec = pyppmd.Ppmd7Decoder(6, 16 << 20)
+        for i in range(30):
+            remaining = chunk_sizes[i]
+            result = b""
+            while remaining > 0:
+                data = f.read(READ_BLOCKSIZE)
+                out = dec.decode(data, remaining)
+                remaining -= len(out)
+                result += out
+            assert len(result) == chunk_sizes[i]
