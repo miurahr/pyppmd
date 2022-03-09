@@ -23,6 +23,7 @@ kwargs = {"include_dirs": ["lib", "lib2"], "library_dirs": [], "libraries": [], 
 PLATFORM_MINGW = os.name == "nt" and "GCC" in sys.version
 PLATFORM_PYPY = platform.python_implementation() == "PyPy"
 
+
 def has_option(option):
     if option in sys.argv:
         sys.argv = [s for s in sys.argv if s != option]
