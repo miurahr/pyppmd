@@ -7,6 +7,20 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+`v0.17.4`_
+==========
+Fixed
+-----
+* ppmd7: allow multiple decode without additional input data (#84)
+* ppmd8: test: Fix fuzzer test program (#82)
+
+Changed
+-------
+* CI: bump actions/checkout@v3 (#81)
+* CI: bump actions/setup-python@v3 (#80)
+* CI: bump pypa/cibuildwheel@2.3.1 (#78)
+* Update 32bit detection logic
+
 `v0.17.3`_
 ==========
 Fixed
@@ -242,7 +256,8 @@ v0.10.0
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.17.3...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.17.4...HEAD
+.. _v0.17.4: https://github.com/miurahr/py7zr/compare/v0.17.3...v0.17.4
 .. _v0.17.3: https://github.com/miurahr/py7zr/compare/v0.17.1...v0.17.3
 .. _v0.17.1: https://github.com/miurahr/py7zr/compare/v0.17.0...v0.17.1
 .. _v0.17.0: https://github.com/miurahr/py7zr/compare/v0.16.1...v0.17.0
