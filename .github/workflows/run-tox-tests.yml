@@ -82,6 +82,7 @@ jobs:
 
   test_on_msys2_mingw:
    name: Test on Mingw32/Windows
+   if: ${{ false }}
    runs-on: windows-2022
    defaults:
      run:
