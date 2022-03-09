@@ -837,30 +837,28 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
     assert(self->inited2 == 1);
 
     int result;
-    if (data.len  > 0) {
-        for (int i = 0; i < length; i++) {
-            if (in->pos == in->size) {
-                break;
-            }
-            if (out->pos == out->size) {
-                if (OutputBuffer_Grow(buffer, out) < 0) {
-                    PyErr_SetString(PyExc_ValueError, "No Memory.");
-                    goto error;
-                }
-            }
-            Py_BEGIN_ALLOW_THREADS
-            result = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
-            Py_END_ALLOW_THREADS
-            if (result == PPMD_RESULT_EOF) {
-                self->eof = True;
-                break;
-            } else if (result == PPMD_RESULT_ERROR) {
-                PyErr_SetString(PyExc_ValueError, "Failed to decode PPMd7.");
-                self->eof = True;
+    for (int i = 0; i < length; i++) {
+        if (in->pos == in->size) {
+            break;
+        }
+        if (out->pos == out->size) {
+            if (OutputBuffer_Grow(buffer, out) < 0) {
+                PyErr_SetString(PyExc_ValueError, "No Memory.");
                 goto error;
-            } else {
-                *((Byte *)out->dst + out->pos++) = result;
             }
+        }
+        Py_BEGIN_ALLOW_THREADS
+        result = Ppmd7_DecodeSymbol(self->cPpmd7, self->rangeDec);
+        Py_END_ALLOW_THREADS
+        if (result == PPMD_RESULT_EOF) {
+            self->eof = True;
+            break;
+        } else if (result == PPMD_RESULT_ERROR) {
+            PyErr_SetString(PyExc_ValueError, "Failed to decode PPMd7.");
+            self->eof = True;
+            goto error;
+        } else {
+            *((Byte *)out->dst + out->pos++) = result;
         }
     }
 
