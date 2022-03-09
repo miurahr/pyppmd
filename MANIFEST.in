@@ -19,6 +19,7 @@ recursive-include src py.typed
 recursive-include src *.c
 
 recursive-include tests *.csv
+recursive-include tests *.ppmd
 recursive-include tests *.py
 
 recursive-include utils *.py
