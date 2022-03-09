@@ -11,10 +11,7 @@ testdata = testdata_path.joinpath("10000SalesRecords.csv")
 src_size = testdata.stat().st_size
 READ_BLOCKSIZE = 1048576
 
-targets = [
-    ("PPMd H", 7, 6, 16 << 20),
-    ("PPMd I", 8, 8, 8 << 20),
-]
+targets = [("PPMd H", 7, 6, 16 << 20), ("PPMd I", 8, 8, 8 << 20)]
 
 
 @pytest.mark.benchmark(group="compress")

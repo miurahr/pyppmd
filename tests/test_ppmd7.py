@@ -47,13 +47,7 @@ def test_ppmd7_decoder2():
 
 
 # test mem_size less than original file size as well
-@pytest.mark.parametrize(
-    "mem_size",
-    [
-        (16 << 20),
-        (1 << 20),
-    ],
-)
+@pytest.mark.parametrize("mem_size", [(16 << 20), (1 << 20)])
 def test_ppmd7_encode_decode(tmp_path, mem_size):
     length = 0
     m = hashlib.sha256()

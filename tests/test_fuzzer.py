@@ -39,6 +39,8 @@ def test_ppmd8_fuzzer(obj, max_order, mem_size):
     compressed += enc.flush()
     dec = pyppmd.Ppmd8Decoder(max_order=max_order, mem_size=mem_size, restore_method=pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF)
     result = dec.decode(compressed, length)
+    if len(result) < length:
+        result += dec.decode(b"", length)
     assert result == obj
 
 
