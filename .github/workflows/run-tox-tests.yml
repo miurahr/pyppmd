@@ -120,7 +120,6 @@ jobs:
     needs:
       - build
       - test_on_aarch64
-      - test_on_msys2_mingw
     steps:
       - name: Tell Coveralls that the parallel build is finished
         run: |
