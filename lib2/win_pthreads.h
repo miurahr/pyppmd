@@ -55,7 +55,7 @@
 #define WRAP_CANCELLATION_POINTS true
 
 #include <windows.h>
-
+#include <process.h>    /* _beginthreadex, _endthreadex */
 #include <stdio.h>
 #include <setjmp.h>
 #include <errno.h>
@@ -119,19 +119,6 @@ extern "C" {
 #endif /* _cplusplus */
 
 /* Windows Declarations that are not Included. */
-extern uintptr_t _beginthreadex(
-	void *security,
-	unsigned stack_size,
-	int ( __cdecl *start_address )( void * ),
-	void *arglist,
-	unsigned initflag,
-	unsigned *thrdaddr
-);
-
-extern void _endthreadex(
-	unsigned retval
-);
-
 extern void * _InterlockedCompareExchangePointer (
    void * volatile * Destination,
    void * Exchange,
@@ -819,7 +806,7 @@ static int pthread_setcanceltype(int type, int *oldtype)
 	return 0;
 }
 
-static int pthread_create_wrapper(void *args)
+static int __stdcall pthread_create_wrapper(void *args)
 {
 	struct _pthread_v *tv = (struct _pthread_v *)args;
 
