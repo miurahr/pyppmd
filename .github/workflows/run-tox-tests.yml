@@ -92,8 +92,9 @@ jobs:
           update: true
           install: >-
             base-devel
-            mingw-w64-x86_64-python
-            mingw-w64-x86_64-python-pip
+            mingw-w64-x86_64-python3
+            mingw-w64-x86_64-python3-pip
+            mingw-w64-x86_64-python3-cffi
             mingw-w64-x86_64-gcc
             git
       - name: Check python header

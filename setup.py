@@ -20,6 +20,8 @@ sources = [
 _ppmd_extension = Extension("pyppmd._ppmd", sources)
 kwargs = {"include_dirs": ["lib", "lib2"], "library_dirs": [], "libraries": [], "sources": sources, "define_macros": []}
 
+PLATFORM_MINGW = os.name == "nt" and "GCC" in sys.version
+PLATFORM_PYPY = platform.python_implementation() == "PyPy"
 
 def has_option(option):
     if option in sys.argv:
@@ -29,7 +31,7 @@ def has_option(option):
         return False
 
 
-if has_option("--cffi") or platform.python_implementation() == "PyPy":
+if has_option("--cffi") or PLATFORM_PYPY or PLATFORM_MINGW:
     # packages
     packages = ["pyppmd", "pyppmd.cffi"]
 
