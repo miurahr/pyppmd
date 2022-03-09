@@ -92,13 +92,11 @@ jobs:
           update: true
           install: >-
             base-devel
-            mingw-w64-x86_64-python3
-            mingw-w64-x86_64-python3-pip
-            mingw-w64-x86_64-python3-cffi
+            mingw-w64-x86_64-python
+            mingw-w64-x86_64-python-pip
+            mingw-w64-x86_64-python-cffi
             mingw-w64-x86_64-gcc
             git
-      - name: Check python header
-        run: ls -l D:/a/_temp/msys64/mingw64/include/python*/Python.h
       - name: Checkout 🛎️
         uses: actions/checkout@v3
         with:
