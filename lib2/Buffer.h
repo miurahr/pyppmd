@@ -5,6 +5,7 @@
 #ifndef PYPPMD_BUFFER_H
 #define PYPPMD_BUFFER_H
 
+#include "Ppmd7.h"
 #include "Ppmd8.h"
 
 typedef struct InBuffer_s {
@@ -22,6 +23,7 @@ typedef struct OutBuffer_s {
 typedef struct ppmd_info_s {
     /* hold CPpmd8 or CPpmd7 struct pointer */
     void *cPpmd;
+    void *rc;
     InBuffer *in;
     OutBuffer *out;
     int max_length;
