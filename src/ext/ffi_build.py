@@ -217,6 +217,7 @@ ffibuilder.cdef(
     r"""
 typedef struct ppmd_info_s {
     void *cPpmd;
+    void *rc;
     InBuffer *in;
     OutBuffer *out;
     int max_length;
@@ -225,6 +226,8 @@ typedef struct ppmd_info_s {
 } ppmd_info;
 
 Byte Ppmd_thread_Reader(const void *p);
+int Ppmd7T_decode(CPpmd7 *cPpmd7, CPpmd7z_RangeDec *rc, OutBuffer *out, int max_length, ppmd_info *args);
+void Ppmd7T_Free(CPpmd7 *cPpmd7, ppmd_info *args, IAlloc *allocator);
 int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *args);
 void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *args, IAlloc *allocator);
 """
@@ -255,13 +258,13 @@ typedef struct {
 
 void ppmd7_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize, IAlloc *allocator);
 void ppmd7_state_close(CPpmd7 *ppmd, IAlloc *allocator);
-int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader);
+
 void ppmd7_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *write);
+int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader, ppmd_info *info, IAlloc *allocator);
 
 int ppmd7_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, OutBuffer *out_buf, InBuffer *in_buf);
 void ppmd7_compress_flush(CPpmd7 *p, CPpmd7z_RangeEnc *rc, Bool endmark);
-int ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc, OutBuffer *out_buf, InBuffer *in_buf, size_t length);
-void ppmd7_decompress_flush(CPpmd7 *p, CPpmd7z_RangeDec *rc, OutBuffer *out_buf, InBuffer *in_buf, size_t length);
+int ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc, OutBuffer *out_buf, InBuffer *in_buf, size_t length, ppmd_info *info);
 
 void Ppmd7_Construct(CPpmd7 *p);
 void Ppmd7_Init(CPpmd7 *p, unsigned maxOrder);
@@ -324,11 +327,12 @@ void ppmd7_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *writer)
     Ppmd7z_RangeEnc_Init(rc);
 }
 
-int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader)
+int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader, ppmd_info *info, IAllocPtr allocator)
 {
     reader->Read = (Byte (*)(void *)) Reader;
     rc->Stream = (IByteIn *) reader;
     Bool res = Ppmd7z_RangeDec_Init(rc);
+    Ppmd_thread_decode_init(info, allocator);
     return res;
 }
 
@@ -352,35 +356,10 @@ void ppmd7_compress_flush(CPpmd7 *p, CPpmd7z_RangeEnc *rc, Bool endmark){
     Ppmd7z_RangeEnc_FlushData(rc);
 }
 
-int ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc, OutBuffer *out_buf, InBuffer *in_buf, size_t length) {
-    Byte* c = (Byte *) out_buf->dst + out_buf->pos;
-    const size_t out_start = out_buf->pos;
-    const Byte* out_end = (Byte *)out_buf->dst + length;
-    int result;
-    while (c < out_end) {
-         result = Ppmd7_DecodeSymbol(p, rc);
-         if (result == -1) {
-             break;  // detect eof
-         } else if (result == -2) {
-             return -2;  // error
-         } else {
-             *c++ = result;
-         }
-        if (in_buf->pos == in_buf->size) {
-            break;
-        }
-    }
-    out_buf->pos = c - (Byte *)out_buf->dst;
-    return out_buf->pos - out_start;
-}
-
-void ppmd7_decompress_flush(CPpmd7 *p, CPpmd7z_RangeDec *rc, OutBuffer *out_buf, InBuffer *in_buf, size_t length) {
-    Byte* c = (Byte *) out_buf->dst + out_buf->pos;
-    const Byte* out_end = (Byte *)out_buf->dst + length;
-    while (c < out_end) {
-        *c++ = Ppmd7_DecodeSymbol(p, rc);
-    }
-    out_buf->pos = c - (Byte *)out_buf->dst;
+int ppmd7_decompress(CPpmd7 *ppmd, CPpmd7z_RangeDec *rc, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd_info *info) {
+    info->in = in_buf;
+    info->out = out_buf;
+    return Ppmd7T_decode(ppmd, rc, out_buf, length, info);
 }
 
 void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer)
