@@ -32,7 +32,7 @@ def test_ppmd7_encoder2():
 def test_ppmd7_decoder():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
     result = decoder.decode(encoded, 66)
-    result += decoder.decode(b'', 66 - len(result))
+    result += decoder.decode(b"", 66 - len(result))
     assert result == data
 
 
@@ -40,7 +40,7 @@ def test_ppmd7_decoder2():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
     result = decoder.decode(encoded[:33], 33)
     result += decoder.decode(encoded[33:], 28)
-    result += decoder.decode(b'', 66 - len(result))
+    result += decoder.decode(b"", 66 - len(result))
     assert result == data
 
 
