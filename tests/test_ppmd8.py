@@ -93,6 +93,20 @@ def test_ppmd8_encode_decode(tmp_path, mem_size, restore_method):
     assert thash == shash
 
 
+def test_ppmd8_encode_decode_shortage():
+    txt = "\U0001127f\U00069f6a\U00069f6a"
+    obj = txt.encode("UTF-8")
+    enc = pyppmd.Ppmd8Encoder(3, 2048)
+    data = enc.encode(obj)
+    data += enc.flush()
+    length = len(obj)
+    dec = pyppmd.Ppmd8Decoder(3, 2048)
+    res = dec.decode(data, length)
+    if len(res) < length:
+        res += dec.decode(b"\0", length - len(res))
+    assert obj == res
+
+
 def test_ppmdcompress():
     compressor = pyppmd.PpmdCompressor(6, 8 << 20, restore_method=pyppmd.PPMD8_RESTORE_METHOD_RESTART, variant="I")
     result = compressor.compress(source)
