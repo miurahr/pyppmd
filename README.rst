@@ -36,17 +36,39 @@ Development status
 
 A development status is considered as ``Beta``.
 
+Extra input byte
+----------------
+
+``PPMd`` algorithm and implementation is designed to use ``Extra`` input byte.
+The encoder will omit a last null (b"\0") byte when last byte is b"\0".
+You may need to provide an extra null byte when you don't get expected size of
+extracted data.
+
+You can do like as:
+
+.. code-block::
+
+    dec = pyppmd.Ppmd7Decoder(max_order=6, mem_size=16 << 10)
+    result = dec.decode(compressed, length)
+    if len(result) < length:
+        if dec.needs_input:
+            # ppmd need an extra null byte
+            result += dec.decode(b"\0", length - len(result))
+        else:
+            result += dec.decode(b"", length - len(result))
+
+
 WARNING
 -------
 
-* There is several known issues for PPMd8 Decoder that sometimes break resulted output,
-  wrong EOF status detection, and deadlock when setting some parameter combination.
-
+* There is a known issues for Decoder that sometimes failed with access violation error
+  on 32bit python on Windows.
+* It is recommended to use PyPPMd on 64bit python.
 
 Copyright and License
 ---------------------
 
-Copyright (C) 2020-2021 Hiroshi Miura
+Copyright (C) 2020-2022 Hiroshi Miura
 
 Copyright (C) 2020-2021 Ma Lin
 
