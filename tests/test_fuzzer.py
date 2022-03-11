@@ -22,7 +22,12 @@ def test_ppmd7_fuzzer(obj, max_order, mem_size):
     compressed += enc.flush()
     dec = pyppmd.Ppmd7Decoder(max_order=max_order, mem_size=mem_size)
     result = dec.decode(compressed, length)
-    result += dec.flush(length - len(result))
+    if len(result) < length:
+        if dec.needs_input:
+            # ppmd need extra null byte
+            result += dec.decode(b"\0", length - len(result))
+        else:
+            result += dec.flush(length - len(result))
     assert result == obj
 
 
@@ -40,7 +45,11 @@ def test_ppmd8_fuzzer(obj, max_order, mem_size):
     dec = pyppmd.Ppmd8Decoder(max_order=max_order, mem_size=mem_size, restore_method=pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF)
     result = dec.decode(compressed, length)
     if len(result) < length:
-        result += dec.decode(b"", length)
+        if dec.needs_input:
+            # ppmd need extra null byte
+            result += dec.decode(b"\0", length - len(result))
+        else:
+            result += dec.decode(b"", length - len(result))
     assert result == obj
 
 
