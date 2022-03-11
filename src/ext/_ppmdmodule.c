@@ -603,13 +603,14 @@ Ppmd7Decoder_init(Ppmd7Decoder *self, PyObject *args, PyObject *kwargs)
                     goto success;
                 }
             }
-            Ppmd7_Free(self->cPpmd7, &allocator);
+            Ppmd7_Free(self->cPpmd7, &allocator);;
         }
         PyMem_Free(self->cPpmd7);
         PyMem_Free(out);
         PyMem_Free(in);
         PyMem_Free(blocksOutputBuffer);
         PyMem_Free(bufferReader);
+        PyMem_Free(threadInfo);
         PyErr_NoMemory();
 }
 
@@ -618,6 +619,33 @@ error:
 
 success:
     return 0;
+}
+
+static PyObject *
+Ppmd7_unused_data_get(Ppmd7Decoder *self, void *Py_UNUSED(ignored))
+{
+    PyObject *ret;
+
+    /* Thread-safe code */
+    ACQUIRE_LOCK(self);
+
+    if (!self->eof) {
+        ret = PyBytes_FromStringAndSize(NULL, 0);
+    } else {
+        if (self->unused_data == NULL) {
+            self->unused_data = PyBytes_FromStringAndSize(
+                    self->input_buffer + self->in_begin,
+                    self->in_end - self->in_begin);
+            ret = self->unused_data;
+            Py_XINCREF(ret);
+        } else {
+            ret = self->unused_data;
+            Py_INCREF(ret);
+        }
+    }
+
+    RELEASE_LOCK(self);
+    return ret;
 }
 
 PyDoc_STRVAR(Ppmd7Decoder_decode_doc, "decode()\n"
@@ -768,6 +796,17 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
             }
         }
     }
+    if (result == 0) {
+        self->needs_input = True;
+    }
+    if (result == -1) {
+        self->eof = True;
+        self->needs_input = False;
+    }
+    if (result == -2) {
+        PyErr_SetString(PyExc_ValueError, "L1595: Corrupted input data.");
+        goto error;
+    }
 
     ret = OutputBuffer_Finish(self->blocksOutputBuffer, out);
     if (Ppmd7z_RangeDec_IsFinishedOK(self->rangeDec)) {
@@ -855,6 +894,7 @@ static PyMethodDef Ppmd7Decoder_methods[] = {
 };
 
 PyDoc_STRVAR(Ppmd7Decoder_eof__doc, "True if the end-of-stream marker has been reached.");
+PyDoc_STRVAR(Ppmd7Decoder_unused_data__doc, "Data found after the end of the compressed stream.");
 PyDoc_STRVAR(Ppmd7Decoder_needs_input_doc, "True if more input is needed before more decompressed data can be produced.");
 
 static PyMemberDef Ppmd7Decoder_members[] = {
@@ -867,12 +907,19 @@ static PyMemberDef Ppmd7Decoder_members[] = {
         {NULL}
 };
 
+static PyGetSetDef Ppmd7Decoder_getset[] = {
+        {"unused_data", (getter)Ppmd7_unused_data_get, NULL,
+                Ppmd7Decoder_unused_data__doc},
+        {NULL},
+};
+
 static PyType_Slot Ppmd7Decoder_slots[] = {
     {Py_tp_new, Ppmd7Decoder_new},
     {Py_tp_dealloc, Ppmd7Decoder_dealloc},
     {Py_tp_init, Ppmd7Decoder_init},
     {Py_tp_methods, Ppmd7Decoder_methods},
     {Py_tp_members, Ppmd7Decoder_members},
+    {Py_tp_getset, Ppmd7Decoder_getset},
     {Py_tp_doc, (char *)Ppmd7Decoder_doc},
     {0, 0}
 };
@@ -1494,8 +1541,12 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
             }
         }
     }
+    if (result == 0) {
+        self->needs_input = True;
+    }
     if (result == -1) {
         self->eof = True;
+        self->needs_input = False;
     }
     if (result == -2) {
         PyErr_SetString(PyExc_ValueError, "L1595: Corrupted input data.");
@@ -1510,11 +1561,6 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
             /* Clear input_buffer */
             self->in_begin = 0;
             self->in_end = 0;
-        }
-        if (self->eof) {
-            self->needs_input = False;
-        } else {
-            self->needs_input = True;
         }
     } else {
         const size_t data_size = in->size - in->pos;

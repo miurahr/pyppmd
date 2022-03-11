@@ -33,6 +33,8 @@ def test_ppmd7_fuzzer(txt, max_order, mem_size):
         else:
             result += dec.decode(b"", length - len(result))
     assert result == obj
+    assert dec.eof
+    assert not dec.needs_input
 
 
 @given(

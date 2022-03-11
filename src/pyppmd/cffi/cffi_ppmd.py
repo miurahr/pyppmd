@@ -441,6 +441,7 @@ class Ppmd7Decoder(PpmdBaseDecoder):
             self.inited = True
         out, out_buf = self._setup_outBuffer()
         remaining: int = length
+        out_size = 0
         while remaining > 0:
             size = min(out_buf.size, remaining)
             self.lock.release()
@@ -451,17 +452,17 @@ class Ppmd7Decoder(PpmdBaseDecoder):
                 raise PpmdError("DecodeError.")
             if out_size == -1 or self.rc.Code == 0:
                 self._eof = True
+                self._needs_input = False
+                break
+            if out_size == 0:
+                self._needs_input = True
                 break
             if out_buf.pos == out_buf.size:
                 out.grow(out_buf)
-            elif in_buf.pos == in_buf.size:
-                break
             remaining = remaining - out_size
         self._unconsumed_in(in_buf, use_input_buffer)
         res = out.finish(out_buf)
         self.lock.release()
-        if self._eof:
-            self._needs_input = False
         return res
 
     @property
