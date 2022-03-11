@@ -6,8 +6,10 @@ from hypothesis import strategies as st
 
 import pyppmd
 
-MAX_SIZE = 1 << 30
-
+if sys.maxsize > 2**32:
+    MAX_SIZE = 1 << 30
+else:
+    MAX_SIZE = 1 << 28
 
 @given(
     txt=st.text(min_size=1),
