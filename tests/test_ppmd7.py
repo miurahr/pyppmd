@@ -32,18 +32,25 @@ def test_ppmd7_encoder2():
 def test_ppmd7_decoder():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
     result = decoder.decode(encoded, 66)
-    if len(result) < 66:
-        result += decoder.decode(b"\0", 66 - len(result))
     assert result == data
+    assert decoder.eof
+    assert not decoder.needs_input
 
 
 def test_ppmd7_decoder2():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
     result = decoder.decode(encoded[:33], 33)
     result += decoder.decode(encoded[33:], 28)
-    if len(result) < 66:
-        result += decoder.decode(b"\0", 66 - len(result))
+    assert not decoder.eof
+    while len(result) < 66:
+        if decoder.needs_input:
+            result += decoder.decode(b"\0", 66 - len(result))
+            break
+        else:
+            result += decoder.decode(b"", 66 - len(result))
     assert result == data
+    assert not decoder.needs_input
+    assert decoder.eof
 
 
 # test mem_size less than original file size as well
