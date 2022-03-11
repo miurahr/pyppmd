@@ -465,18 +465,20 @@ Ppmd7Decoder_dealloc(Ppmd7Decoder *self)
         PyThread_free_lock(self->lock);
     }
     if (self->cPpmd7 != NULL) {
-        BufferReader *bufferReader = (BufferReader *) self->rangeDec->Stream;
-        Ppmd7T_Free(self->cPpmd7, bufferReader->t, &allocator);
-        Ppmd7_Free(self->cPpmd7, &allocator);
-        if (bufferReader != NULL) {
-            PyMem_Free(bufferReader->inBuffer);
-            PyMem_Free(bufferReader->t->out);
-            PyMem_Free(bufferReader->t);
+        if (self->rangeDec != NULL) {
+            BufferReader *bufferReader = (BufferReader *) self->rangeDec->Stream;
+            Ppmd7T_Free(self->cPpmd7, bufferReader->t, &allocator);
+            Ppmd7_Free(self->cPpmd7, &allocator);
+            if (bufferReader != NULL) {
+                PyMem_Free(bufferReader->inBuffer);
+                PyMem_Free(bufferReader->t->out);
+                PyMem_Free(bufferReader->t);
+                PyMem_Free(bufferReader);
+            }
+            PyMem_Free(self->blocksOutputBuffer);
+            PyMem_Free(self->rangeDec);
         }
-        PyMem_Free(self->blocksOutputBuffer);
-        PyMem_Free(bufferReader);
         PyMem_Free(self->cPpmd7);
-        PyMem_Free(self->rangeDec);
     }
     PyTypeObject *tp = Py_TYPE(self);
     tp->tp_free((PyObject*)self);
@@ -1170,9 +1172,9 @@ Ppmd8Decoder_dealloc(Ppmd8Decoder *self) {
             PyMem_Free(bufferReader->inBuffer);
             PyMem_Free(bufferReader->t->out);
             PyMem_Free(bufferReader->t);
+            PyMem_Free(bufferReader);
         }
         PyMem_Free(self->blocksOutputBuffer);
-        PyMem_Free(bufferReader);
         PyMem_Free(self->cPpmd8);
     }
     PyTypeObject *tp = Py_TYPE(self);
