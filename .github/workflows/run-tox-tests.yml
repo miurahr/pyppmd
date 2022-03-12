@@ -90,7 +90,6 @@ jobs:
 
   test_on_msys2_mingw:
    name: Test on Mingw32/Windows
-   if: ${{ false }}
    runs-on: windows-2022
    defaults:
      run:
@@ -98,27 +97,21 @@ jobs:
    steps:
       - uses: msys2/setup-msys2@v2
         with:
-          update: true
+          update: false
           install: >-
-            base-devel
-            mingw-w64-x86_64-python
-            mingw-w64-x86_64-python-pip
-            mingw-w64-x86_64-gcc
             git
-      - name: Check python header
-        run: ls -l D:/a/_temp/msys64/mingw64/include/python*/Python.h
+            mingw-w64-x86_64-python-tox
+            mingw-w64-x86_64-python-setuptools-scm
+            mingw-w64-x86_64-gcc
       - name: Checkout 🛎️
         uses: actions/checkout@v3
         with:
           fetch-depth: 20
-      - name: Install python tox
-        run: |
-          pip install -U tox
       - name: Run test
         run: |
-          pip install -U tox
            python -m tox -e py39
         env:
+          SETUPTOOLS_USE_DISTUTILS: stdlib
           PYTEST_ADDOPTS: "--benchmark-skip"
 
   finish:
@@ -127,7 +120,6 @@ jobs:
     container: python:3-slim
     needs:
       - build
-      - test_on_aarch64
     steps:
       - name: Tell Coveralls that the parallel build is finished
         run: |
