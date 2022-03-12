@@ -77,7 +77,7 @@ legacy_tox_ini = """
 envlist = check, py{36,37,38,39,310}, pypy3, docs, coveralls
 
 [testenv]
-passenv = TRAVIS TRAVIS_* APPVEYOR APPVEYOR_* GITHUB_* PYTEST_ADDOPTS COVERALLS_* MSYSTEM
+passenv = TRAVIS TRAVIS_* APPVEYOR APPVEYOR_* GITHUB_* PYTEST_ADDOPTS COVERALLS_* SETUPTOOLS_USE_DISTUTILS
 extras = test
 commands =
     python -m pytest -vv -s
