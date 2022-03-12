@@ -7,6 +7,29 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+`v0.18.0`_
+==========
+Fixed
+-----
+* test: Fix fuzzer error with silent null byte (#89)
+* test: 32bit test memory parameter too large(#90)
+* PPMd7: avoid access violation on dealloc when failed in allocation (#91)
+* PPMd7: decoder.eof and decoder.needs_input return proper value(#92)
+
+Security
+-----
+* PPMd7,PPMd8: fix struct definition by include process.h in windows
+  This may cause crash on 32bit version of python on windows(#86)
+
+Changed
+-------
+* PPMd7: decompressor use threading(#85)
+
+Added
+-----
+* doc: Explanation of ``Extra silent null byte`` in README
+
+
 `v0.17.4`_
 ==========
 Fixed
@@ -256,19 +279,20 @@ v0.10.0
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.17.4...HEAD
-.. _v0.17.4: https://github.com/miurahr/py7zr/compare/v0.17.3...v0.17.4
-.. _v0.17.3: https://github.com/miurahr/py7zr/compare/v0.17.1...v0.17.3
-.. _v0.17.1: https://github.com/miurahr/py7zr/compare/v0.17.0...v0.17.1
-.. _v0.17.0: https://github.com/miurahr/py7zr/compare/v0.16.1...v0.17.0
-.. _v0.16.1: https://github.com/miurahr/py7zr/compare/v0.16.0...v0.16.1
-.. _v0.16.0: https://github.com/miurahr/py7zr/compare/v0.15.2...v0.16.0
-.. _v0.15.2: https://github.com/miurahr/py7zr/compare/v0.15.1...v0.15.2
-.. _v0.15.1: https://github.com/miurahr/py7zr/compare/v0.15.0...v0.15.1
-.. _v0.15.0: https://github.com/miurahr/py7zr/compare/v0.14.0...v0.15.0
-.. _v0.14.0: https://github.com/miurahr/py7zr/compare/v0.13.0...v0.14.0
-.. _v0.13.0: https://github.com/miurahr/py7zr/compare/v0.12.1...v0.13.0
-.. _v0.12.1: https://github.com/miurahr/py7zr/compare/v0.12.0...v0.12.1
-.. _v0.12.0: https://github.com/miurahr/py7zr/compare/v0.11.1...v0.12.0
-.. _v0.11.1: https://github.com/miurahr/py7zr/compare/v0.11.0...v0.11.1
-.. _v0.11.0: https://github.com/miurahr/py7zr/compare/v0.10.0...v0.11.0
+.. _Unreleased: https://github.com/miurahr/pyppmd/compare/v0.18.0...HEAD
+.. _v0.18.0: https://github.com/miurahr/pyppmd/compare/v0.17.4...v0.18.0
+.. _v0.17.4: https://github.com/miurahr/pyppmd/compare/v0.17.3...v0.17.4
+.. _v0.17.3: https://github.com/miurahr/pyppmd/compare/v0.17.1...v0.17.3
+.. _v0.17.1: https://github.com/miurahr/pyppmd/compare/v0.17.0...v0.17.1
+.. _v0.17.0: https://github.com/miurahr/pyppmd/compare/v0.16.1...v0.17.0
+.. _v0.16.1: https://github.com/miurahr/pyppmd/compare/v0.16.0...v0.16.1
+.. _v0.16.0: https://github.com/miurahr/pyppmd/compare/v0.15.2...v0.16.0
+.. _v0.15.2: https://github.com/miurahr/pyppmd/compare/v0.15.1...v0.15.2
+.. _v0.15.1: https://github.com/miurahr/pyppmd/compare/v0.15.0...v0.15.1
+.. _v0.15.0: https://github.com/miurahr/pyppmd/compare/v0.14.0...v0.15.0
+.. _v0.14.0: https://github.com/miurahr/pyppmd/compare/v0.13.0...v0.14.0
+.. _v0.13.0: https://github.com/miurahr/pyppmd/compare/v0.12.1...v0.13.0
+.. _v0.12.1: https://github.com/miurahr/pyppmd/compare/v0.12.0...v0.12.1
+.. _v0.12.0: https://github.com/miurahr/pyppmd/compare/v0.11.1...v0.12.0
+.. _v0.11.1: https://github.com/miurahr/pyppmd/compare/v0.11.0...v0.11.1
+.. _v0.11.0: https://github.com/miurahr/pyppmd/compare/v0.10.0...v0.11.0
