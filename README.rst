@@ -39,9 +39,11 @@ A development status is considered as ``Beta``.
 WARNING
 -------
 
-* There is several known issues for PPMd8 Decoder that sometimes break resulted output,
+* There is several known issues for the decoder that breaks resulted output,
   wrong EOF status detection, and deadlock when setting some parameter combination.
+  You are recommended to use v0.18.x and later.
 
+* When use it on MSYS2/MINGW64 environment, you should set environment variable ``SETUPTOOLS_USE_DISTUTILS=stdlib``
 
 Copyright and License
 ---------------------
