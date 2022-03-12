@@ -61,9 +61,7 @@ You can do like as:
 WARNING
 -------
 
-* There is a known issues for Decoder that sometimes failed with access violation error
-  on 32bit python on Windows.
-* It is recommended to use PyPPMd on 64bit python.
+* When use it on MSYS2/MINGW64 environment, you should set environment variable ``SETUPTOOLS_USE_DISTUTILS=stdlib``
 
 Copyright and License
 ---------------------
