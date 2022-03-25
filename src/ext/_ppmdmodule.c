@@ -1168,7 +1168,7 @@ Ppmd7Encoder_flush(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
 
     ACQUIRE_LOCK(self);
     if (self->flushed) {
-        PyErr_SetString(PyExc_ValueError, "Repeated call to flush()");
+        PyErr_SetString(PyExc_ValueError, flush_twice_msg);
         goto error;
     }
 
@@ -1894,6 +1894,10 @@ Ppmd8Encoder_flush(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
     }
 
     ACQUIRE_LOCK(self);
+    if (self->flushed) {
+        PyErr_SetString(PyExc_ValueError, flush_twice_msg);
+        goto error;
+    }
 
     if (OutputBuffer_InitAndGrow(&buffer, &out, -1) < 0) {
         PyErr_SetString(PyExc_ValueError, "No memory.");
