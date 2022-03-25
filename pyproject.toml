@@ -1,8 +1,65 @@
 [project]
+name = "pyppmd"
 requires-python = ">=3.6"
+description = "PPMd compression/decompression library"
+readme = "README.rst"
+license = {file = "LICENSE.rst"}
+authors = [
+    {name = "Hiroshi Miura", email = "miurahr@linux.com"},
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.optional-dependencies]
+test = [
+      "pytest>=6.0",
+      "pytest-benchmark",
+      "pytest-cov",
+      "pytest-timeout",
+      "hypothesis",
+      "coverage[toml]>=5.2",
+]
+check = [
+    "mypy>=0.812",
+    "mypy_extensions>=0.4.3",
+    "check-manifest",
+    "flake8",
+    "flake8-black",
+    "readme-renderer",
+    "pygments",
+    "isort>=5.0.3",
+]
+docs = [
+    "sphinx>=2.3",
+    "sphinx_rtd_theme",
+]
+fuzzer = [
+    "atheris",
+    "hypothesis",
+]
+
+[project.urls]
+Source = "https://github.com/miurahr/pyppmd"
 
 [build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.0.1"]
+requires = ["setuptools>=58", "wheel", "setuptools_scm[toml]>=6.0.1"]
 build-backend = "setuptools.build_meta"
 
 [tools.setuptools_scm]
