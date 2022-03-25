@@ -7,8 +7,18 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+`v0.18.1`_
+==========
+
+Fixed
+-----
+* Installation error with recent pip version (#94, #95)
+  * Add metadata in pyproject.toml
+* PPMd8: check double flush(#96)
+
 `v0.18.0`_
 ==========
+
 Fixed
 -----
 * test: Fix fuzzer error with silent null byte (#89)
@@ -279,7 +289,8 @@ v0.10.0
 * First Alpha
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/pyppmd/compare/v0.18.0...HEAD
+.. _Unreleased: https://github.com/miurahr/pyppmd/compare/v0.18.1...HEAD
+.. _v0.18.1: https://github.com/miurahr/pyppmd/compare/v0.18.0...v0.18.1
 .. _v0.18.0: https://github.com/miurahr/pyppmd/compare/v0.17.4...v0.18.0
 .. _v0.17.4: https://github.com/miurahr/pyppmd/compare/v0.17.3...v0.17.4
 .. _v0.17.3: https://github.com/miurahr/pyppmd/compare/v0.17.1...v0.17.3
