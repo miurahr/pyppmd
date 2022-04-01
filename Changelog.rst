@@ -7,6 +7,20 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+`v0.18.2`_
+==========
+
+Fixed
+-----
+* Publish wheel package for python 3.10 on macos.
+* pyproject.toml: add "version" as dynamic (#100)
+
+Changed
+-------
+* Update security policy to support version to be 0.18.x
+* Move old changelog to Chanlog.old.rst
+
+
 `v0.18.1`_
 ==========
 
@@ -41,6 +55,7 @@ Added
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/pyppmd/compare/v0.18.1...HEAD
+.. _Unreleased: https://github.com/miurahr/pyppmd/compare/v0.18.2...HEAD
+.. _v0.18.2: https://github.com/miurahr/pyppmd/compare/v0.18.1...v0.18.2
 .. _v0.18.1: https://github.com/miurahr/pyppmd/compare/v0.18.0...v0.18.1
 .. _v0.18.0: https://github.com/miurahr/pyppmd/compare/v0.17.4...v0.18.0
