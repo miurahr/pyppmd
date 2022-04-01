@@ -19,7 +19,6 @@ jobs:
     env:
       CIBW_ARCHS_LINUX: "auto"
       CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
-      CIBW_SKIP: "cp310-macosx*"
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v3
