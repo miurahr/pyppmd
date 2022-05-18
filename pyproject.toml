@@ -3,7 +3,7 @@ name = "pyppmd"
 requires-python = ">=3.6"
 description = "PPMd compression/decompression library"
 readme = "README.rst"
-license = {file = "LICENSE.rst"}
+license = {text = "LGPL-2.1-or-later"}
 authors = [
     {name = "Hiroshi Miura", email = "miurahr@linux.com"},
 ]
@@ -71,7 +71,7 @@ line-length = 125
 target-version = ['py38']
 
 [tool.coverage.paths]
-source = ["src", "*/site-packages"]
+source = ["src", "**/site-packages"]
 
 [tool.coverage.run]
 branch = true
