@@ -18,7 +18,13 @@ sources = [
     "src/lib/buffer/ThreadDecoder.c",
 ]
 _ppmd_extension = Extension("pyppmd._ppmd", sources)
-kwargs = {"include_dirs": ["src/lib/ppmd", "src/lib/buffer"], "library_dirs": [], "libraries": [], "sources": sources, "define_macros": []}
+kwargs = {
+    "include_dirs": ["src/lib/ppmd", "src/lib/buffer"],
+    "library_dirs": [],
+    "libraries": [],
+    "sources": sources,
+    "define_macros": [],
+}
 
 
 def has_option(option):
