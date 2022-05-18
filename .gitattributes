@@ -1,5 +1,0 @@
-* text=auto
-
-*.ppmd binary
-*.dat binary
-tests/data/*.csv binary
