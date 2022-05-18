@@ -26,6 +26,9 @@ This library implements PPMd Variant H, and PPMd Variant I Version 2.
    ppmd7
    contribution
    authors
+   security_policy
+   license_notices
+   changelog
 
 Indices and tables
 ==================
