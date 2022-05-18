@@ -1,36 +1,17 @@
-PyPPMd is distributed under GNU Lesser General Public License version 2.1
-or any later version.
+Third-party software notices and information
+============================================
 
-The source code in PyPPMd is partially in the public domain,
-LGPLv2 and partially modified work of the software distributed
-under the BSD 3-Clause license.
+This project incorporates components derivered from the projects listed below.
+The original copyright notices and the licenses under which we received such components
+are set forth below.
 
-PyPPMd takes a LGPL2.1+ for license compatibility between them.
-You can use PyPPMd as python dependency of any software,
-and/or combines with LGPL2.1+, LGPL3, GPLv2, and GPLv3 software.
+1. lib/ppmd/*                  derived from 7-zip/p7Zip 16.00
+2. lib/buffer/blockoutput.c    derived from pyzstd v0.15.0
 
-GNU Lesser General Public License
-=================================
+The other codes are original of PyPPMd project licensed under LGPLv2.1 or later.
 
-Copyright (C) 2020-2021, Hiroshi Miura
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-
-
-Public domain/GNU Lesser General Public License
-===============================================
+7-zip/p7zip
+-----------
 
 C code under lib folder which originating from 7-zip are
 released under LGPL, and each sources are noted as follows.
@@ -57,8 +38,8 @@ You can receive a copy of the GNU Lesser General Public License from
 http://www.gnu.org/
 
 
-BSD license
-===========
+pyzstd
+------
 
 A part of C extension code is a derived work of pyzstd which is licensed
 under BSD 3-Clause license.

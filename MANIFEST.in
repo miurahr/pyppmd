@@ -1,22 +1,17 @@
 include *.rst
 include *.txt
 include tox.ini
+include LICENSE
 
 recursive-include docs *.bat
 recursive-include docs *.py
 recursive-include docs *.rst
 recursive-include docs Makefile
 
-recursive-include lib *.h
-recursive-include lib *.c
-recursive-include lib *.txt
-recursive-include lib2 *.h
-recursive-include lib2 *.c
-
-recursive-include src *.py
-recursive-include src *.pyi
-recursive-include src py.typed
+recursive-include src *.h
 recursive-include src *.c
+recursive-include src *.py
+recursive-include src py.typed
 
 recursive-include tests *.csv
 recursive-include tests *.ppmd

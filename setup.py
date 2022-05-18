@@ -8,17 +8,23 @@ from setuptools.command.build_ext import build_ext
 from setuptools.command.egg_info import egg_info
 
 sources = [
-    "lib/Ppmd7.c",
-    "lib/Ppmd8.c",
-    "lib/Ppmd8Dec.c",
-    "lib/Ppmd7Enc.c",
-    "lib/Ppmd8Enc.c",
-    "lib/Ppmd7Dec.c",
-    "lib2/Buffer.c",
-    "lib2/ThreadDecoder.c",
+    "src/lib/ppmd/Ppmd7.c",
+    "src/lib/ppmd/Ppmd8.c",
+    "src/lib/ppmd/Ppmd8Dec.c",
+    "src/lib/ppmd/Ppmd7Enc.c",
+    "src/lib/ppmd/Ppmd8Enc.c",
+    "src/lib/ppmd/Ppmd7Dec.c",
+    "src/lib/buffer/Buffer.c",
+    "src/lib/buffer/ThreadDecoder.c",
 ]
 _ppmd_extension = Extension("pyppmd._ppmd", sources)
-kwargs = {"include_dirs": ["lib", "lib2"], "library_dirs": [], "libraries": [], "sources": sources, "define_macros": []}
+kwargs = {
+    "include_dirs": ["src/lib/ppmd", "src/lib/buffer"],
+    "library_dirs": [],
+    "libraries": [],
+    "sources": sources,
+    "define_macros": [],
+}
 
 
 def has_option(option):

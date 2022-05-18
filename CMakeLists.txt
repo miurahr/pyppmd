@@ -165,25 +165,26 @@ add_dependencies(pytest_runner venv.stamp generate_ext generate_cffi)
 
 # ##################################################################################################
 # for build test and analytics
-include_directories(lib lib2)
+include_directories(src/lib/ppmd src/lib/buffer)
 add_library(
         pyppmd
-        lib/Arch.h
-        lib/Interface.h
-        lib/Ppmd.h
-        lib/Ppmd7.c
-        lib/Ppmd7.h
-        lib/Ppmd7Dec.c
-        lib/Ppmd7Enc.c
-        lib/Ppmd8.c
-        lib/Ppmd8.h
-        lib/Ppmd8Dec.c
-        lib/Ppmd8Enc.c
-        lib2/Buffer.c
-        lib2/Buffer.h
-        lib2/win_pthreads.h
-        lib2/ThreadDecoder.c
-        lib2/ThreadDecoder.h
+        src/lib/ppmd/Arch.h
+        src/lib/ppmd/Interface.h
+        src/lib/ppmd/Ppmd.h
+        src/lib/ppmd/Ppmd7.c
+        src/lib/ppmd/Ppmd7.h
+        src/lib/ppmd/Ppmd7Dec.c
+        src/lib/ppmd/Ppmd7Enc.c
+        src/lib/ppmd/Ppmd8.c
+        src/lib/ppmd/Ppmd8.h
+        src/lib/ppmd/Ppmd8Dec.c
+        src/lib/ppmd/Ppmd8Enc.c
+        src/lib/buffer/blockoutput.h
+        src/lib/buffer/Buffer.c
+        src/lib/buffer/Buffer.h
+        src/lib/buffer/win_pthreads.h
+        src/lib/buffer/ThreadDecoder.c
+        src/lib/buffer/ThreadDecoder.h
         src/ext/_ppmdmodule.c)
 target_include_directories(pyppmd PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pyppmd PRIVATE ${Python_LIBRARIES})
