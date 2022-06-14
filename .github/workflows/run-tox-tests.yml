@@ -56,7 +56,7 @@ jobs:
           architecture: ${{ matrix.architecture }}
       - name: Install dependencies
         run: |
-          pip install -U pip
+          pip install -U pip setuptools setuptools_scm[toml]
           pip install tox tox-gh-actions coverage[toml] coveralls
       - name: Test project with tox
         timeout-minutes: 7
@@ -95,7 +95,7 @@ jobs:
           run: |
             git config --global --add safe.directory ${GITHUB_WORKSPACE}
             python3 -c "import platform;print('Machine type:', platform.machine())"
-            python3 -m pip install -U pip tox
+            python3 -m pip install -U pip tox setuptools setuptools_scm[toml]
             python3 -m tox -e py38
           env: |  # YAML, but pipe character is necessary
             PYTEST_ADDOPTS: "--benchmark-skip"
