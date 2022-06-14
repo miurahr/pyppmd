@@ -27,7 +27,7 @@ jobs:
       - name: Fetch release tags
         run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Set up Python 🐍
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
       - name: Update pip
@@ -58,7 +58,7 @@ jobs:
       - name: Fetch release tags
         run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Set up Python 🐍
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
       - name: Set up QEMU
@@ -97,7 +97,7 @@ jobs:
       - name: Fetch release tags
         run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Set up Python 🐍
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
       - name: Update pip
         run: python -m pip install -U pip
       - name: Build source distribution
