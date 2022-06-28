@@ -19,6 +19,8 @@ jobs:
     env:
       CIBW_ARCHS_LINUX: "auto"
       CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
+      # Include latest Python beta
+      CIBW_PRERELEASE_PYTHONS: True
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v3
