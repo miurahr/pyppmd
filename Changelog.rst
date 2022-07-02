@@ -7,6 +7,11 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+Changed
+-------
+
+* Drop release-note and stale actions
+
 `v0.18.3`_
 ==========
 
