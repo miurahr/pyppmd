@@ -7,6 +7,27 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+`v0.18.3`_
+==========
+
+Added
+-----
+* Release wheel for python 3.11 beta
+
+Fixed
+-----
+* CI: update setuptools before test run (#115)
+* CI: fix error on tox test on aarch64.
+
+Changed
+-------
+* Bump pypa/cibuildwheel@2.7.0 (#116)
+* Bump actions/setup-python@v4 (#114)
+* Bump actions/download-artifact, actions/upload-artifact@v3 (#105,#106)
+* CI: Test with python 3.11 beta(#112)
+* Update license notifications
+* Move C sources under ``src/lib`` folder
+
 `v0.18.2`_
 ==========
 
@@ -55,7 +76,8 @@ Added
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/pyppmd/compare/v0.18.2...HEAD
+.. _Unreleased: https://github.com/miurahr/pyppmd/compare/v0.18.3...HEAD
+.. _v0.18.3: https://github.com/miurahr/pyppmd/compare/v0.18.2...v0.18.3
 .. _v0.18.2: https://github.com/miurahr/pyppmd/compare/v0.18.1...v0.18.2
 .. _v0.18.1: https://github.com/miurahr/pyppmd/compare/v0.18.0...v0.18.1
 .. _v0.18.0: https://github.com/miurahr/pyppmd/compare/v0.17.4...v0.18.0
