@@ -136,7 +136,7 @@ jobs:
           name: ppmd-files
           path: dist
       - name: Publish distribution 📦 to Test PyPI
-        if: startsWith(github.event.ref, 'refs/heads/main')
+        if: startsWith(github.event.ref, 'refs/heads/releases')
         uses: pypa/gh-action-pypi-publish@master
         with:
           user: __token__
