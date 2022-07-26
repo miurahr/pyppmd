@@ -1,0 +1,186 @@
+# Variable 'python.version' was defined in the Variables tab
+# Multi-job configuration must be converted to matrix strategy: https://docs.microsoft.com/en-us/azure/devops/pipelines/process/phases?view=azure-devops&tabs=yaml#multi-job-configuration
+variables:
+- name: BuildParameters.versionSpec
+  value: $(python.version)
+trigger:
+  branches:
+    include:
+    - releases/*
+    - main
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: refs/heads/main
+jobs:
+- job: Job_5
+  displayName: Check
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - checkout: self
+    clean: true
+  - task: UsePythonVersion@0
+    displayName: Use Python $(python.version)
+    inputs:
+      versionSpec: $(BuildParameters.versionSpec)
+      disableDownloadFromRegistry: true
+  - task: Bash@3
+    displayName: Install dependencies and run tox
+    inputs:
+      targetType: inline
+      script: >-
+        python -m pip install --upgrade pip setuptools setuptools_scm[toml] coverage[toml] tox importlib_metadata
+
+        python -m tox -e py
+- job: Job_1
+  displayName: linux
+  dependsOn: Job_5
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - checkout: self
+    clean: true
+  - task: UsePythonVersion@0
+    displayName: Use Python 3.x
+    inputs:
+      disableDownloadFromRegistry: true
+  - task: Bash@3
+    displayName: Install dependencies
+    inputs:
+      targetType: inline
+      script: >
+        set -o errexit
+
+        python3 -m pip install --upgrade pip
+
+        pip3 install cibuildwheel==2.8.1
+  - task: Bash@3
+    displayName: Build wheels
+    inputs:
+      targetType: inline
+      script: cibuildwheel --output-dir wheelhouse .
+  - task: PublishBuildArtifacts@1
+    displayName: Publish Artifact
+    inputs:
+      PathtoPublish: wheelhouse
+      ArtifactName: wheelhouse
+- job: Job_2
+  displayName: macos
+  dependsOn: Job_5
+  pool:
+    vmImage: macos-latest
+  steps:
+  - checkout: self
+    clean: true
+  - task: UsePythonVersion@0
+    displayName: Use Python 3.x
+    inputs:
+      disableDownloadFromRegistry: true
+  - task: Bash@3
+    displayName: Install dependencies
+    inputs:
+      targetType: inline
+      script: >
+        set -o errexit
+
+        python3 -m pip install --upgrade pip
+
+        python3 -m pip install cibuildwheel==2.8.0
+  - task: Bash@3
+    displayName: Build wheels
+    inputs:
+      targetType: inline
+      script: >
+        cibuildwheel --output-dir wheelhouse .
+  - task: PublishBuildArtifacts@1
+    displayName: Publish Artifact
+    inputs:
+      PathtoPublish: wheelhouse
+      ArtifactName: wheelhouse
+- job: Job_3
+  displayName: windows
+  dependsOn: Job_5
+  pool:
+    vmImage: windows-latest
+  steps:
+  - checkout: self
+    clean: true
+  - task: UsePythonVersion@0
+    displayName: Use Python 3.x
+    inputs:
+      disableDownloadFromRegistry: true
+  - task: Bash@3
+    displayName: Install dependecies
+    inputs:
+      targetType: inline
+      script: >
+        set -o errexit
+
+        python -m pip install --upgrade pip
+
+        pip install cibuildwheel==2.8.0
+  - task: Bash@3
+    displayName: Build wheels
+    inputs:
+      targetType: inline
+      script: cibuildwheel --output-dir wheelhouse .
+  - task: PublishBuildArtifacts@1
+    displayName: Publish Artifact
+    inputs:
+      PathtoPublish: wheelhouse
+      ArtifactName: wheelhouse
+- job: Job_4
+  displayName: Publish to PyPI
+  dependsOn:
+  - Job_1
+  - Job_2
+  - Job_3
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - checkout: self
+    clean: true
+  - task: UsePythonVersion@0
+    displayName: Use Python 3.x
+  - task: DownloadBuildArtifacts@1
+    displayName: Download Build Artifacts
+    inputs:
+      artifactName: wheelhouse
+      itemPattern: >
+        **
+      downloadPath: wheelhouse
+  - task: Bash@3
+    displayName: Install Dependencies
+    inputs:
+      targetType: inline
+      script: >
+        python -m pip install twine
+  - task: TwineAuthenticate@1
+    displayName: Twine Authenticate (testpypi)
+    condition: and(not(startsWith(variables['build.sourceBranch'], 'refs/tags/v')), startsWith(variables['build.sourceBranch'], 'refs/heads/releases/'))
+    inputs:
+      pythonUploadServiceConnection: 38ba9668-be53-494d-b8b5-ce3dc32fd309
+  - task: Bash@3
+    displayName: Upload to Python Package Index(test)
+    condition: and(succeeded(), not(startsWith(variables['build.sourceBranch'], 'refs/tags/v')), startsWith(variables['build.sourceBranch'], 'refs/heads/releases/'))
+    inputs:
+      targetType: inline
+      script: >+
+        python -m twine upload  --repository testpypi --config-file $(PYPIRC_PATH) wheelhouse/wheelhouse/*.whl
+
+  - task: TwineAuthenticate@1
+    displayName: Twine Authenticate (pypi)
+    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/v')
+    inputs:
+      pythonUploadServiceConnection: 7bcc3d9c-d109-445a-b785-5890d404db02
+  - task: Bash@3
+    displayName: Upload to Python Package Index
+    condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/v'))
+    inputs:
+      targetType: inline
+      script: >+
+        python -m twine upload  --repository pypi --config-file $(PYPIRC_PATH) wheelhouse/wheelhouse/*.whl
+
+...
