@@ -18,6 +18,14 @@ jobs:
   displayName: Check
   pool:
     vmImage: ubuntu-latest
+  strategy:
+    matrix:
+      "python 3.8":
+        - python.version: 3.8
+      "python 3.9":
+        - python.version: 3.9
+      "python 3.10":
+      - python.version: 3.10
   steps:
   - checkout: self
     clean: true
@@ -32,7 +40,6 @@ jobs:
       targetType: inline
       script: >-
         python -m pip install --upgrade pip setuptools setuptools_scm[toml] coverage[toml] tox importlib_metadata
-
         python -m tox -e py
 - job: Job_1
   displayName: linux
@@ -52,15 +59,15 @@ jobs:
       targetType: inline
       script: >
         set -o errexit
-
         python3 -m pip install --upgrade pip
-
         pip3 install cibuildwheel==2.8.1
   - task: Bash@3
     displayName: Build wheels
     inputs:
       targetType: inline
       script: cibuildwheel --output-dir wheelhouse .
+    env:
+      CIBW_PRERELEASE_PYTHONS: True
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifact
     inputs:
@@ -84,9 +91,7 @@ jobs:
       targetType: inline
       script: >
         set -o errexit
-
         python3 -m pip install --upgrade pip
-
         python3 -m pip install cibuildwheel==2.8.0
   - task: Bash@3
     displayName: Build wheels
@@ -94,6 +99,8 @@ jobs:
       targetType: inline
       script: >
         cibuildwheel --output-dir wheelhouse .
+    env:
+      CIBW_PRERELEASE_PYTHONS: True
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifact
     inputs:
@@ -117,26 +124,64 @@ jobs:
       targetType: inline
       script: >
         set -o errexit
-
         python -m pip install --upgrade pip
-
         pip install cibuildwheel==2.8.0
   - task: Bash@3
     displayName: Build wheels
     inputs:
       targetType: inline
       script: cibuildwheel --output-dir wheelhouse .
+    env:
+      CIBW_PRERELEASE_PYTHONS: True
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifact
     inputs:
       PathtoPublish: wheelhouse
       ArtifactName: wheelhouse
+- job: Job_6
+  displayName: linux(aarch64)
+  dependsOn: Job_5
+  pool:
+    name: Azure Pipelines
+  steps:
+    - checkout: self
+      clean: true
+    - task: UsePythonVersion@0
+      displayName: Use Python 3.x
+    - task: DockerInstaller@0
+      displayName: Install Docker 20.10.17
+      inputs:
+        dockerVersion: 20.10.17
+    - task: Bash@3
+      displayName: Install dependecies and qemu
+      inputs:
+        targetType: inline
+        script: >
+          set -o errexit
+          python -m pip install --upgrade pip
+          docker pull tonistiigi/binfmt:latest
+          docker run --rm --privileged tonistiigi/binfmt:latest --install arm64
+          pip install cibuildwheel==2.8.0
+    - task: Bash@3
+      displayName: Build wheels
+      inputs:
+        targetType: inline
+        script: cibuildwheel --output-dir wheelhouse .
+      env:
+        CIBW_PRERELEASE_PYTHONS: True
+        CIBW_ARCHS: aarch64
+    - task: PublishBuildArtifacts@1
+      displayName: Publish Artifact
+      inputs:
+        PathtoPublish: wheelhouse
+        ArtifactName: wheelhouse
 - job: Job_4
   displayName: Publish to PyPI
   dependsOn:
   - Job_1
   - Job_2
   - Job_3
+  - Job_6
   pool:
     vmImage: ubuntu-latest
   steps:
