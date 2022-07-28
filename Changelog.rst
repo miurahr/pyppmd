@@ -9,7 +9,8 @@ All notable changes to this project will be documented in this file.
 
 Changed
 -------
-
+* Move CI on Azure pipelines
+* Migrate forge site to CodeBerg.org
 * Drop release-note and stale actions
 
 `v0.18.3`_
