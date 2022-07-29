@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 Changed
 -------
+* Fix publish script to make sdist and upload it.
 * Move CI on Azure pipelines
 * Migrate forge site to CodeBerg.org
 * Drop release-note and stale actions
