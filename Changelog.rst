@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+`v1.0.0`_
+=========
+
 Changed
 -------
 * Fix publish script to make sdist and upload it.
@@ -83,7 +86,8 @@ Added
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/pyppmd/compare/v0.18.3...HEAD
+.. _Unreleased: https://github.com/miurahr/pyppmd/compare/v1.0.0...HEAD
+.. _v1.0.0: https://github.com/miurahr/pyppmd/compare/v0.18.3...v1.0.0
 .. _v0.18.3: https://github.com/miurahr/pyppmd/compare/v0.18.2...v0.18.3
 .. _v0.18.2: https://github.com/miurahr/pyppmd/compare/v0.18.1...v0.18.2
 .. _v0.18.1: https://github.com/miurahr/pyppmd/compare/v0.18.0...v0.18.1
