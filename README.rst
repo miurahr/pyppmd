@@ -67,6 +67,9 @@ Copyright and License
 Some codes are derived from p7zip/7zip and pyzstd project.
 Details are shown in LicenseNotices.rst
 
+- SPDX-License-Identifier: LGPL-2.1-or-later
+- SPDX-URL: https://spdx.org/licenses/LGPL-2.1-or-later.html
+
 PyPPMd is licensed under GNU Lesser General Public License v2.1 or later.
 
 - Copyright (C) 2020-2022 Hiroshi Miura
