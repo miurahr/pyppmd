@@ -88,7 +88,6 @@ class my_egg_info(egg_info):
 
 
 setup(
-    use_scm_version={"local_scheme": "no-local-version"},
     ext_modules=[binary_extension],
     package_dir={"": "src"},
     packages=packages,

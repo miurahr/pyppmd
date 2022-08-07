@@ -41,7 +41,8 @@ check = [
     "mypy>=0.812",
     "mypy_extensions>=0.4.3",
     "check-manifest",
-    "flake8",
+    "flake8<5",
+    "flake8-isort",
     "flake8-black",
     "readme-renderer",
     "pygments",
@@ -57,13 +58,13 @@ fuzzer = [
 ]
 
 [project.urls]
-Source = "https://github.com/miurahr/pyppmd"
+Source = "https://codeberg.org/miurahr/pyppmd"
 
 [build-system]
-requires = ["setuptools>=58", "wheel", "setuptools_scm[toml]>=6.0.1"]
+requires = ["setuptools>=59", "setuptools_scm[toml]>=7"]
 build-backend = "setuptools.build_meta"
 
-[tools.setuptools_scm]
+[tool.setuptools_scm]
 local_scheme = "no-local-version"
 
 [tool.black]
@@ -147,21 +148,10 @@ ignore_errors=true
 commands =
     check-manifest {toxinidir}
     flake8 src tests setup.py
-    isort --quiet --check-only --diff src tests setup.py
 
 [testenv:docs]
 basepython = python3.8
 extras = docs
 commands =
     sphinx-build {posargs:-E} -b html docs build/html
-
-[gh-actions]
-python =
-    3.6: py36
-    3.7: py37
-    3.8: py38, check, docs
-    3.9: py39
-    3.10: py310
-    3.11: py311
-    pypy-3: pypy3
 """

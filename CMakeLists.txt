@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
 # TARGET PYTHON version
-set(PY_VERSION 3.8)
+set(PY_VERSION 3.9)
 set(Python_FIND_IMPLEMENTATIONS CPython)
 #set(Python_FIND_IMPLEMENTATIONS PyPy)
 set(VENV_PATH "${CMAKE_BINARY_DIR}/venv")
@@ -25,7 +25,8 @@ execute_process(
   COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/get_ext.py
   OUTPUT_VARIABLE PY_EXT_EXT
   OUTPUT_STRIP_TRAILING_WHITESPACE)
-set(PY_EXT ${PY_EXT_DIR}/${PY_EXT_FILE}.${PY_EXT_EXT})
+set(PY_EXT_INPLACE ${PY_EXT_DIR}/${PY_EXT_FILE}.${PY_EXT_EXT})
+set(PY_EXT build/${PY_EXT_FILE}.${PY_EXT_EXT})
 set(PY_CFFI ${PY_CFFI_DIR}/PY_CFFI_FILE}.${PY_EXT_EXT})
 if(DEBUG_BUILD)
   if (WIN32)
@@ -42,17 +43,29 @@ endif()
 add_custom_target(
   generate_ext
   BYPRODUCTS ${PY_EXT}
-  COMMAND ${BUILD_EXT_PYTHON} setup.py build_ext ${BUILD_EXT_OPTION} --inplace
+  COMMAND ${BUILD_EXT_PYTHON} setup.py build_ext ${BUILD_EXT_OPTION}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS venv.stamp
   SOURCES ${pyppmd_sources})
 add_custom_target(
   generate_cffi
   BYPRODUCTS ${PY_CFFI}
-  COMMAND ${BUILD_EXT_PYTHON} setup.py build_ext ${BUILD_EXT_OPTION} --cffi --inplace
+  COMMAND ${BUILD_EXT_PYTHON} setup.py build_ext ${BUILD_EXT_OPTION} --cffi
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS venv.stamp
   SOURCES ${pyppmd_sources})
+
+# ##################################################################################################
+include_directories(src/lib/buffer src/lib/ppmd)
+set(_sources src/ext/_ppmdmodule.c src/lib/buffer/Buffer.c src/lib/buffer/ThreadDecoder.c
+        src/lib/ppmd/Ppmd7.c src/lib/ppmd/Ppmd7Dec.c src/lib/ppmd/Ppmd7Enc.c
+        src/lib/ppmd/Ppmd8.c src/lib/ppmd/Ppmd8Dec.c src/lib/ppmd/Ppmd8Enc.c)
+Python_add_library(_ppmd MODULE WITH_SOABI ${_sources})
+add_custom_target(build_ext
+        BYPRODUCTS ${PY_EXT_INPLACE}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:_ppmd> ${CMAKE_SOURCE_DIR}/${PY_EXT_DIR}
+        DEPENDS _ppmd
+        )
 
 # ##################################################################################################
 # create virtualenv
@@ -72,12 +85,11 @@ if (WIN32)
 else()
   set(PIP_COMMAND ${VENV_PATH}/bin/pip)
 endif()
-add_custom_target(
-        venv.stamp
-        BYPRODUCTS venv.stamp
+add_custom_command(OUTPUT venv.stamp
         COMMAND ${Python_EXECUTABLE} -m venv ${VENV_PATH}
         COMMAND ${PIP_COMMAND} install -r ${CMAKE_BINARY_DIR}/requirements.txt
         COMMAND ${CMAKE_COMMAND} -E touch venv.stamp)
+set(SRC_PATH "${CMAKE_SOURCE_DIR}/src")
 set(VPKG_PATH_A "${VENV_PATH}/lib/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/site-packages/")
 set(VPKG_PATH_B "${VENV_PATH}/Lib/site-packages/")
 
@@ -102,11 +114,12 @@ int main(int argc, char **argv) {
         }
         args.append(\"]\");
     }
+    std::filesystem::path src_path = \"${SRC_PATH}\";
     std::filesystem::path vsite_path_a = \"${VPKG_PATH_A}\";
     std::filesystem::path vsite_path_b = \"${VPKG_PATH_B}\";
     std::string pycode =
         \"import sys\\n\"
-        \"sys.path.append('src')\\n\"
+        \"sys.path.append('\" + src_path.string() + \"')\\n\"
         \"sys.path.append('\" + vsite_path_a.string() + \"')\\n\"
         \"sys.path.append('\" + vsite_path_b.string() + \"')\\n\"
         \"import pytest\\n\"
@@ -156,12 +169,17 @@ int main(int argc, char **argv) {
 }")
 if ("${Python_INTERPRETER_ID}" STREQUAL "PyPy")
   add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pypytest_runner.cpp)
+  add_dependencies(pytest_runner generate_cffi)
 else()
   add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
+  add_dependencies(pytest_runner build_ext)
 endif()
 target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
-add_dependencies(pytest_runner venv.stamp generate_ext generate_cffi)
+add_custom_target(run_pytest
+        COMMAND $<TARGET_FILE:pytest_runner> --verbose
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        DEPENDS pytest_runner)
 
 # ##################################################################################################
 # for build test and analytics
