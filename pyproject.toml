@@ -61,7 +61,7 @@ fuzzer = [
 Source = "https://codeberg.org/miurahr/pyppmd"
 
 [build-system]
-requires = ["setuptools>=59", "setuptools_scm[toml]>=7"]
+requires = ["setuptools>=59", "setuptools_scm[toml]>=6.4.2"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
