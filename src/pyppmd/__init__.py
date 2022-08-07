@@ -30,7 +30,8 @@ except ImportError:
         msg = "pyppmd module: Neither C implementation nor CFFI " "implementation can be imported."
         raise ImportError(msg)
 
-__all__ = ("compress", "decompress", "Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder", "PpmdError")
+__all__ = ("compress", "decompress", "PPMD8_RESTORE_METHOD_RESTART", "PPMD8_RESTORE_METHOD_CUT_OFF",
+           "Ppmd7Encoder", "Ppmd7Decoder", "Ppmd8Encoder", "Ppmd8Decoder", "PpmdError")
 
 __doc__ = """\
 Python bindings to PPMd compression library, the API is similar to
