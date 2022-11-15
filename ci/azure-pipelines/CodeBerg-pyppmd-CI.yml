@@ -39,8 +39,21 @@ jobs:
     inputs:
       targetType: inline
       script: >-
-        python -m pip install --upgrade pip setuptools setuptools_scm[toml] coverage[toml] tox importlib_metadata
+        python -m pip install --upgrade pip setuptools setuptools_scm[toml] coverage[toml] tox importlib_metadata build
         python -m tox -e py
+  - task: Bash@3
+    displayName: build sdist
+    inputs:
+      targetType: inline
+      script: >-
+        python -m build --sdist
+    condition: eq(variables['python.version'], '3.8')
+  - task: PublishBuildArtifacts@1
+    displayName: Publish Artifact
+    inputs:
+      PathtoPublish: dist
+      ArtifactName: wheelhouse
+    condition: eq(variables['python.version'], '3.8')
 - job: Job_1
   displayName: linux
   dependsOn: Job_5
@@ -213,7 +226,7 @@ jobs:
     inputs:
       targetType: inline
       script: >+
-        python -m twine upload  --repository testpypi --config-file $(PYPIRC_PATH) wheelhouse/wheelhouse/*.whl
+        python -m twine upload  --repository testpypi --config-file $(PYPIRC_PATH) wheelhouse/wheelhouse/*
 
   - task: TwineAuthenticate@1
     displayName: Twine Authenticate (pypi)
@@ -226,6 +239,6 @@ jobs:
     inputs:
       targetType: inline
       script: >+
-        python -m twine upload  --repository pypi --config-file $(PYPIRC_PATH) wheelhouse/wheelhouse/*.whl
+        python -m twine upload  --repository pypi --config-file $(PYPIRC_PATH) wheelhouse/wheelhouse/*
 
 ...
