@@ -59,6 +59,10 @@ fuzzer = [
 
 [project.urls]
 Source = "https://codeberg.org/miurahr/pyppmd"
+Homepage = "https://pyppmd.readthedocs.io/"
+Documentation = "https://pyppmd.readthedocs.io/en/stable/"
+"Bug Tracker" = "https://codeberg.org/miurahr/pyppmd/issues"
+Changelog = "https://pyppmd.readthedocs.io/en/latest/changelog.html"
 
 [build-system]
 requires = ["setuptools>=59", "setuptools_scm[toml]>=7"]
@@ -66,6 +70,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
+
+[tool.setuptools.package_data]
+pyppmd = ["py.typed"]
 
 [tool.black]
 line-length = 125
