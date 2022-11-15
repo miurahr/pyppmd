@@ -7,6 +7,15 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+
+Changed
+-------
+* Export PPMD8_RESTORE_METHOD_* constants
+* Drop setup.cfg
+* Drop github actions workflows
+* README: Add SPDX identifier
+
+
 `v1.0.0`_
 =========
 
