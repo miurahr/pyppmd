@@ -9,9 +9,9 @@ Only recent version of pyppmd are currently being supported with security update
 +---------+--------------------+
 | Version | Status             |
 +=========+====================+
-| 0.18.x  | Development        |
+| 1.0.x   | Development        |
 +---------+--------------------+
-| < 0.18  | not supported      |
+| < 1.0   | not supported      |
 +---------+--------------------+
 
 Reporting a Vulnerability

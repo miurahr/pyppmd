@@ -22,4 +22,5 @@ recursive-include utils *.txt
 
 exclude .gitignore
 exclude .gitattributes
-prune .github
+prune ci
+prune issue_template
