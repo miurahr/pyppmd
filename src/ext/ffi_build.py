@@ -398,9 +398,24 @@ int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int len
 """
 
 
-def set_kwargs(**kwargs):
+if __name__ == "__main__":
+    # when running without setuptools
+    kwargs = {
+        "include_dirs": ["src/lib/ppmd", "src/lib/buffer"],
+        "library_dirs": [],
+        "libraries": [],
+        "sources": [
+            "src/lib/ppmd/Ppmd7.c",
+            "src/lib/ppmd/Ppmd8.c",
+            "src/lib/ppmd/Ppmd8Dec.c",
+            "src/lib/ppmd/Ppmd7Enc.c",
+            "src/lib/ppmd/Ppmd8Enc.c",
+            "src/lib/ppmd/Ppmd7Dec.c",
+            "src/lib/buffer/Buffer.c",
+            "src/lib/buffer/ThreadDecoder.c",
+        ],
+        "define_macros": [],
+        "module_name": "pyppmd.cffi._cffi_ppmd",
+    }
     ffibuilder.set_source(source=source, **kwargs)
-
-
-if __name__ == "__main__":  # not when running with setuptools
     ffibuilder.compile(verbose=True)

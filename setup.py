@@ -45,7 +45,7 @@ if has_option("--cffi") or platform.python_implementation() == "PyPy":
     sys.path.append("src/ext")
     import ffi_build
 
-    ffi_build.set_kwargs(**kwargs)
+    ffi_build.ffibuilder.set_source(source=ffi_build.source, **kwargs)
     binary_extension = ffi_build.ffibuilder.distutils_extension()
 else:  # C implementation
     # packages
