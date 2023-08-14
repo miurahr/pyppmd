@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 # TARGET PYTHON version
 set(PY_VERSION 3.9)
-set(Python_FIND_IMPLEMENTATIONS CPython)
-#set(Python_FIND_IMPLEMENTATIONS PyPy)
+#set(Python_FIND_IMPLEMENTATIONS CPython)
+set(Python_FIND_IMPLEMENTATIONS PyPy)
 set(VENV_PATH "${CMAKE_BINARY_DIR}/venv")
 set(DEBUG_BUILD ON)
 
@@ -16,18 +16,20 @@ set(DEBUG_BUILD ON)
 set(Python_FIND_STRATEGY VERSION)
 find_package(Python ${PY_VERSION}.0...${PY_VERSION}.99 COMPONENTS Interpreter Development)
 set(PY_EXT_FILE _ppmd)
-set(PY_CFFI_FILE _ppmd)
-set(PY_EXT_DIR src/pyppmd/c)
-set(PY_CFFI_DIR src/pyppmd/cffi)
+set(PY_CFFI_FILE _cffi_ppmd)
+set(PY_EXT_DIR pyppmd/c)
+set(PY_CFFI_DIR pyppmd/cffi)
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_ext.py
      "import sysconfig\nprint(sysconfig.get_config_var('EXT_SUFFIX'))\n")
 execute_process(
   COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/get_ext.py
   OUTPUT_VARIABLE PY_EXT_EXT
   OUTPUT_STRIP_TRAILING_WHITESPACE)
-set(PY_EXT_INPLACE ${PY_EXT_DIR}/${PY_EXT_FILE}.${PY_EXT_EXT})
-set(PY_EXT build/${PY_EXT_FILE}.${PY_EXT_EXT})
-set(PY_CFFI ${PY_CFFI_DIR}/PY_CFFI_FILE}.${PY_EXT_EXT})
+set(PY_BUILD_LIB_DIR build/lib.linux-x86_64-${Python_VERSION_MAJOR}.${Python_VERSION_MINOR})
+set(PY_EXT_INPLACE src/${PY_EXT_DIR}/${PY_EXT_FILE}.${PY_EXT_EXT})
+set(PY_EXT ${PY_BUILD_LIB_DIR}/${PY_EXT_DIR}/${PY_EXT_FILE}.${PY_EXT_EXT})
+set(PY_CFFI_INPLACE src/${PY_CFFI_DIR}/${PY_CFFI_FILE}.${PY_EXT_EXT})
+set(PY_CFFI ${PY_BUILD_LIB_DIR}/${PY_CFFI_DIR}/${PY_CFFI_FILE}.${PY_EXT_EXT})
 if(DEBUG_BUILD)
   if (WIN32)
     set(BUILD_EXT_PYTHON ${VENV_PATH}/Scripts/python_d.exe)
@@ -49,8 +51,8 @@ add_custom_target(
   SOURCES ${pyppmd_sources})
 add_custom_target(
   generate_cffi
-  BYPRODUCTS ${PY_CFFI}
-  COMMAND ${BUILD_EXT_PYTHON} setup.py build_ext ${BUILD_EXT_OPTION} --cffi
+  BYPRODUCTS ${PY_CFFI_INPLACE}
+  COMMAND ${BUILD_EXT_PYTHON} setup.py build_ext ${BUILD_EXT_OPTION} --cffi --inplace
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS venv.stamp
   SOURCES ${pyppmd_sources})
@@ -64,7 +66,7 @@ Python_add_library(_ppmd MODULE WITH_SOABI ${_sources})
 add_custom_target(build_ext
         BYPRODUCTS ${PY_EXT_INPLACE}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:_ppmd> ${CMAKE_SOURCE_DIR}/${PY_EXT_DIR}
-        DEPENDS _ppmd
+        DEPENDS _ppmd venv.stamp
         )
 
 # ##################################################################################################
@@ -79,6 +81,7 @@ pytest-benchmark
 pytest-cov
 pytest-timeout
 cffi
+py-cpuinfo
 ")
 if (WIN32)
   set(PIP_COMMAND ${VENV_PATH}/Scripts/pip.exe)
@@ -90,7 +93,11 @@ add_custom_command(OUTPUT venv.stamp
         COMMAND ${PIP_COMMAND} install -r ${CMAKE_BINARY_DIR}/requirements.txt
         COMMAND ${CMAKE_COMMAND} -E touch venv.stamp)
 set(SRC_PATH "${CMAKE_SOURCE_DIR}/src")
-set(VPKG_PATH_A "${VENV_PATH}/lib/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/site-packages/")
+if ("${Python_INTERPRETER_ID}" STREQUAL "PyPy")
+  set(VPKG_PATH_A "${VENV_PATH}/lib/pypy${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/site-packages/")
+else()
+  set(VPKG_PATH_A "${VENV_PATH}/lib/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/site-packages/")
+endif()
 set(VPKG_PATH_B "${VENV_PATH}/Lib/site-packages/")
 
 # ##################################################################################################
@@ -100,7 +107,7 @@ file(
   "
 #include <string>
 #include <filesystem>
-#include <Python.h>
+#include <unistd.h>
 int main(int argc, char **argv) {
     std::string args;
     if ( argc > 1) {
@@ -124,55 +131,14 @@ int main(int argc, char **argv) {
         \"sys.path.append('\" + vsite_path_b.string() + \"')\\n\"
         \"import pytest\\n\"
         \"pytest.main(\" + args + \")\\n\";
-    wchar_t * program_name = Py_DecodeLocale(argv[0], NULL);
-    Py_SetProgramName(program_name);
-    Py_Initialize();
-    PyRun_SimpleString(&*pycode.begin());
-    Py_Finalize();
+    execl(\"${Python_EXECUTABLE}\", \"${Python_EXECUTABLE}\", \"-c\", pycode.c_str(), (char*)0);
     return 0;
 }")
-file(
-    WRITE ${CMAKE_CURRENT_BINARY_DIR}/pypytest_runner.cpp
-     "
-#include <string>
-#include <cstring>
-#include <filesystem>
-#include <PyPy.h>
-int main(int argc, char **argv) {
-    std::string args;
-    if ( argc > 1) {
-        args.append(\"[\");
-        for (int i = 1; i < argc; i++) {
-            if (i > 2)
-                args.append(\",\");
-            args.append(\"\\\"\");
-            args.append(argv[i]);
-            args.append(\"\\\"\");
-        }
-        args.append(\"]\");
-    }
-    std::filesystem::path vsite_path_a = \"${VPKG_PATH_A}\";
-    std::filesystem::path vsite_path_b = \"${VPKG_PATH_B}\";
-    std::string pycode =
-        \"import sys\\n\"
-        \"sys.path.append('src')\\n\"
-        \"sys.path.append('\" + vsite_path_a.string() + \"')\\n\"
-        \"sys.path.append('\" + vsite_path_b.string() + \"')\\n\"
-        \"import pytest\\n\"
-        \"pytest.main(\" + args + \")\\n\";
-    rpython_startup_code();
-    pypy_setup_home(NULL, 1);
-    char * cstr = new char [pycode.length()+1];
-    std::strcpy (cstr, pycode.c_str());
-    pypy_execute_source(cstr);
-    return 0;
-}")
+add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
 if ("${Python_INTERPRETER_ID}" STREQUAL "PyPy")
-  add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pypytest_runner.cpp)
   add_dependencies(pytest_runner generate_cffi)
 else()
-  add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
-  add_dependencies(pytest_runner build_ext)
+  add_dependencies(pytest_runner generate_ext build_ext)
 endif()
 target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
