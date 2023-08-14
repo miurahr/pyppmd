@@ -39,18 +39,23 @@ jobs:
       versionSpec: $(BuildParameters.versionSpec)
       disableDownloadFromRegistry: true
   - task: Bash@3
-    displayName: Install dependencies and run tox
+    displayName: Install dependencies
     inputs:
       targetType: inline
       script: >-
         python -m pip install --upgrade pip setuptools setuptools_scm[toml] coverage[toml] tox importlib_metadata build
-        python -m tox -e py
   - task: Bash@3
     displayName: build sdist
     inputs:
       targetType: inline
       script: >-
         python -m build --sdist
+  - task: Bash@3
+    displayName: run tox
+    inputs:
+      targetType: inline
+      script: >-
+        python -m tox
     condition: eq(variables['python.version'], '3.8')
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifact

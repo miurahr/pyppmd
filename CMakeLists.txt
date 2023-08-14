@@ -25,7 +25,8 @@ execute_process(
   COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/get_ext.py
   OUTPUT_VARIABLE PY_EXT_EXT
   OUTPUT_STRIP_TRAILING_WHITESPACE)
-set(PY_BUILD_LIB_DIR build/lib.linux-x86_64-${Python_VERSION_MAJOR}.${Python_VERSION_MINOR})
+
+set(PY_BUILD_LIB_DIR build/lib.${PY_PLATFORM}-${Python_VERSION_MAJOR}.${Python_VERSION_MINOR})
 set(PY_EXT_INPLACE src/${PY_EXT_DIR}/${PY_EXT_FILE}.${PY_EXT_EXT})
 set(PY_EXT ${PY_BUILD_LIB_DIR}/${PY_EXT_DIR}/${PY_EXT_FILE}.${PY_EXT_EXT})
 set(PY_CFFI_INPLACE src/${PY_CFFI_DIR}/${PY_CFFI_FILE}.${PY_EXT_EXT})
@@ -82,6 +83,7 @@ pytest-cov
 pytest-timeout
 cffi
 py-cpuinfo
+tox
 ")
 if (WIN32)
   set(PIP_COMMAND ${VENV_PATH}/Scripts/pip.exe)
@@ -173,3 +175,8 @@ add_library(
 target_include_directories(pyppmd PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(pyppmd PRIVATE ${Python_LIBRARIES})
 # ##################################################################################################
+add_custom_target(run_tox
+        COMMAND  ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_PATH} ${VENV_PATH}/bin/python -m tox
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        DEPENDS venv.stamp
+        )
