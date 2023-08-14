@@ -11,6 +11,8 @@ PyPPMd
 .. image:: https://readthedocs.org/projects/pyppmd/badge/?version=latest
   :target: https://pyppmd.readthedocs.io/en/latest/?badge=latest
 
+.. image:: https://dev.azure.com/miurahr/CodeBerg/_apis/build/status%2FCodeBerg-pyppmd-CI?branchName=main
+  :target: https://dev.azure.com/miurahr/CodeBerg/_build/latest?definitionId=29&branchName=main
 
 Introduction
 ------------
