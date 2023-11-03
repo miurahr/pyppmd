@@ -30,7 +30,7 @@ Some parts of th codes are derived from ``7-zip``, ``pyzstd`` and ``ppmd-cffi``.
 Development status
 ------------------
 
-A development status is considered as ``Beta``.
+A project status is considered as ``Stable``.
 
 Extra input byte
 ----------------
@@ -68,7 +68,7 @@ Details are shown in LicenseNotices.rst
 
 PyPPMd is licensed under GNU Lesser General Public License v2.1 or later.
 
-- Copyright (C) 2020-2022 Hiroshi Miura
+- Copyright (C) 2020-2023 Hiroshi Miura
 - Copyright (C) 2020-2021 Ma Lin
 - Copyright (C) 2010-2012 Lockless Inc.
 - Copyright (C) 1999-2017 Igor Pavlov
