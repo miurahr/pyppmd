@@ -7,13 +7,18 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+Added
+-----
+* Add Python 3.12 support
 
 Changed
 -------
+* Minimum required python to be 3.8
 * Export PPMD8_RESTORE_METHOD_* constants
 * Drop setup.cfg
 * Drop github actions workflows
 * README: Add SPDX identifier
+* CI run on python 3.10
 
 
 `v1.0.0`_
