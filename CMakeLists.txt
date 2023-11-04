@@ -65,7 +65,7 @@ set(_sources src/ext/_ppmdmodule.c src/lib/buffer/Buffer.c src/lib/buffer/Thread
 Python_add_library(_ppmd MODULE WITH_SOABI ${_sources})
 add_custom_target(build_ext
         BYPRODUCTS ${PY_EXT_INPLACE}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:_ppmd> ${CMAKE_SOURCE_DIR}/${PY_EXT_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:_ppmd> ${CMAKE_SOURCE_DIR}/src/${PY_EXT_DIR}
         DEPENDS _ppmd venv.stamp
         )
 
