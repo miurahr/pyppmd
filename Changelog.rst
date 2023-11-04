@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+`v1.1.0`_
+=========
+
 Added
 -----
 * Add Python 3.12 support
@@ -18,7 +21,7 @@ Changed
 * Drop setup.cfg
 * Drop github actions workflows
 * README: Add SPDX identifier
-* CI run on python 3.10
+* CI run on python 3.10, 3.11 and 3.12
 
 
 `v1.0.0`_
@@ -100,9 +103,10 @@ Added
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/pyppmd/compare/v1.0.0...HEAD
-.. _v1.0.0: https://github.com/miurahr/pyppmd/compare/v0.18.3...v1.0.0
-.. _v0.18.3: https://github.com/miurahr/pyppmd/compare/v0.18.2...v0.18.3
-.. _v0.18.2: https://github.com/miurahr/pyppmd/compare/v0.18.1...v0.18.2
-.. _v0.18.1: https://github.com/miurahr/pyppmd/compare/v0.18.0...v0.18.1
-.. _v0.18.0: https://github.com/miurahr/pyppmd/compare/v0.17.4...v0.18.0
+.. _Unreleased: https://codeberg.org/miurahr/pyppmd/compare/v1.1.0...HEAD
+.. _v1.1.0: https://codeberg.org/miurahr/pyppmd/compare/v1.0.0...v1.1.0
+.. _v1.0.0: https://codeberg.org/miurahr/pyppmd/compare/v0.18.3...v1.0.0
+.. _v0.18.3: https://codeberg.org/miurahr/pyppmd/compare/v0.18.2...v0.18.3
+.. _v0.18.2: https://codeberg.org/miurahr/pyppmd/compare/v0.18.1...v0.18.2
+.. _v0.18.1: https://codeberg.org/miurahr/pyppmd/compare/v0.18.0...v0.18.1
+.. _v0.18.0: https://codeberg.org/miurahr/pyppmd/compare/v0.17.4...v0.18.0
