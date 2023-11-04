@@ -1,6 +1,8 @@
 when:
-  event: pull_request
-  branch: [main, releases/*]
+  - event: push
+    branch: [main, releases/*]
+  - event: pull_request
+
 
 clone:
   git:
