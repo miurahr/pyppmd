@@ -23,5 +23,6 @@ recursive-include utils *.txt
 
 exclude .gitignore
 exclude .gitattributes
+exclude .woodpecker.yml
 prune ci
 prune issue_template
