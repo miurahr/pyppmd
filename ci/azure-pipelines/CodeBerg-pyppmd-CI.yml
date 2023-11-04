@@ -3,6 +3,7 @@
 variables:
 - name: BuildParameters.versionSpec
   value: $(python.version)
+
 trigger:
   branches:
     include:
@@ -13,8 +14,9 @@ resources:
   - repository: self
     type: git
     ref: refs/heads/main
+
 jobs:
-- job: Job_5
+- job: Check
   displayName: Check
   pool:
     vmImage: ubuntu-latest
@@ -30,8 +32,6 @@ jobs:
         - python-version: 3.11
       "python 3.12":
         - python-version: 3.12
-      "pypy 7.3.13-3.10":
-        - python-version: pypy3
   steps:
   - checkout: self
     clean: true
@@ -47,27 +47,53 @@ jobs:
       script: >-
         python -m pip install --upgrade pip setuptools setuptools_scm[toml] coverage[toml] tox importlib_metadata build
   - task: Bash@3
-    displayName: build sdist
-    inputs:
-      targetType: inline
-      script: >-
-        python -m build --sdist
-  - task: Bash@3
     displayName: run tox
     inputs:
       targetType: inline
       script: >-
         python -m tox
     condition: eq(variables['python.version'], '3.9')
+
+- job: BuildSdist
+  displayName: Sdist
+  dependsOn: Check
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - task: Bash@3
+    displayName: build sdist
+    inputs:
+      targetType: inline
+      script: >-
+        python -m build --sdist
   - task: PublishBuildArtifacts@1
     displayName: Publish Artifact
     inputs:
       PathtoPublish: dist
       ArtifactName: wheelhouse
     condition: eq(variables['python.version'], '3.9')
-- job: Job_1
+
+
+- job: CheckPyPy
+  displayName: Test on pypy3.9
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - bash: |
+      PYPY=`find /opt/hostedtoolcache/PyPy/ -name '3.9.*' -type d`/x64/bin/pypy3
+      echo Use $PYPY
+      $PYPY -m venv venv
+      source venv/bin/activate
+      python -m pip install -U pip setuptools setuptools_scm[toml]
+      python -m pip install .[test]
+      python -m pytest -vv -s
+    displayName: 'Run pytest on pypy3.9'
+
+- job: Linux
   displayName: linux
-  dependsOn: Job_5
+  dependsOn:
+    - Check
+    - CheckPyPy
   pool:
     vmImage: ubuntu-latest
   steps:
@@ -97,9 +123,10 @@ jobs:
     inputs:
       PathtoPublish: wheelhouse
       ArtifactName: wheelhouse
-- job: Job_2
+
+- job: MacOS
   displayName: macos
-  dependsOn: Job_5
+  dependsOn: Check
   pool:
     vmImage: macos-latest
   steps:
@@ -130,9 +157,10 @@ jobs:
     inputs:
       PathtoPublish: wheelhouse
       ArtifactName: wheelhouse
-- job: Job_3
+
+- job: Windows
   displayName: windows
-  dependsOn: Job_5
+  dependsOn: Check
   pool:
     vmImage: windows-latest
   steps:
@@ -162,9 +190,10 @@ jobs:
     inputs:
       PathtoPublish: wheelhouse
       ArtifactName: wheelhouse
-- job: Job_6
+
+- job: LinuxAarch64
   displayName: linux(aarch64)
-  dependsOn: Job_5
+  dependsOn: Check
   pool:
     name: Azure Pipelines
   steps:
@@ -199,13 +228,15 @@ jobs:
       inputs:
         PathtoPublish: wheelhouse
         ArtifactName: wheelhouse
-- job: Job_4
+
+- job: Publish
   displayName: Publish to PyPI
   dependsOn:
-  - Job_1
-  - Job_2
-  - Job_3
-  - Job_6
+  - Linux
+  - MacOS
+  - Windwos
+  - LinuxAarch64
+  - BuildSdist
   pool:
     vmImage: ubuntu-latest
   steps:
