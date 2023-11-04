@@ -7,22 +7,20 @@ from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 from setuptools.command.egg_info import egg_info
 
-sources = [
-    "src/lib/ppmd/Ppmd7.c",
-    "src/lib/ppmd/Ppmd8.c",
-    "src/lib/ppmd/Ppmd8Dec.c",
-    "src/lib/ppmd/Ppmd7Enc.c",
-    "src/lib/ppmd/Ppmd8Enc.c",
-    "src/lib/ppmd/Ppmd7Dec.c",
-    "src/lib/buffer/Buffer.c",
-    "src/lib/buffer/ThreadDecoder.c",
-]
-_ppmd_extension = Extension("pyppmd._ppmd", sources)
 kwargs = {
     "include_dirs": ["src/lib/ppmd", "src/lib/buffer"],
     "library_dirs": [],
     "libraries": [],
-    "sources": sources,
+    "sources": [
+            "src/lib/ppmd/Ppmd7.c",
+            "src/lib/ppmd/Ppmd8.c",
+            "src/lib/ppmd/Ppmd8Dec.c",
+            "src/lib/ppmd/Ppmd7Enc.c",
+            "src/lib/ppmd/Ppmd8Enc.c",
+            "src/lib/ppmd/Ppmd7Dec.c",
+            "src/lib/buffer/Buffer.c",
+            "src/lib/buffer/ThreadDecoder.c",
+        ],
     "define_macros": [],
 }
 
@@ -45,8 +43,7 @@ if has_option("--cffi") or platform.python_implementation() == "PyPy":
     sys.path.append("src/ext")
     import ffi_build
 
-    ffi_build.ffibuilder.set_source(source=ffi_build.source, **kwargs)
-    binary_extension = ffi_build.ffibuilder.distutils_extension()
+    binary_extension = ffi_build.get_extension(**kwargs)
 else:  # C implementation
     # packages
     packages = ["pyppmd", "pyppmd.c"]

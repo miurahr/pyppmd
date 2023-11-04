@@ -1,19 +1,23 @@
 import sys
-
-import cffi  # type: ignore  # noqa
+try:
+    from cffi import FFI  # type: ignore  # noqa
+except ImportError:
+    # PyPy includes cffi by default
+    msg = ('To build the CFFI implementation of pyzstd module, need to '
+           'install cffi module like this: "sudo python3 -m pip install '
+           'cffi". On CPython, CFFI implementation is slower than C '
+           'implementation.')
+    raise ImportError(msg)
 
 
 def is_64bit() -> bool:
     return sys.maxsize > 1 << 32
 
 
-ffibuilder = cffi.FFI()
-
 # ----------- PPMd interfaces ---------------------
 # Interface.h
 # Buffer.h
-ffibuilder.cdef(
-    r"""
+defs = r"""
 typedef unsigned char Byte;
 typedef short Int16;
 typedef unsigned short UInt16;
@@ -49,12 +53,10 @@ typedef struct OutBuffer_s {
     size_t pos;         /**< position where writing stopped. Will be updated. Necessarily 0 <= pos <= size */
 } OutBuffer;
 """
-)
 
 # Ppmd.h
 # Ppmd7.h
-ffibuilder.cdef(
-    r"""
+defs += r"""
 /* SEE-contexts for PPM-contexts with masked symbols */
 typedef struct
 {
@@ -71,19 +73,17 @@ typedef struct
   UInt16 SuccessorHigh;
 } CPpmd_State;
 """
-)
 
 if is_64bit():
-    ffibuilder.cdef("typedef UInt32 CPpmd_State_Ref;")
-    ffibuilder.cdef("typedef UInt32 CPpmd_Void_Ref;")
-    ffibuilder.cdef("typedef UInt32 CPpmd7_Context_Ref;")
+    defs += "typedef UInt32 CPpmd_State_Ref;\n"
+    defs += "typedef UInt32 CPpmd_Void_Ref;\n"
+    defs += "typedef UInt32 CPpmd7_Context_Ref;\n"
 else:
-    ffibuilder.cdef("typedef CPpmd_State * CPpmd_State_Ref;")
-    ffibuilder.cdef("typedef void * CPpmd_Void_Ref;")
-    ffibuilder.cdef("struct CPpmd7_Context_; typedef struct CPpmd7_Context_ * CPpmd7_Context_Ref;")
+    defs += "typedef CPpmd_State * CPpmd_State_Ref;\n"
+    defs += "typedef void * CPpmd_Void_Ref;\n"
+    defs += "struct CPpmd7_Context_; typedef struct CPpmd7_Context_ * CPpmd7_Context_Ref;\n"
 
-ffibuilder.cdef(
-    r"""
+defs += r"""
 typedef struct CPpmd7_Context_
 {
   UInt16 NumStats;
@@ -126,16 +126,14 @@ typedef struct
   IByteOut *Stream;
 } CPpmd7z_RangeEnc;
 """
-)
 
 # Ppmd8.h
 if is_64bit():
-    ffibuilder.cdef("typedef UInt32 CPpmd8_Context_Ref;")
+    defs += "typedef UInt32 CPpmd8_Context_Ref;\n"
 else:
-    ffibuilder.cdef("typedef struct CPpmd8_Context_ * CPpmd8_Context_Ref;")
+    defs += "typedef struct CPpmd8_Context_ * CPpmd8_Context_Ref;\n"
 
-ffibuilder.cdef(
-    r"""
+defs += r"""
 typedef struct CPpmd8_Context_
 {
   Byte NumStats;
@@ -178,11 +176,9 @@ typedef struct
   UInt16 BinSumm[25][64];
 } CPpmd8;
 """
-)
 
 if sys.platform.startswith("win32"):
-    ffibuilder.cdef(
-        r"""
+    defs += r"""
 typedef struct _pthread_cleanup _pthread_cleanup;
 struct _pthread_cleanup
 {
@@ -205,16 +201,14 @@ struct _pthread_v
 };
 typedef struct _pthread_v *pthread_t;
     """
-    )
 elif sys.platform.startswith("darwin"):
-    ffibuilder.cdef(r"typedef void* pthread_t;")
+    defs += "typedef void* pthread_t;\n"
 elif sys.platform.startswith("linux"):
-    ffibuilder.cdef(r"typedef unsigned long int pthread_t;")
+    defs += "typedef unsigned long int pthread_t;\n"
 else:
-    pass  # todo
+    pass
 
-ffibuilder.cdef(
-    r"""
+defs += r"""
 typedef struct ppmd_info_s {
     void *cPpmd;
     void *rc;
@@ -231,11 +225,9 @@ void Ppmd7T_Free(CPpmd7 *cPpmd7, ppmd_info *args, IAlloc *allocator);
 int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *args);
 void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *args, IAlloc *allocator);
 """
-)
 
 # ----------- python binding API ---------------------
-ffibuilder.cdef(
-    r"""
+defs += r"""
 extern "Python" void *raw_alloc(size_t);
 extern "Python" void raw_free(void *);
 
@@ -289,7 +281,6 @@ void Ppmd8_RangeEnc_FlushData(CPpmd8 *ppmd);
 Bool Ppmd8_RangeDec_Init(CPpmd8 *ppmd);
 int Ppmd8_DecodeSymbol(CPpmd8 *ppmd);
 """
-)
 
 source = r"""
 #include "Ppmd7.h"
@@ -398,6 +389,15 @@ int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int len
 """
 
 
+ffibuilder = FFI()
+
+
+def get_extension(**kwargs):
+    ffibuilder.cdef(defs)
+    ffibuilder.set_source(source=source, **kwargs)
+    return ffibuilder.distutils_extension()
+
+
 if __name__ == "__main__":
     # when running without setuptools
     kwargs = {
@@ -417,5 +417,6 @@ if __name__ == "__main__":
         "define_macros": [],
         "module_name": "pyppmd.cffi._cffi_ppmd",
     }
+    ffibuilder.cdef(defs)
     ffibuilder.set_source(source=source, **kwargs)
     ffibuilder.compile(verbose=True)
