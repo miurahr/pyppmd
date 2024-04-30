@@ -4,7 +4,7 @@
 
 #include "ThreadDecoder.h"
 #include "Buffer.h"
-#ifdef __MACH__
+#ifdef __APPLE__
 #include <mach/clock.h>
 #include <mach/mach.h>
 #endif
@@ -13,7 +13,7 @@
 int ppmd_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, unsigned long nsec) {
     //https://gist.github.com/jbenet/1087739
     struct timespec abstime;
-#ifdef __MACH__ // OS X does not have clock_gettime, use clock_get_time
+#ifdef __APPLE__ // OS X does not have clock_gettime, use clock_get_time
     clock_serv_t cclock;
     mach_timespec_t mts;
     host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
