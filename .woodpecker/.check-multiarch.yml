@@ -1,0 +1,29 @@
+when:
+  - event: push
+    branch: [main, releases/*]
+  - event: pull_request
+
+
+clone:
+  git:
+    image: woodpeckerci/plugin-git
+    settings:
+      partial: false
+      depth: 1
+      lfs: false
+      tags: true
+
+steps:
+  check:
+    image: quay.io/pypa/manylinux_2_28_${ARCH}
+    commands:
+      - python3.12 -m pip install --upgrade pip
+      - python3.12 -m pip install tox setuptools setuptools_scm[toml]
+      - python3.12 -m tox -e py
+
+
+matrix:
+  ARCH:
+    - s390x
+    - ppc64le
+    - aarch64
