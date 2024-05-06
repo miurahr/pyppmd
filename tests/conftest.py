@@ -1,5 +1,3 @@
-import cpuinfo
-
 
 def pytest_benchmark_update_json(config, benchmarks, output_json):
     """Calculate compression/decompression speed and add as extra_info"""
@@ -10,6 +8,8 @@ def pytest_benchmark_update_json(config, benchmarks, output_json):
 
 
 def pytest_benchmark_update_machine_info(config, machine_info):
+    cpuinfo = pytest.importorskip("cpuinfo")
+
     cpu_info = cpuinfo.get_cpu_info()
     brand = cpu_info.get("brand_raw", None)
     if brand is None:
