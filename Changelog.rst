@@ -7,6 +7,18 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+v1.1.1_
+=======
+
+Added
+-----
+* Add Python 3.13 support
+
+Changed
+-------
+* Minimum required python to be 3.9
+
+
 `v1.1.0`_
 =========
 
@@ -103,7 +115,8 @@ Added
 
 
 .. History links
-.. _Unreleased: https://codeberg.org/miurahr/pyppmd/compare/v1.1.0...HEAD
+.. _Unreleased: https://codeberg.org/miurahr/pyppmd/compare/v1.1.1...HEAD
+.. _v1.1.1: https://codeberg.org/miurahr/pyppmd/compare/v1.0.0...v1.1.1
 .. _v1.1.0: https://codeberg.org/miurahr/pyppmd/compare/v1.0.0...v1.1.0
 .. _v1.0.0: https://codeberg.org/miurahr/pyppmd/compare/v0.18.3...v1.0.0
 .. _v0.18.3: https://codeberg.org/miurahr/pyppmd/compare/v0.18.2...v0.18.3
