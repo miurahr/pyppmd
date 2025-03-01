@@ -853,7 +853,7 @@ Ppmd7Encoder_flush(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
     PyObject *ret;
     CPpmd7z_RangeEnc *rc = self->rangeEnc;
     OutBuffer out;
-    BlocksOutputBuffer buffer = {};
+    BlocksOutputBuffer buffer = { 0 };
     BufferWriter writer;
     static char *kwlist[] = {"endmark", NULL};
     Bool endmark = False;
@@ -1578,7 +1578,7 @@ Ppmd8Encoder_flush(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *ret;
     OutBuffer out;
-    BlocksOutputBuffer buffer = {};
+    BlocksOutputBuffer buffer = { 0 };
     BufferWriter writer;
     static char *kwlist[] = {"endmark", NULL};
     Bool endmark = True;
