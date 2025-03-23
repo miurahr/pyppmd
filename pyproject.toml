@@ -3,13 +3,12 @@ name = "pyppmd"
 requires-python = ">=3.9"
 description = "PPMd compression/decompression library"
 readme = "README.rst"
-license = {text = "LGPL-2.1-or-later"}
+license = "LGPL-2.1-or-later"
 authors = [
     {name = "Hiroshi Miura", email = "miurahr@linux.com"},
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
-    "License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX",
