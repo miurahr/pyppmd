@@ -22,8 +22,6 @@ jobs:
     vmImage: ubuntu-latest
   strategy:
     matrix:
-      "python 3.8":
-        - python.version: 3.8
       "python 3.9":
         - python.version: 3.9
       "python 3.10":
@@ -32,6 +30,8 @@ jobs:
         - python-version: 3.11
       "python 3.12":
         - python-version: 3.12
+      "python 3.13":
+        - python-version: 3.13
   steps:
   - checkout: self
     clean: true
@@ -177,7 +177,7 @@ jobs:
       script: >
         set -o errexit
         python -m pip install --upgrade pip
-        pip install cibuildwheel==2.16.2
+        pip install cibuildwheel==2.23.1
   - task: Bash@3
     displayName: Build wheels
     inputs:
@@ -214,7 +214,7 @@ jobs:
           python -m pip install --upgrade pip
           docker pull tonistiigi/binfmt:latest
           docker run --rm --privileged tonistiigi/binfmt:latest --install arm64
-          pip install cibuildwheel==2.16.2
+          pip install cibuildwheel==2.23.1
     - task: Bash@3
       displayName: Build wheels
       inputs:
