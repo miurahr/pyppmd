@@ -110,7 +110,7 @@ jobs:
       script: >
         set -o errexit
         python3 -m pip install --upgrade pip
-        pip3 install cibuildwheel==2.16.2
+        pip3 install cibuildwheel==2.23.1
   - task: Bash@3
     displayName: Build wheels
     inputs:
@@ -143,7 +143,7 @@ jobs:
       script: >
         set -o errexit
         python3 -m pip install --upgrade pip
-        python3 -m pip install cibuildwheel==2.16.2
+        python3 -m pip install cibuildwheel==2.23.1
   - task: Bash@3
     displayName: Build wheels
     inputs:
@@ -202,9 +202,9 @@ jobs:
     - task: UsePythonVersion@0
       displayName: Use Python 3.x
     - task: DockerInstaller@0
-      displayName: Install Docker 20.10.17
+      displayName: Install Docker 20.10.24
       inputs:
-        dockerVersion: 20.10.17
+        dockerVersion: 20.10.24
     - task: Bash@3
       displayName: Install dependecies and qemu
       inputs:
