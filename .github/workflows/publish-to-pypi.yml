@@ -1,0 +1,110 @@
+name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI
+
+on:
+  push:
+    branches:
+      - main
+      - releases/*
+    tags:
+      - v*
+
+env:
+  CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.platform }}
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+      CIBW_MANYLINUX_I686_IMAGE: manylinux2014
+      CIBW_ARCHS_LINUX: "auto aarch64"
+      CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
+      # Include latest Python beta
+      CIBW_PRERELEASE_PYTHONS: True
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 20
+      - name: Fetch release tags
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: arm64
+      - name: Install cibuildwheel & build wheels
+        run: |
+          python -m pip install -U pip
+          python -m pip install -U cibuildwheel
+          python -m cibuildwheel --output-dir wheelhouse
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: bcj-files-${{ matrix.platform }}
+          path: |
+            wheelhouse/*.whl
+
+  build_source_dist:
+    name: Build source dist
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 20
+      - name: Fetch release tags
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Build source distribution & wheels🎡
+        run: |
+          python -m pip install -U pip setuptools setuptools_scm[toml] build
+          python -m build --sdist
+      - name: Upload source distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: bcj-files-source
+          path: dist/*.tar.gz
+
+  merge-artifact:
+    name: merge uploaded artifacts
+    needs: [build_wheels, build_source_dist]
+    runs-on: ubuntu-latest
+    steps:
+    - name: artifacts
+      uses: actions/upload-artifact/merge@v4
+      with:
+        delete-merged: 'true'
+
+  pypi-publish:
+    name: publish Python 🐍 distributions 📦 to PyPI and TestPyPI
+    runs-on: ubuntu-latest
+    needs: merge-artifact
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: dist
+      - name: Publish distribution 📦 to Test PyPI
+        if: ${{ startsWith(github.event.ref, 'refs/heads/releases') }}
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc  # release/v1.12.4
+        with:
+          repository-url: https://test.pypi.org/legacy/
+      - name: Publish distribution 📦 to PyPI
+        if: startsWith(github.event.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # release/v1.12.4
