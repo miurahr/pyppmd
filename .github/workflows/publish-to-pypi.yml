@@ -15,7 +15,6 @@ jobs:
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest, ubuntu-24.04-arm, windows-11-arm]
     env:
-      CIBW_ARCHS_LINUX: "native"
       CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
       # Include latest Python beta
       CIBW_PRERELEASE_PYTHONS: True
@@ -27,32 +26,27 @@ jobs:
       - name: Fetch release tags
         run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Set up Python 🐍
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.11
-      - name: Set up QEMU
-        if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v1
-        with:
-          platforms: arm64
       - name: Install cibuildwheel
         run: |
-          python -m pip install -U pip
-          python -m pip install -U cibuildwheel
+          python -m pip install -U pip cibuildwheel
       - name: Build wheels
         if: runner.os != 'Linux'
         run: python -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_SKIP: "pp*"
       - name: Build wheels
-        if: matrix.platform == 'ubuntu-latest'
+        if: runner.os == 'Linux'
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_ARCHS_LINUX: "x86_64"
+          CIBW_ARCHS_LINUX: "native"
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: artifact-${{ matrix.platform }}
-          path: |
-            wheelhouse/*.whl
+          path: wheelhouse/*.whl
 
   build_source_dist:
     name: Build source dist
@@ -65,9 +59,9 @@ jobs:
       - name: Fetch release tags
         run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Set up Python 🐍
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.11
       - name: Build source distribution & wheels🎡
         run: |
           python -m pip install -U pip setuptools setuptools_scm[toml] build
@@ -89,7 +83,6 @@ jobs:
       - name: download dist artifacts
         uses: actions/download-artifact@v4
         with:
-          name: artifact-*
           path: dist
           merge-multiple: true
       - name: Publish distribution 📦 to Test PyPI
