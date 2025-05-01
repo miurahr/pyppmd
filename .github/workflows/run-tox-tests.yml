@@ -62,7 +62,7 @@ jobs:
         with:
           fetch-depth: 20
       - name: Build & run test
-        uses: uraimo/run-on-arch-action@v2
+        uses: uraimo/run-on-arch-action@v3
         with:
           arch: ${{ matrix.arch }}
           distro: ${{ matrix.distro }}
