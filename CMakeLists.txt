@@ -83,6 +83,7 @@ pytest-timeout
 cffi
 py-cpuinfo
 tox
+setuptools
 ")
 if (WIN32)
   set(PIP_COMMAND ${VENV_PATH}/Scripts/pip.exe)
@@ -147,6 +148,16 @@ add_custom_target(run_pytest
         COMMAND $<TARGET_FILE:pytest_runner> --verbose
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS pytest_runner)
+
+# ##################################################################################################
+# Some platform do not have `pthread_cancel`. We need to use `pthread_kill` on those platform.
+include(CheckSymbolExists)
+check_symbol_exists(pthread_cancel "pthread.h" HAVE_PTHREAD_CANCEL)
+if (NOT HAVE_PTHREAD_CANCEL)
+add_compile_definitions(PPMD_NO_PTHREAD_CANCEL=1)
+else()
+add_compile_definitions(PPMD_NO_PTHREAD_CANCEL=0)
+endif()
 
 # ##################################################################################################
 # for build test and analytics

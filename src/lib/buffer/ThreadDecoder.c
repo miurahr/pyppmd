@@ -9,6 +9,12 @@
 #include <mach/mach.h>
 #endif
 
+#include <signal.h>
+
+#if defined(__ANDROID__) || defined(__BIONIC__) || defined(PPMD_NO_PTHREAD_CANCEL) || 1
+#define pthread_cancel(x) pthread_kill(x, SIGKILL)
+#endif
+
 #ifndef _MSC_VER
 int ppmd_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, unsigned long nsec) {
     //https://gist.github.com/jbenet/1087739
