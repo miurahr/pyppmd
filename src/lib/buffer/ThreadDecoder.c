@@ -104,10 +104,14 @@ Ppmd7T_decode_run(void *p) {
     while (i < max_length ) {
         Bool inbuf_empty = reader->inBuffer->size == reader->inBuffer->pos;
         Bool outbuf_full = threadInfo->out->size == threadInfo->out->pos;
-        if (outbuf_full) {
-            break;
-        }
-        if (inbuf_empty && reader->inBuffer->size > 0) {
+        /*
+         * Stop decoding when either:
+         *  - input buffer is empty (let caller decide to provide more), or
+         *  - output buffer is full.
+         * This avoids blocking inside Reader() waiting for more input and
+         * reduces chances of deadlock between the worker and controller.
+         */
+        if (inbuf_empty || outbuf_full) {
             break;
         }
         int c = Ppmd7_DecodeSymbol(cPpmd7, rc);
@@ -130,6 +134,8 @@ Ppmd7T_decode_run(void *p) {
     pthread_mutex_lock(&tc->mutex);
     threadInfo->result = result;
     tc->finished = True;
+    /* Wake controller that might be waiting on input-empty condition */
+    pthread_cond_broadcast(&tc->inEmpty);
     pthread_mutex_unlock(&tc->mutex);
     return NULL;
 }
@@ -225,6 +231,8 @@ Ppmd8T_decode_run(void *p) {
     pthread_mutex_lock(&tc->mutex);
     threadInfo->result = result;
     tc->finished = True;
+    /* Wake controller that might be waiting on input-empty condition */
+    pthread_cond_broadcast(&tc->inEmpty);
     pthread_mutex_unlock(&tc->mutex);
     return NULL;
 }
