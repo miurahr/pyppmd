@@ -7,6 +7,15 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+v1.3.1_
+=======
+
+Fixed
+-----
+* Fix publish CI/CD configuration
+    * Bump musllinux image musllinux_1_2
+    * Bump manylinux image manylinux_2_28
+
 v1.3.0_
 =======
 
@@ -147,7 +156,8 @@ Added
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/pyppmd/compare/v1.3.0...HEAD
+.. _Unreleased: https://github.com/miurahr/pyppmd/compare/v1.3.1...HEAD
+.. _v1.3.1: https://github.com/miurahr/pyppmd/compare/v1.3.0...v1.3.1
 .. _v1.3.0: https://github.com/miurahr/pyppmd/compare/v1.2.0...v1.3.0
 .. _v1.2.0: https://github.com/miurahr/pyppmd/compare/v1.1.1...v1.2.0
 .. _v1.1.1: https://github.com/miurahr/pyppmd/compare/v1.0.0...v1.1.1
