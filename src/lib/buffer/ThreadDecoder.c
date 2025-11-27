@@ -65,10 +65,12 @@ Byte Ppmd_thread_Reader(const void *p) {
         pthread_mutex_lock(&tc->mutex);
         tc->empty = True;
         pthread_cond_broadcast(&tc->inEmpty);
+        /* Ensure mutex is unlocked if this thread is cancelled while waiting */
+        pthread_cleanup_push((void (*)(void *))pthread_mutex_unlock, (void *)&tc->mutex);
         do {
             pthread_cond_wait(&tc->notEmpty, &tc->mutex);
         } while (tc->empty);
-        pthread_mutex_unlock(&tc->mutex);
+        pthread_cleanup_pop(1); /* unlocks mutex */
     }
     return *((const Byte *)inBuffer->src + inBuffer->pos++);
 }
@@ -183,12 +185,23 @@ int Ppmd7T_decode(CPpmd7 *cPpmd7, CPpmd7z_RangeDec *rc, OutBuffer *out, int max_
 
 void Ppmd7T_Free(CPpmd7 *cPpmd7, ppmd_info *threadInfo, IAllocPtr allocator) {
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
-    if (!(tc->finished)) {
+    if (tc && !(tc->finished)) {
+        /* Wake worker if it's waiting for input, then cancel and join */
+        pthread_mutex_lock(&tc->mutex);
+        tc->empty = False;
+        pthread_cond_broadcast(&tc->notEmpty);
+        pthread_mutex_unlock(&tc->mutex);
+
         pthread_cancel(tc->handle);
+        pthread_join(tc->handle, NULL);
         tc->finished = True;
     }
-    IAlloc_Free(allocator, tc);
-    Ppmd7_Free(cPpmd7, allocator);
+    if (tc) {
+        pthread_mutex_destroy(&tc->mutex);
+        pthread_cond_destroy(&tc->inEmpty);
+        pthread_cond_destroy(&tc->notEmpty);
+        IAlloc_Free(allocator, tc);
+    }
 }
 
 static void *
@@ -281,10 +294,21 @@ inempty:
 
 void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *threadInfo, IAllocPtr allocator) {
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
-    if (!(tc->finished)) {
+    if (tc && !(tc->finished)) {
+        /* Wake worker if it's waiting for input, then cancel and join */
+        pthread_mutex_lock(&tc->mutex);
+        tc->empty = False;
+        pthread_cond_broadcast(&tc->notEmpty);
+        pthread_mutex_unlock(&tc->mutex);
+
         pthread_cancel(tc->handle);
+        pthread_join(tc->handle, NULL);
         tc->finished = True;
     }
-    IAlloc_Free(allocator, tc);
-    Ppmd8_Free(cPpmd8, allocator);
+    if (tc) {
+        pthread_mutex_destroy(&tc->mutex);
+        pthread_cond_destroy(&tc->inEmpty);
+        pthread_cond_destroy(&tc->notEmpty);
+        IAlloc_Free(allocator, tc);
+    }
 }
