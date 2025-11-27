@@ -26,7 +26,7 @@ jobs:
       - name: Fetch release tags
         run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Set up Python 🐍
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
       - name: Install cibuildwheel
@@ -59,7 +59,7 @@ jobs:
       - name: Fetch release tags
         run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Set up Python 🐍
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
       - name: Build source distribution & wheels🎡

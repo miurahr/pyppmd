@@ -1,6 +1,6 @@
 [project]
 name = "pyppmd"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 description = "PPMd compression/decompression library"
 readme = "README.rst"
 license = {text = "LGPL-2.1-or-later"}
@@ -15,11 +15,11 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
@@ -135,7 +135,7 @@ archs = ["x86_64", "universal2", "arm64"]
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = check, py{39,310,311,312,313}, pypy39, docs
+envlist = check, py{310,311,312,313,314}, pypy310, docs
 
 [testenv]
 passenv =
@@ -145,8 +145,8 @@ extras = test
 commands =
     python -m pytest -vv -s
 
-[testenv:pypy39]
-basepython = pypy3.9
+[testenv:pypy310]
+basepython = pypy3.10
 
 [testenv:check]
 basepython = python3.12
