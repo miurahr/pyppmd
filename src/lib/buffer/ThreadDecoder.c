@@ -102,16 +102,15 @@ Ppmd7T_decode_run(void *p) {
     int i = 0;
     int result;
     while (i < max_length ) {
-        Bool inbuf_empty = reader->inBuffer->size == reader->inBuffer->pos;
         Bool outbuf_full = threadInfo->out->size == threadInfo->out->pos;
         /*
-         * Stop decoding when either:
-         *  - input buffer is empty (let caller decide to provide more), or
-         *  - output buffer is full.
-         * This avoids blocking inside Reader() waiting for more input and
-         * reduces chances of deadlock between the worker and controller.
+         * Only stop when output buffer is full. Do NOT stop just because
+         * input buffer appears empty, since decoder may still be able to
+         * produce symbols without consuming new input bytes. If more input
+         * is actually required, Reader() will block and signal controller
+         * via inEmpty condition.
          */
-        if (inbuf_empty || outbuf_full) {
+        if (outbuf_full) {
             break;
         }
         int c = Ppmd7_DecodeSymbol(cPpmd7, rc);
@@ -206,9 +205,10 @@ Ppmd8T_decode_run(void *p) {
     int i = 0;
     int result;
     while (i < max_length ) {
-        Bool inbuf_empty = reader->inBuffer->size == reader->inBuffer->pos;
         Bool outbuf_full = threadInfo->out->size == threadInfo->out->pos;
-        if (inbuf_empty || outbuf_full) {
+        /* Only stop when output buffer is full; let Reader() handle
+         * input starvation by signaling controller. */
+        if (outbuf_full) {
             break;
         }
         int c = Ppmd8_DecodeSymbol(cPpmd8);
