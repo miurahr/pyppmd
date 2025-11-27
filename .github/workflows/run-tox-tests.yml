@@ -28,6 +28,8 @@ jobs:
         include:
           - os: macos-latest
             python-version: "3.14"
+          - os: ubuntu-24.04-arm
+            python-version: "3.14"
         exclude:
           - os: windows-latest
             python-version: 'pypy-3.10'
@@ -48,32 +50,3 @@ jobs:
       - name: Test project with tox
         run: |
           tox
-
-  test_on_aarch64:
-    name: Test on ${{ matrix.arch }}
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        arch: [aarch64]
-        distro: [ubuntu22.04]
-    steps:
-      - name: Checkout 🛎️
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 20
-      - name: Build & run test
-        uses: uraimo/run-on-arch-action@v2
-        with:
-          arch: ${{ matrix.arch }}
-          distro: ${{ matrix.distro }}
-          githubToken: ${{ github.token }}
-          install: |
-            apt-get update -q -y
-            apt-get install -q -y python3 python3-pip python3-dev build-essential gcc git
-            python3 -m pip install -U pip tox setuptools setuptools_scm[toml]
-          run: |
-            git config --global --add safe.directory ${GITHUB_WORKSPACE}
-            python3 -c "import platform;print('Machine type:', platform.machine())"
-            python3 -m tox -e py310
-          env: |
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
