@@ -55,10 +55,10 @@ fuzzer = [
 ]
 
 [project.urls]
-Source = "https://codeberg.org/miurahr/pyppmd"
+Source = "https://github.com/miurahr/pyppmd"
 Homepage = "https://pyppmd.readthedocs.io/"
 Documentation = "https://pyppmd.readthedocs.io/en/stable/"
-"Bug Tracker" = "https://codeberg.org/miurahr/pyppmd/issues"
+"Bug Tracker" = "https://github.com/miurahr/pyppmd/issues"
 Changelog = "https://pyppmd.readthedocs.io/en/latest/changelog.html"
 
 [build-system]
