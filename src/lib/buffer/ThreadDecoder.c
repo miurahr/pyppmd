@@ -4,6 +4,7 @@
 
 #include "ThreadDecoder.h"
 #include "Buffer.h"
+#include <time.h>
 #ifdef __APPLE__
 #include <mach/clock.h>
 #include <mach/mach.h>
@@ -56,6 +57,11 @@ int ppmd_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, unsigned long n
 }
 #endif
 
+/* cleanup helper for pthread_cleanup_push/pop */
+static void ppmd_mutex_unlock(void *m) {
+    pthread_mutex_unlock((pthread_mutex_t *)m);
+}
+
 Byte Ppmd_thread_Reader(const void *p) {
     BufferReader *bufferReader = (BufferReader *)p;
     ppmd_info *threadInfo = bufferReader->t;
@@ -65,10 +71,12 @@ Byte Ppmd_thread_Reader(const void *p) {
         pthread_mutex_lock(&tc->mutex);
         tc->empty = True;
         pthread_cond_broadcast(&tc->inEmpty);
+        /* Ensure mutex is unlocked if this thread is cancelled while waiting */
+        pthread_cleanup_push(ppmd_mutex_unlock, (void *)&tc->mutex);
         do {
             pthread_cond_wait(&tc->notEmpty, &tc->mutex);
         } while (tc->empty);
-        pthread_mutex_unlock(&tc->mutex);
+        pthread_cleanup_pop(1); /* unlocks mutex */
     }
     return *((const Byte *)inBuffer->src + inBuffer->pos++);
 }
@@ -102,19 +110,23 @@ Ppmd7T_decode_run(void *p) {
     int i = 0;
     int result;
     while (i < max_length ) {
-        Bool inbuf_empty = reader->inBuffer->size == reader->inBuffer->pos;
         Bool outbuf_full = threadInfo->out->size == threadInfo->out->pos;
+        /*
+         * Only stop when output buffer is full. Do NOT stop just because
+         * input buffer appears empty, since decoder may still be able to
+         * produce symbols without consuming new input bytes. If more input
+         * is actually required, Reader() will block and signal controller
+         * via inEmpty condition.
+         */
         if (outbuf_full) {
-            break;
-        }
-        if (inbuf_empty && reader->inBuffer->size > 0) {
             break;
         }
         int c = Ppmd7_DecodeSymbol(cPpmd7, rc);
         if (c == PPMD_RESULT_EOF) {
             result = PPMD_RESULT_EOF;
             goto exit;
-        } else if (c == PPMD_RESULT_ERROR) {
+        }
+        if (c == PPMD_RESULT_ERROR) {
             result = PPMD_RESULT_ERROR;
             goto exit;
         }
@@ -130,6 +142,8 @@ Ppmd7T_decode_run(void *p) {
     pthread_mutex_lock(&tc->mutex);
     threadInfo->result = result;
     tc->finished = True;
+    /* Wake controller that might be waiting on input-empty condition */
+    pthread_cond_broadcast(&tc->inEmpty);
     pthread_mutex_unlock(&tc->mutex);
     return NULL;
 }
@@ -178,12 +192,23 @@ int Ppmd7T_decode(CPpmd7 *cPpmd7, CPpmd7z_RangeDec *rc, OutBuffer *out, int max_
 
 void Ppmd7T_Free(CPpmd7 *cPpmd7, ppmd_info *threadInfo, IAllocPtr allocator) {
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
-    if (!(tc->finished)) {
+    if (tc && !(tc->finished)) {
+        /* Wake worker if it's waiting for input, then cancel and join */
+        pthread_mutex_lock(&tc->mutex);
+        tc->empty = False;
+        pthread_cond_broadcast(&tc->notEmpty);
+        pthread_mutex_unlock(&tc->mutex);
+
         pthread_cancel(tc->handle);
+        pthread_join(tc->handle, NULL);
         tc->finished = True;
     }
-    IAlloc_Free(allocator, tc);
-    Ppmd7_Free(cPpmd7, allocator);
+    if (tc) {
+        pthread_mutex_destroy(&tc->mutex);
+        pthread_cond_destroy(&tc->inEmpty);
+        pthread_cond_destroy(&tc->notEmpty);
+        IAlloc_Free(allocator, tc);
+    }
 }
 
 static void *
@@ -200,9 +225,10 @@ Ppmd8T_decode_run(void *p) {
     int i = 0;
     int result;
     while (i < max_length ) {
-        Bool inbuf_empty = reader->inBuffer->size == reader->inBuffer->pos;
         Bool outbuf_full = threadInfo->out->size == threadInfo->out->pos;
-        if (inbuf_empty || outbuf_full) {
+        /* Only stop when output buffer is full; let Reader() handle
+         * input starvation by signaling controller. */
+        if (outbuf_full) {
             break;
         }
         int c = Ppmd8_DecodeSymbol(cPpmd8);
@@ -225,6 +251,8 @@ Ppmd8T_decode_run(void *p) {
     pthread_mutex_lock(&tc->mutex);
     threadInfo->result = result;
     tc->finished = True;
+    /* Wake controller that might be waiting on input-empty condition */
+    pthread_cond_broadcast(&tc->inEmpty);
     pthread_mutex_unlock(&tc->mutex);
     return NULL;
 }
@@ -273,10 +301,21 @@ inempty:
 
 void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *threadInfo, IAllocPtr allocator) {
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
-    if (!(tc->finished)) {
+    if (tc && !(tc->finished)) {
+        /* Wake worker if it's waiting for input, then cancel and join */
+        pthread_mutex_lock(&tc->mutex);
+        tc->empty = False;
+        pthread_cond_broadcast(&tc->notEmpty);
+        pthread_mutex_unlock(&tc->mutex);
+
         pthread_cancel(tc->handle);
+        pthread_join(tc->handle, NULL);
         tc->finished = True;
     }
-    IAlloc_Free(allocator, tc);
-    Ppmd8_Free(cPpmd8, allocator);
+    if (tc) {
+        pthread_mutex_destroy(&tc->mutex);
+        pthread_cond_destroy(&tc->inEmpty);
+        pthread_cond_destroy(&tc->notEmpty);
+        IAlloc_Free(allocator, tc);
+    }
 }
