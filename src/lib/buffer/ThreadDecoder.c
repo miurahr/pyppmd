@@ -4,6 +4,7 @@
 
 #include "ThreadDecoder.h"
 #include "Buffer.h"
+#include <time.h>
 #ifdef __APPLE__
 #include <mach/clock.h>
 #include <mach/mach.h>
@@ -56,6 +57,11 @@ int ppmd_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, unsigned long n
 }
 #endif
 
+/* cleanup helper for pthread_cleanup_push/pop */
+static void ppmd_mutex_unlock(void *m) {
+    pthread_mutex_unlock((pthread_mutex_t *)m);
+}
+
 Byte Ppmd_thread_Reader(const void *p) {
     BufferReader *bufferReader = (BufferReader *)p;
     ppmd_info *threadInfo = bufferReader->t;
@@ -66,7 +72,7 @@ Byte Ppmd_thread_Reader(const void *p) {
         tc->empty = True;
         pthread_cond_broadcast(&tc->inEmpty);
         /* Ensure mutex is unlocked if this thread is cancelled while waiting */
-        pthread_cleanup_push((void (*)(void *))pthread_mutex_unlock, (void *)&tc->mutex);
+        pthread_cleanup_push(ppmd_mutex_unlock, (void *)&tc->mutex);
         do {
             pthread_cond_wait(&tc->notEmpty, &tc->mutex);
         } while (tc->empty);
@@ -119,7 +125,8 @@ Ppmd7T_decode_run(void *p) {
         if (c == PPMD_RESULT_EOF) {
             result = PPMD_RESULT_EOF;
             goto exit;
-        } else if (c == PPMD_RESULT_ERROR) {
+        }
+        if (c == PPMD_RESULT_ERROR) {
             result = PPMD_RESULT_ERROR;
             goto exit;
         }
