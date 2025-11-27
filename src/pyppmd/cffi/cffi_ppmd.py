@@ -557,6 +557,11 @@ class Ppmd8Decoder(PpmdBaseDecoder):
         if not isinstance(length, int):
             raise PpmdError("Wrong length argument is specified.")
         self.lock.acquire()
+        # If EOF already reached in a previous call, subsequent decode calls
+        # should be no-ops and return empty bytes without touching freed/native state.
+        if getattr(self, "_eof", False):
+            self.lock.release()
+            return b""
         in_buf, use_input_buffer = self._setup_inBuffer(data)
         out, out_buf = self._setup_outBuffer()
         self.threadInfo.out = out_buf
@@ -578,7 +583,6 @@ class Ppmd8Decoder(PpmdBaseDecoder):
                 self._needs_input = False
                 res = out.finish(out_buf)
                 self.lock.release()
-                self._free()
                 return res
             elif size == -2:
                 raise ValueError("Corrupted archive data.")

@@ -11,6 +11,8 @@ kwargs = {
     "include_dirs": ["src/lib/ppmd", "src/lib/buffer"],
     "library_dirs": [],
     "libraries": [],
+    "extra_compile_args": [],
+    "extra_link_args": [],
     "sources": [
             "src/lib/ppmd/Ppmd7.c",
             "src/lib/ppmd/Ppmd8.c",
@@ -62,6 +64,11 @@ class build_ext_compiler_check(build_ext):
     def build_extensions(self):
         for extension in self.extensions:
             if self.compiler.compiler_type.lower() in ("unix", "mingw32"):
+                # Ensure pthread is used for synchronization primitives
+                extension.extra_compile_args.append("-pthread")
+                if not hasattr(extension, "extra_link_args") or extension.extra_link_args is None:
+                    extension.extra_link_args = []
+                extension.extra_link_args.append("-pthread")
                 if WARNING_AS_ERROR:
                     extension.extra_compile_args.append("-Werror")
             elif self.compiler.compiler_type.lower() == "msvc":
