@@ -7,6 +7,27 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+v1.3.0_
+=======
+
+Fixed
+-----
+* Fix several issues in ThreadDecoder.c (#126)
+    * Fix the double call of Ppmd7_Free from both Ppmd7T_Free and Ppmd7Decoder_dealloc
+    * Fix the double call of Ppmd8_Free from both Ppmd8T_Free and Ppmd8Decoder_dealloc
+* Fix the issue in PyPY (#126)
+    * Fix initialization order in ffi_build.py
+    * Fix eof handling in cffi_ppmd.py
+
+Added
+-----
+* Add support for Python 3.14
+
+Changed
+-------
+* Add compile and link flag for building C++ with `-pthread` (#126)
+* Minimum required python to be 3.10
+
 v1.2.0_
 =======
 
@@ -126,7 +147,8 @@ Added
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/pyppmd/compare/v1.2.0...HEAD
+.. _Unreleased: https://github.com/miurahr/pyppmd/compare/v1.3.0...HEAD
+.. _v1.3.0: https://github.com/miurahr/pyppmd/compare/v1.2.0...v1.3.0
 .. _v1.2.0: https://github.com/miurahr/pyppmd/compare/v1.1.1...v1.2.0
 .. _v1.1.1: https://github.com/miurahr/pyppmd/compare/v1.0.0...v1.1.1
 .. _v1.1.0: https://github.com/miurahr/pyppmd/compare/v1.0.0...v1.1.0
