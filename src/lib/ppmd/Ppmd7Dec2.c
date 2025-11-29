@@ -64,7 +64,7 @@ static int Range_Init_Progress(CPpmd7t_RangeDec *p)
   return 1;
 }
 
-static inline int Range_Normalize_Push(CPpmd7t_RangeDec *p)
+static int Range_Normalize_Push(CPpmd7t_RangeDec *p)
 {
   if (p->Range < kTopValue) {
     UInt32 b;
@@ -82,19 +82,19 @@ static inline int Range_Normalize_Push(CPpmd7t_RangeDec *p)
   return 1;
 }
 
-static inline UInt32 Range_GetThreshold_Push(CPpmd7t_RangeDec *p, UInt32 total)
+static UInt32 Range_GetThreshold_Push(CPpmd7t_RangeDec *p, UInt32 total)
 {
   return p->Code / (p->Range /= total);
 }
 
-static inline int Range_Decode_Push(CPpmd7t_RangeDec *p, UInt32 start, UInt32 size)
+static int Range_Decode_Push(CPpmd7t_RangeDec *p, UInt32 start, UInt32 size)
 {
   p->Code -= start * p->Range;
   p->Range *= size;
   return Range_Normalize_Push(p);
 }
 
-static inline int Range_DecodeBit_Push(CPpmd7t_RangeDec *p, UInt32 size0, UInt32 *symbol)
+static int Range_DecodeBit_Push(CPpmd7t_RangeDec *p, UInt32 size0, UInt32 *symbol)
 {
   UInt32 newBound = (p->Range >> 14) * size0;
   if (p->Code < newBound) {
@@ -298,5 +298,5 @@ Ppmd7tStatus Ppmd7t_Decode(CPpmd7 *model,
 
   if (out_written) *out_written = produced;
   if (in_consumed) *in_consumed = rc->in_pos;
-  return produced ? PPMD7T_STATUS_OK : PPMD7T_STATUS_OK;
+  return produced ? PPMD7T_STATUS_OK : PPMD7T_STATUS_NEED_INPUT;
 }

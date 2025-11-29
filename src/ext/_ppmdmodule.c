@@ -461,8 +461,9 @@ Ppmd7tDecoder_decode(Ppmd7tDecoder *self,  PyObject *args, PyObject *kwargs)
        continue decoding into an internal pending buffer until END or NEED_INPUT.
        This allows us to set eof flag accurately without returning extra bytes. */
     if (!self->eof && !self->needs_input && (want >= 0) && total_written == (size_t)want) {
-        int prev_allow = self->rc.allow_eof_zeros;
-        if (in_size == 0) self->rc.allow_eof_zeros = 1;
+        /* Continue decoding internally to determine END/NEED_INPUT without
+           returning more output. Add safety to avoid infinite loops. */
+        size_t safety_iters = 0;
         for (;;) {
             /* ensure pending capacity */
             size_t chunk = 4096;
@@ -492,8 +493,15 @@ Ppmd7tDecoder_decode(Ppmd7tDecoder *self,  PyObject *args, PyObject *kwargs)
             }
             self->pending_size = old_size + ow;
             if (st == PPMD7T_STATUS_OK) {
+                /* If no progress and no input, declare NEED_INPUT to avoid spinning */
+                if (ow == 0) {
+                    if (in_size == 0) {
+                        self->needs_input = 1;
+                        break;
+                    }
+                }
                 /* continue probing */
-                continue;
+                ;
             } else if (st == PPMD7T_STATUS_END) {
                 self->eof = 1;
                 break;
@@ -504,8 +512,11 @@ Ppmd7tDecoder_decode(Ppmd7tDecoder *self,  PyObject *args, PyObject *kwargs)
                 PyErr_SetString(PyExc_ValueError, "Corrupted input data");
                 goto done;
             }
+            if (++safety_iters > 100000) { /* hard safety break */
+                self->needs_input = 1;
+                break;
+            }
         }
-        self->rc.allow_eof_zeros = prev_allow;
     }
 
     result = OutputBuffer_Finish(blocks, out);
