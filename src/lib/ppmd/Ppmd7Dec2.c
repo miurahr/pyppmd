@@ -12,7 +12,13 @@
 static int rc_need_byte(CPpmd7t_RangeDec *p, UInt32 *outByte)
 {
   if (p->in_pos >= p->in_size)
+  {
+    if (p->allow_eof_zeros) {
+      *outByte = 0;
+      return 1;
+    }
     return 0;
+  }
   *outByte = p->in[p->in_pos++];
   return 1;
 }
@@ -26,6 +32,9 @@ void Ppmd7t_RangeDec_Reset(CPpmd7t_RangeDec *p)
   p->in_pos = 0;
   p->initialized = 0;
   p->init_count = 0;
+  p->have_look = 0;
+  p->look_sym = 0;
+  p->allow_eof_zeros = 0;
 }
 
 void Ppmd7t_RangeDec_SetInput(CPpmd7t_RangeDec *p, const Byte *data, size_t size)
@@ -222,6 +231,39 @@ Ppmd7tStatus Ppmd7t_Decode(CPpmd7 *model,
     }
     if (r < 0)
       return PPMD7T_STATUS_ERROR;
+  }
+
+  /* If there is a buffered lookahead symbol, output it first if there is space. */
+  if (rc->have_look && out_cap > 0) {
+    out[produced++] = rc->look_sym;
+    rc->have_look = 0;
+  }
+
+  /* Special case: zero-capacity probe. Try to decode a single symbol to update
+     status without emitting to output by using lookahead buffer. */
+  if (out_cap == 0) {
+    int sym = Ppmd7t_DecodeSymbol_Push(model, rc);
+    if (sym >= 0) {
+      rc->look_sym = (Byte)sym;
+      rc->have_look = 1;
+      if (out_written) *out_written = 0;
+      if (in_consumed) *in_consumed = rc->in_pos;
+      return PPMD7T_STATUS_OK;
+    }
+    if (sym == -3) {
+      if (out_written) *out_written = 0;
+      if (in_consumed) *in_consumed = rc->in_pos;
+      return PPMD7T_STATUS_NEED_INPUT;
+    }
+    if (sym == -1) {
+      if (rc->Code == 0) {
+        if (finished_ok) *finished_ok = 1;
+        if (in_consumed) *in_consumed = rc->in_pos;
+        return PPMD7T_STATUS_END;
+      }
+      return PPMD7T_STATUS_ERROR;
+    }
+    return PPMD7T_STATUS_ERROR; /* -2 data error */
   }
 
   for (;;) {

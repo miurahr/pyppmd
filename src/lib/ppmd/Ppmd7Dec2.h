@@ -29,6 +29,11 @@ typedef struct
   /* initialization state: header (first 5 bytes) consumed */
   int initialized;
   size_t init_count; /* number of header bytes consumed [0..5] */
+  /* one-symbol lookahead buffer to allow zero-capacity probes */
+  int have_look;
+  Byte look_sym;
+  /* when set, missing input bytes are synthesized as 0 (like IByteIn EOF) */
+  int allow_eof_zeros;
 } CPpmd7t_RangeDec;
 
 typedef enum {
