@@ -125,6 +125,30 @@ typedef struct {
     char inited2;
 } Ppmd7tDecoder;
 
+/*
+ * Common utility definitions
+ */
+
+static const char init_twice_msg[] = "__init__ method is called twice.";
+static const char flush_twice_msg[] = "flush method is called twice.";
+
+static void clamp_max_order(unsigned long *max_order, unsigned long max) {
+    assert(PPMD7_MIN_ORDER == PPMD8_MIN_ORDER);
+    if (*max_order < PPMD7_MIN_ORDER) {
+        *max_order = PPMD7_MIN_ORDER;
+    } else if (*max_order > max) {
+        *max_order = max;
+    }
+}
+
+static void clamp_memory_size(unsigned long *memorySize) {
+    if (*memorySize < PPMD7_MIN_MEM_SIZE) {
+        *memorySize = PPMD7_MIN_MEM_SIZE;
+    } else if (*memorySize > PPMD7_MAX_MEM_SIZE) {
+        *memorySize = PPMD7_MAX_MEM_SIZE;
+    }
+}
+
 /* -----------------------
      Ppmd7tDecoder code
    ------------------------ */
@@ -254,7 +278,6 @@ static PyObject *
 Ppmd7t_unused_data_get(Ppmd7tDecoder *self, void *Py_UNUSED(ignored))
 {
     PyObject *ret;
-    ACQUIRE_LOCK(self);
     if (!self->eof) {
         ret = PyBytes_FromStringAndSize(NULL, 0);
     } else {
@@ -269,7 +292,6 @@ Ppmd7t_unused_data_get(Ppmd7tDecoder *self, void *Py_UNUSED(ignored))
             Py_INCREF(ret);
         }
     }
-    RELEASE_LOCK(self);
     return ret;
 }
 
@@ -293,8 +315,6 @@ Ppmd7tDecoder_decode(Ppmd7tDecoder *self,  PyObject *args, PyObject *kwargs)
                        "Not enough data for starting decompression.");
        return NULL;
     }
-
-    ACQUIRE_LOCK(self);
 
     /* setup output aggregation */
     BlocksOutputBuffer *blocks = self->blocksOutputBuffer;
@@ -410,10 +430,9 @@ Ppmd7tDecoder_decode(Ppmd7tDecoder *self,  PyObject *args, PyObject *kwargs)
         }
     }
 
-    result = OutputBuffer_Finish(blocks, out, (Py_ssize_t)total_written);
+    result = OutputBuffer_Finish(blocks, out);
 
 done:
-    RELEASE_LOCK(self);
     if (result == NULL && !PyErr_Occurred())
         PyErr_SetString(PyExc_RuntimeError, "decode failed");
     return result;
@@ -522,28 +541,6 @@ static _ppmd_state static_state;
         Py_END_ALLOW_THREADS                      \
     } } while (0)
 #define RELEASE_LOCK(obj) PyThread_release_lock((obj)->lock)
-
-static const char init_twice_msg[] = "__init__ method is called twice.";
-static const char flush_twice_msg[] = "flush method is called twice.";
-
-static inline void
-clamp_max_order(unsigned long *max_order, unsigned long max) {
-    assert(PPMD7_MIN_ORDER == PPMD8_MIN_ORDER);
-    if (*max_order < PPMD7_MIN_ORDER) {
-        *max_order = PPMD7_MIN_ORDER;
-    } else if (*max_order > max) {
-        *max_order = max;
-    }
-}
-
-static inline void
-clamp_memory_size(unsigned long *memorySize) {
-    if (*memorySize < PPMD7_MIN_MEM_SIZE) {
-        *memorySize = PPMD7_MIN_MEM_SIZE;
-    } else if (*memorySize > PPMD7_MAX_MEM_SIZE) {
-        *memorySize = PPMD7_MAX_MEM_SIZE;
-    }
-}
 
 /* -----------------------
      Ppmd7Decoder code
