@@ -28,6 +28,28 @@ def test_ppmd7_encoder2():
     assert len(result) == 41
     assert result == encoded
 
+def test_ppmd7t_decoder():
+    decoder = pyppmd.Ppmd7tDecoder(6, 16 << 20)
+    result = decoder.decode(encoded, 66)
+    assert result == data
+    assert decoder.eof
+    assert not decoder.needs_input
+
+
+def test_ppmd7t_decoder2():
+    decoder = pyppmd.Ppmd7tDecoder(6, 16 << 20)
+    result = decoder.decode(encoded[:33], 33)
+    result += decoder.decode(encoded[33:], 28)
+    assert not decoder.eof
+    while len(result) < 66:
+        if decoder.needs_input:
+            result += decoder.decode(b"\0", 66 - len(result))
+            break
+        else:
+            result += decoder.decode(b"", 66 - len(result))
+    assert result == data
+    assert not decoder.needs_input
+    assert decoder.eof
 
 def test_ppmd7_decoder():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
