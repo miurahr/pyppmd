@@ -35,7 +35,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Lesser General Public License for more details.
 
 You can receive a copy of the GNU Lesser General Public License from
-http://www.gnu.org/
+https://www.gnu.org/
 
 
 pyzstd
