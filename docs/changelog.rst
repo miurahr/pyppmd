@@ -225,15 +225,15 @@ Fixed
 * Fix build error on Windows.
 
 
-`v0.11.1`_
-==========
+`v0.11.1`
+=========
 
 Fixed
 -----
 * Fix Packaging configuration
 
-`v0.11.0`_
-==========
+`v0.11.0`
+=========
 
 Fixed
 -----
@@ -265,5 +265,3 @@ v0.10.0
 .. _v0.13.0: https://github.com/miurahr/pyppmd/compare/v0.12.1...v0.13.0
 .. _v0.12.1: https://github.com/miurahr/pyppmd/compare/v0.12.0...v0.12.1
 .. _v0.12.0: https://github.com/miurahr/pyppmd/compare/v0.11.1...v0.12.0
-.. _v0.11.1: https://github.com/miurahr/pyppmd/compare/v0.11.0...v0.11.1
-.. _v0.11.0: https://github.com/miurahr/pyppmd/compare/v0.10.0...v0.11.0
