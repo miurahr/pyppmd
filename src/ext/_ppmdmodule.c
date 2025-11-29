@@ -123,6 +123,12 @@ typedef struct {
     char inited;
     /* decode has been called with some data*/
     char inited2;
+    /* Pending output ring (simple linear buffer) for bytes decoded beyond
+       the requested length in order to detect EOF exactly */
+    char *pending_buf;
+    size_t pending_size;  /* number of valid bytes in pending */
+    size_t pending_pos;   /* read position within pending */
+    size_t pending_cap;   /* allocated capacity */
 } Ppmd7tDecoder;
 
 /*
@@ -178,6 +184,10 @@ Ppmd7tDecoder_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     self->input_buffer_size = 0;
     self->in_begin = self->in_end = 0;
     Ppmd7t_RangeDec_Reset(&self->rc);
+    self->pending_buf = NULL;
+    self->pending_size = 0;
+    self->pending_pos = 0;
+    self->pending_cap = 0;
     return (PyObject*)self;
 }
 
@@ -199,6 +209,9 @@ Ppmd7tDecoder_dealloc(Ppmd7tDecoder *self)
     }
     if (self->input_buffer) {
         PyMem_Free(self->input_buffer);
+    }
+    if (self->pending_buf) {
+        PyMem_Free(self->pending_buf);
     }
     Py_XDECREF(self->unused_data);
     PyTypeObject *tp = Py_TYPE(self);
@@ -374,6 +387,20 @@ Ppmd7tDecoder_decode(Ppmd7tDecoder *self,  PyObject *args, PyObject *kwargs)
         size_t out_cap = out->size - out->pos;
         if (want >= 0 && (size_t)want - total_written < out_cap)
             out_cap = (size_t)want - total_written;
+        /* First, drain any pending output from previous call */
+        if (out_cap > 0 && self->pending_size > self->pending_pos) {
+            size_t avail = self->pending_size - self->pending_pos;
+            if (avail > out_cap) avail = out_cap;
+            memcpy((Byte*)out->dst + out->pos,
+                   self->pending_buf + self->pending_pos, avail);
+            self->pending_pos += avail;
+            out->pos += avail;
+            total_written += avail;
+            if (self->pending_pos == self->pending_size) {
+                self->pending_pos = self->pending_size = 0; /* fully drained */
+            }
+            continue;
+        }
         if (out_cap == 0)
             break;
 
@@ -430,9 +457,101 @@ Ppmd7tDecoder_decode(Ppmd7tDecoder *self,  PyObject *args, PyObject *kwargs)
         }
     }
 
+    /* If we produced exactly what was requested but haven't reached EOF or NEED_INPUT,
+       continue decoding into an internal pending buffer until END or NEED_INPUT.
+       This allows us to set eof flag accurately without returning extra bytes. */
+    if (!self->eof && !self->needs_input && (want >= 0) && total_written == (size_t)want) {
+        int prev_allow = self->rc.allow_eof_zeros;
+        if (in_size == 0) self->rc.allow_eof_zeros = 1;
+        for (;;) {
+            /* ensure pending capacity */
+            size_t chunk = 4096;
+            size_t old_size = self->pending_size;
+            size_t need = old_size + chunk;
+            if (self->pending_cap < need) {
+                size_t new_cap = self->pending_cap ? self->pending_cap : 4096;
+                while (new_cap < need) new_cap *= 2;
+                char *tmp = PyMem_Realloc(self->pending_buf, new_cap);
+                if (!tmp) { PyErr_NoMemory(); goto done; }
+                self->pending_buf = tmp; self->pending_cap = new_cap;
+            }
+            Ppmd7t_RangeDec_SetInput(&self->rc, in_ptr, in_size);
+            size_t ow = 0, ic = 0; int finished_ok = 0;
+            Ppmd7tStatus st = Ppmd7t_Decode(self->cPpmd7, &self->rc,
+                                            (Byte*)self->pending_buf + old_size, chunk,
+                                            &ow, &ic, &finished_ok);
+            /* advance input */
+            if (using_internal) {
+                self->in_begin += ic;
+                if (self->in_begin > self->in_end) self->in_begin = self->in_end;
+                in_ptr = (Byte*)self->input_buffer + self->in_begin;
+                in_size = self->in_end - self->in_begin;
+            } else {
+                in_ptr += ic;
+                in_size -= ic;
+            }
+            self->pending_size = old_size + ow;
+            if (st == PPMD7T_STATUS_OK) {
+                /* continue probing */
+                continue;
+            } else if (st == PPMD7T_STATUS_END) {
+                self->eof = 1;
+                break;
+            } else if (st == PPMD7T_STATUS_NEED_INPUT) {
+                self->needs_input = 1;
+                break;
+            } else {
+                PyErr_SetString(PyExc_ValueError, "Corrupted input data");
+                goto done;
+            }
+        }
+        self->rc.allow_eof_zeros = prev_allow;
+    }
+
     result = OutputBuffer_Finish(blocks, out);
 
 done:
+    /* Preserve any unconsumed input for next calls */
+    if (result != NULL) {
+        if (in_size == 0) {
+            /* nothing remains */
+            if (using_internal) {
+                /* Clear input_buffer window */
+                self->in_begin = 0;
+                self->in_end = 0;
+            }
+            /* If we are not at EOF, then we definitely need more input
+               to produce more output. */
+            if (!self->eof) {
+                self->needs_input = 1;
+            }
+        } else {
+            /* some input remains after this call */
+            self->needs_input = 0;
+            if (!using_internal) {
+                /* Ensure internal buffer has enough capacity */
+                if (self->input_buffer_size < in_size) {
+                    char *tmp = PyMem_Realloc(self->input_buffer, in_size);
+                    if (!tmp) {
+                        Py_CLEAR(result);
+                        PyErr_NoMemory();
+                        return NULL;
+                    }
+                    self->input_buffer = tmp;
+                    self->input_buffer_size = in_size;
+                }
+                memcpy(self->input_buffer, in_ptr, in_size);
+                self->in_begin = 0;
+                self->in_end = in_size;
+            } else {
+                /* using internal: advance window by already consumed amount */
+                /* in_ptr/in_size already reflect the remaining range */
+                self->in_begin = (size_t)(in_ptr - (const Byte*)self->input_buffer);
+                self->in_end = self->in_begin + in_size;
+            }
+        }
+    }
+
     if (result == NULL && !PyErr_Occurred())
         PyErr_SetString(PyExc_RuntimeError, "decode failed");
     return result;
