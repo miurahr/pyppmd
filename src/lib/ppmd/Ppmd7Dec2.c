@@ -1,23 +1,19 @@
-/* Ppmd7Dec2.cpp -- PPMdH Decoder (push / buffer-driven)
+/* Ppmd7Dec2.c -- PPMdH Decoder (push / buffer-driven)
    2025-11-29 : pyppmd project : Public domain
 
    This file provides a push-based decoding API that consumes caller-supplied
    buffers and can pause with NEED_INPUT when more data is required.
 */
 
-#include <cstddef>
-#include <cstdint>
 #include "Ppmd7Dec2.h"
-
-extern "C" {
 
 #define kTopValue (1u << 24)
 
-static inline int rc_need_byte(CPpmd7t_RangeDec *p, UInt32 &outByte)
+static int rc_need_byte(CPpmd7t_RangeDec *p, UInt32 *outByte)
 {
   if (p->in_pos >= p->in_size)
     return 0;
-  outByte = p->in[p->in_pos++];
+  *outByte = p->in[p->in_pos++];
   return 1;
 }
 
@@ -25,7 +21,7 @@ void Ppmd7t_RangeDec_Reset(CPpmd7t_RangeDec *p)
 {
   p->Range = 0xFFFFFFFFu;
   p->Code = 0;
-  p->in = nullptr;
+  p->in = NULL;
   p->in_size = 0;
   p->in_pos = 0;
   p->initialized = 0;
@@ -39,12 +35,12 @@ void Ppmd7t_RangeDec_SetInput(CPpmd7t_RangeDec *p, const Byte *data, size_t size
   p->in_pos = 0;
 }
 
-static inline int Range_Init_Progress(CPpmd7t_RangeDec *p)
+static int Range_Init_Progress(CPpmd7t_RangeDec *p)
 {
   /* We need first 5 bytes (one leading zero, then 4 for Code). */
   while (p->init_count < 5) {
     UInt32 b;
-    if (!rc_need_byte(p, b))
+    if (!rc_need_byte(p, &b))
       return 0; /* need more input */
     if (p->init_count == 0) {
       /* first byte must be 0 */
@@ -63,12 +59,12 @@ static inline int Range_Normalize_Push(CPpmd7t_RangeDec *p)
 {
   if (p->Range < kTopValue) {
     UInt32 b;
-    if (!rc_need_byte(p, b))
+    if (!rc_need_byte(p, &b))
       return 0; /* need more input */
     p->Code = (p->Code << 8) | b;
     p->Range <<= 8;
     if (p->Range < kTopValue) {
-      if (!rc_need_byte(p, b))
+      if (!rc_need_byte(p, &b))
         return 0; /* need more input */
       p->Code = (p->Code << 8) | b;
       p->Range <<= 8;
@@ -89,14 +85,14 @@ static inline int Range_Decode_Push(CPpmd7t_RangeDec *p, UInt32 start, UInt32 si
   return Range_Normalize_Push(p);
 }
 
-static inline int Range_DecodeBit_Push(CPpmd7t_RangeDec *p, UInt32 size0, UInt32 &symbol)
+static inline int Range_DecodeBit_Push(CPpmd7t_RangeDec *p, UInt32 size0, UInt32 *symbol)
 {
   UInt32 newBound = (p->Range >> 14) * size0;
   if (p->Code < newBound) {
-    symbol = 0;
+    *symbol = 0;
     p->Range = newBound;
   } else {
-    symbol = 1;
+    *symbol = 1;
     p->Code -= newBound;
     p->Range -= newBound;
   }
@@ -144,7 +140,7 @@ static int Ppmd7t_DecodeSymbol_Push(CPpmd7 *p, CPpmd7t_RangeDec *rc)
   } else {
     UInt16 *prob = Ppmd7_GetBinSumm(p);
     UInt32 bit;
-    if (!Range_DecodeBit_Push(rc, *prob, bit)) return -3;
+    if (!Range_DecodeBit_Push(rc, *prob, &bit)) return -3;
     if (bit == 0) {
       Byte symbol;
       *prob = (UInt16)PPMD_UPDATE_PROB_0(*prob);
@@ -212,6 +208,8 @@ Ppmd7tStatus Ppmd7t_Decode(CPpmd7 *model,
                            size_t *in_consumed,
                            int *finished_ok)
 {
+  size_t produced = 0;
+
   if (out_written) *out_written = 0;
   if (in_consumed) *in_consumed = 0;
   if (finished_ok) *finished_ok = 0;
@@ -226,38 +224,37 @@ Ppmd7tStatus Ppmd7t_Decode(CPpmd7 *model,
       return PPMD7T_STATUS_ERROR;
   }
 
-  size_t produced = 0;
   for (;;) {
     if (produced >= out_cap)
       break;
-    int sym = Ppmd7t_DecodeSymbol_Push(model, rc);
-    if (sym >= 0) {
-      out[produced++] = (Byte)sym;
-      continue;
-    }
-    if (sym == -3) {
-      /* need more input */
-      if (out_written) *out_written = produced;
-      if (in_consumed) *in_consumed = rc->in_pos;
-      return produced ? PPMD7T_STATUS_OK : PPMD7T_STATUS_NEED_INPUT;
-    }
-    if (sym == -1) {
-      /* EOCP: check finish */
-      if (rc->Code == 0) {
-        if (finished_ok) *finished_ok = 1;
+    {
+      int sym = Ppmd7t_DecodeSymbol_Push(model, rc);
+      if (sym >= 0) {
+        out[produced++] = (Byte)sym;
+        continue;
+      }
+      if (sym == -3) {
+        /* need more input */
         if (out_written) *out_written = produced;
         if (in_consumed) *in_consumed = rc->in_pos;
-        return PPMD7T_STATUS_END;
+        return produced ? PPMD7T_STATUS_OK : PPMD7T_STATUS_NEED_INPUT;
       }
+      if (sym == -1) {
+        /* EOCP: check finish */
+        if (rc->Code == 0) {
+          if (finished_ok) *finished_ok = 1;
+          if (out_written) *out_written = produced;
+          if (in_consumed) *in_consumed = rc->in_pos;
+          return PPMD7T_STATUS_END;
+        }
+        return PPMD7T_STATUS_ERROR;
+      }
+      /* sym == -2 : data error */
       return PPMD7T_STATUS_ERROR;
     }
-    /* sym == -2 : data error */
-    return PPMD7T_STATUS_ERROR;
   }
 
   if (out_written) *out_written = produced;
   if (in_consumed) *in_consumed = rc->in_pos;
   return produced ? PPMD7T_STATUS_OK : PPMD7T_STATUS_OK;
 }
-
-} /* extern "C" */

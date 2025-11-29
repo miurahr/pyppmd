@@ -18,7 +18,7 @@ kwargs = {
             "src/lib/ppmd/Ppmd8.c",
             "src/lib/ppmd/Ppmd8Dec.c",
             "src/lib/ppmd/Ppmd7Enc.c",
-            "src/lib/ppmd/Ppmd7Dec2.cpp",
+            "src/lib/ppmd/Ppmd7Dec2.c",
             "src/lib/ppmd/Ppmd8Enc.c",
             "src/lib/ppmd/Ppmd7Dec.c",
             "src/lib/buffer/Buffer.c",
