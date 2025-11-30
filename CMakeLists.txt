@@ -60,7 +60,7 @@ add_custom_target(
 # ##################################################################################################
 include_directories(src/lib/buffer src/lib/ppmd)
 set(_sources src/ext/_ppmdmodule.c src/lib/buffer/Buffer.c src/lib/buffer/ThreadDecoder.c
-        src/lib/ppmd/Ppmd7.c src/lib/ppmd/Ppmd7Dec.c src/lib/ppmd/Ppmd7Enc.c
+        src/lib/ppmd/Ppmd7.c src/lib/ppmd/Ppmd7Dec.c src/lib/ppmd/Ppmd7Dec2.c src/lib/ppmd/Ppmd7Enc.c
         src/lib/ppmd/Ppmd8.c src/lib/ppmd/Ppmd8Dec.c src/lib/ppmd/Ppmd8Enc.c)
 Python_add_library(_ppmd MODULE WITH_SOABI ${_sources})
 add_custom_target(build_ext
@@ -159,6 +159,7 @@ add_library(
         src/lib/ppmd/Ppmd7.c
         src/lib/ppmd/Ppmd7.h
         src/lib/ppmd/Ppmd7Dec.c
+        src/lib/ppmd/Ppmd7Dec2.c
         src/lib/ppmd/Ppmd7Enc.c
         src/lib/ppmd/Ppmd8.c
         src/lib/ppmd/Ppmd8.h
