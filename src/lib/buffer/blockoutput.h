@@ -159,7 +159,7 @@ OutputBuffer_Grow(BlocksOutputBuffer *buffer, OutBuffer *ob) {
     if (buffer->max_length >= 0) {
         /* If (rest == 0), should not grow the buffer. */
         Py_ssize_t rest = buffer->max_length - buffer->allocated;
-        assert(rest > 0);
+        assert(rest >= 0);
 
         /* block_size of the last block */
         if (block_size > rest) {
