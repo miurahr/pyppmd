@@ -7,22 +7,33 @@ from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 from setuptools.command.egg_info import egg_info
 
+COMMON_SOURCES = [
+    "src/lib/buffer/Buffer.c",
+]
+
+# Ppmd7 decoder is synchronous and does not use threads.
+PPMD7_SOURCES = [
+    "src/lib/ppmd/Ppmd7.c",
+    "src/lib/ppmd/Ppmd7Enc.c",
+    "src/lib/ppmd/Ppmd7Dec.c",
+    "src/lib/buffer/Ppmd7Decoder.c",
+]
+
+# Ppmd8 decoder still runs in a worker thread (ThreadDecoder.c).
+PPMD8_SOURCES = [
+    "src/lib/ppmd/Ppmd8.c",
+    "src/lib/ppmd/Ppmd8Enc.c",
+    "src/lib/ppmd/Ppmd8Dec.c",
+    "src/lib/buffer/ThreadDecoder.c",
+]
+
 kwargs = {
     "include_dirs": ["src/lib/ppmd", "src/lib/buffer"],
     "library_dirs": [],
     "libraries": [],
     "extra_compile_args": [],
     "extra_link_args": [],
-    "sources": [
-            "src/lib/ppmd/Ppmd7.c",
-            "src/lib/ppmd/Ppmd8.c",
-            "src/lib/ppmd/Ppmd8Dec.c",
-            "src/lib/ppmd/Ppmd7Enc.c",
-            "src/lib/ppmd/Ppmd8Enc.c",
-            "src/lib/ppmd/Ppmd7Dec.c",
-            "src/lib/buffer/Buffer.c",
-            "src/lib/buffer/ThreadDecoder.c",
-        ],
+    "sources": COMMON_SOURCES + PPMD7_SOURCES + PPMD8_SOURCES,
     "define_macros": [],
 }
 
