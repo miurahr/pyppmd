@@ -220,10 +220,34 @@ typedef struct ppmd_info_s {
 } ppmd_info;
 
 Byte Ppmd_thread_Reader(const void *p);
-int Ppmd7T_decode(CPpmd7 *cPpmd7, CPpmd7z_RangeDec *rc, OutBuffer *out, int max_length, ppmd_info *args);
-void Ppmd7T_Free(CPpmd7 *cPpmd7, ppmd_info *args, IAlloc *allocator);
 int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *args);
 void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *args, IAlloc *allocator);
+"""
+
+# Ppmd7Decoder.h
+defs += r"""
+typedef struct {
+    IByteIn vt;
+    const Byte *src;
+    size_t size;
+    size_t pos;
+    size_t overrun;
+} Ppmd7Reader;
+
+void Ppmd7Reader_Init(Ppmd7Reader *r);
+void Ppmd7Reader_Set(Ppmd7Reader *r, const void *src, size_t size);
+
+typedef enum {
+    PPMD7_DEC_LENGTH = 0,
+    PPMD7_DEC_OUT_FULL,
+    PPMD7_DEC_NEED_INPUT,
+    PPMD7_DEC_EOF,
+    PPMD7_DEC_ERROR_DATA,
+    PPMD7_DEC_ERROR_OVERRUN
+} Ppmd7DecStatus;
+
+Ppmd7DecStatus Ppmd7_DecodeBlock(CPpmd7 *p, CPpmd7z_RangeDec *rc, Ppmd7Reader *in,
+                                 OutBuffer *out, size_t limit, Bool final, size_t *produced);
 """
 
 # ----------- python binding API ---------------------
@@ -252,15 +276,15 @@ void ppmd7_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize,
 void ppmd7_state_close(CPpmd7 *ppmd, IAlloc *allocator);
 
 void ppmd7_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *write);
-int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader, ppmd_info *info, IAlloc *allocator);
+void ppmd7_decompress_init(CPpmd7z_RangeDec *rc, Ppmd7Reader *reader);
 
 int ppmd7_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, OutBuffer *out_buf, InBuffer *in_buf);
 void ppmd7_compress_flush(CPpmd7 *p, CPpmd7z_RangeEnc *rc, Bool endmark);
-int ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc, OutBuffer *out_buf, InBuffer *in_buf, size_t length, ppmd_info *info);
 
 void Ppmd7_Construct(CPpmd7 *p);
 void Ppmd7_Init(CPpmd7 *p, unsigned maxOrder);
 int Ppmd7_DecodeSymbol(CPpmd7 *p, CPpmd7z_RangeDec *rc);
+Bool Ppmd7z_RangeDec_Init(CPpmd7z_RangeDec *p);
 
 void Ppmd7z_RangeEnc_Init(CPpmd7z_RangeEnc *p);
 void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
@@ -286,6 +310,7 @@ source = r"""
 #include "Ppmd7.h"
 #include "Ppmd8.h"
 #include "Buffer.h"
+#include "Ppmd7Decoder.h"
 #include "ThreadDecoder.h"
 
 #include <stdio.h>
@@ -318,17 +343,10 @@ void ppmd7_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *writer)
     Ppmd7z_RangeEnc_Init(rc);
 }
 
-int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader, ppmd_info *info, IAllocPtr allocator)
+void ppmd7_decompress_init(CPpmd7z_RangeDec *rc, Ppmd7Reader *reader)
 {
-    /* Use threaded reader and initialize thread control BEFORE range init,
-       since RangeDec_Init will read from the stream immediately. */
-    reader->Read = (Byte (*)(void *)) Ppmd_thread_Reader;
-    reader->t = info;
-    info->in = reader->inBuffer;
-    Ppmd_thread_decode_init(info, allocator);
-    rc->Stream = (IByteIn *) reader;
-    Bool res = Ppmd7z_RangeDec_Init(rc);
-    return res;
+    Ppmd7Reader_Init(reader);
+    rc->Stream = &reader->vt;
 }
 
 int ppmd7_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, OutBuffer *out_buf, InBuffer *in_buf) {
@@ -349,12 +367,6 @@ void ppmd7_compress_flush(CPpmd7 *p, CPpmd7z_RangeEnc *rc, Bool endmark){
         Ppmd7_EncodeSymbol(p, rc, -1);
     }
     Ppmd7z_RangeEnc_FlushData(rc);
-}
-
-int ppmd7_decompress(CPpmd7 *ppmd, CPpmd7z_RangeDec *rc, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd_info *info) {
-    info->in = in_buf;
-    info->out = out_buf;
-    return Ppmd7T_decode(ppmd, rc, out_buf, length, info);
 }
 
 void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer)
@@ -416,6 +428,7 @@ if __name__ == "__main__":
             "src/lib/ppmd/Ppmd8Enc.c",
             "src/lib/ppmd/Ppmd7Dec.c",
             "src/lib/buffer/Buffer.c",
+            "src/lib/buffer/Ppmd7Decoder.c",
             "src/lib/buffer/ThreadDecoder.c",
         ],
         "define_macros": [],

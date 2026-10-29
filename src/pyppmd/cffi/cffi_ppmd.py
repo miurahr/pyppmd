@@ -30,6 +30,7 @@ _allocated = []
 CFFI_PYPPMD = True
 
 _new_nonzero = ffi.new_allocator(should_clear_after_alloc=False)
+_SIZE_MAX = int(ffi.cast("size_t", -1))
 
 
 class PpmdError(Exception):
@@ -419,50 +420,85 @@ class Ppmd7Decoder(PpmdBaseDecoder):
         if mem_size > sys.maxsize:
             raise ValueError("Mem_size exceed to platform limit.")
         if _PPMD7_MIN_ORDER <= max_order <= _PPMD7_MAX_ORDER and _PPMD7_MIN_MEM_SIZE <= mem_size <= _PPMD7_MAX_MEM_SIZE:
-            self.lock = Lock()
             self._init_common()
             self.ppmd = ffi.new("CPpmd7 *")
             self.rc = ffi.new("CPpmd7z_RangeDec *")
-            self.threadInfo = ffi.new("ppmd_info *")
+            self._reader7 = ffi.new("Ppmd7Reader *")
+            self._produced = ffi.new("size_t *")
             self._eof = False
             self._finished = False
             self._needs_input = True
             lib.ppmd7_state_init(self.ppmd, max_order, mem_size, self._allocator)
+            lib.ppmd7_decompress_init(self.rc, self._reader7)
         else:
             raise ValueError("PPMd wrong parameters.")
 
-    def decode(self, data: Union[bytes, bytearray, memoryview], length: int) -> bytes:
-        if not isinstance(length, int) or length < 0:
-            raise PpmdError("Wrong length argument is specified. It should be positive integer.")
-        self.lock.acquire()
-        in_buf, use_input_buffer = self._setup_inBuffer(data)
-        if not self.inited:
-            lib.ppmd7_decompress_init(self.rc, self.reader, self.threadInfo, self._allocator)
-            self.inited = True
-        out, out_buf = self._setup_outBuffer()
-        remaining: int = length
-        out_size = 0
-        while remaining > 0:
-            size = min(out_buf.size, remaining)
-            self.lock.release()
-            out_size = lib.ppmd7_decompress(self.ppmd, self.rc, out_buf, in_buf, size, self.threadInfo)
-            self.lock.acquire()
-            if out_size == -2:
-                self.lock.release()
-                raise PpmdError("DecodeError.")
-            if out_size == -1 or self.rc.Code == 0:
+    def decode(self, data: Union[bytes, bytearray, memoryview], length: int = -1, *, final: bool = False) -> bytes:
+        """Decode PPMd7 compressed data and return the decompressed bytes.
+
+        Arguments
+        data:   compressed input. The first call needs at least 5 bytes.
+        length: max number of bytes to produce, -1 for unlimited.
+                Use `length` unless the stream has an end mark.
+        final:  True when `data` is the last input of the stream. The decoder then decodes
+                symbols until the input is exhausted (a missing tail is treated as zero bytes).
+                When False, the decoder keeps a small unconsumed tail of input internally
+                and `needs_input` becomes True when it needs more input.
+        """
+        if not isinstance(length, int):
+            raise TypeError("length should be an integer.")
+        if not self.inited and len(data) < 5:
+            raise ValueError("Not enough data for starting decompression.")
+        with self.lock:
+            if self._finished:
+                raise ValueError("Decoder is already closed.")
+            if self._eof:
+                # Already at end of stream: nothing more to produce.
+                return b""
+            try:
+                return self._decode(data, length, bool(final))
+            except BaseException:
                 self._eof = True
                 self._needs_input = False
+                self._in_begin = 0
+                self._in_end = 0
+                raise
+
+    def _decode(self, data, length: int, final: bool) -> bytes:
+        reader = self._reader7
+        if not final:
+            # Without `final`, the reader must never run dry within this call.
+            reader.overrun = 0
+        in_buf, use_input_buffer = self._setup_inBuffer(data)
+        lib.Ppmd7Reader_Set(reader, in_buf.src, in_buf.size)
+        if not self.inited:
+            # first time initialized.
+            if not lib.Ppmd7z_RangeDec_Init(self.rc):
+                raise ValueError("Corrupted input data.")
+            self.inited = True
+        out_buf = _new_nonzero("OutBuffer *")
+        if out_buf == ffi.NULL:
+            raise MemoryError
+        out = _BlocksOutputBuffer()
+        out.initAndGrow(out_buf, length)
+        remains = length if length >= 0 else _SIZE_MAX
+        while True:
+            status = lib.Ppmd7_DecodeBlock(self.ppmd, self.rc, reader, out_buf, remains, final, self._produced)
+            if length >= 0:
+                remains -= self._produced[0]
+            if status != lib.PPMD7_DEC_OUT_FULL:
                 break
-            if out_size == 0:
-                self._needs_input = True
-                break
-            if out_buf.pos == out_buf.size:
-                out.grow(out_buf)
-            remaining = remaining - out_size
-        self._unconsumed_in(in_buf, use_input_buffer)
+            out.grow(out_buf)
+        if status == lib.PPMD7_DEC_EOF:
+            self._eof = True
+        elif status == lib.PPMD7_DEC_ERROR_DATA:
+            raise ValueError("Corrupted input data.")
+        elif status == lib.PPMD7_DEC_ERROR_OVERRUN:
+            raise RuntimeError("Internal error: input reader overrun.")
+        self._needs_input = status == lib.PPMD7_DEC_NEED_INPUT
         res = out.finish(out_buf)
-        self.lock.release()
+        in_buf.pos = reader.pos
+        self._unconsumed_in(in_buf, use_input_buffer)
         return res
 
     @property
@@ -473,19 +509,26 @@ class Ppmd7Decoder(PpmdBaseDecoder):
     def eof(self):
         return self._eof
 
+    def _free(self):
+        if self._finished:
+            return
+        self._finished = True
+        lib.ppmd7_state_close(self.ppmd, self._allocator)
+        ffi.release(self.ppmd)
+        ffi.release(self.rc)
+        ffi.release(self._reader7)
+        self._release()
+        self._needs_input = False
+
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._finished:
-            return
-        self._finished = True
-        lib.Ppmd7T_Free(self.ppmd, self.threadInfo, self._allocator)
-        ffi.release(self.ppmd)
-        ffi.release(self.rc)
-        self._release()
-        self._needs_input = False
-        self.lock.release()
+        self._free()
+
+    def __del__(self):
+        if hasattr(self, "_finished"):
+            self._free()
 
 
 class Ppmd8Encoder(PpmdBaseEncoder):

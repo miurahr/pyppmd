@@ -11,12 +11,6 @@ import pyppmd
 testdata_path = pathlib.Path(os.path.dirname(__file__)).joinpath("data")
 golden_path = testdata_path.joinpath("ppmd7_golden")
 
-# The synchronous decode(data, length, *, final=...) API is implemented by the C backend only.
-# TODO: implement it in the CFFI backend (Step 2).
-needs_sync_api = pytest.mark.skipif(
-    pyppmd.Ppmd7Decoder.__module__ != "_ppmd",
-    reason="Ppmd7Decoder.decode(final=...) is not implemented in the CFFI backend yet",
-)
 data = b"This file is located in a folder.This file is located in the root."
 encoded = b"\x00T\x16C\x98\xbdi\x9b\n\xf1B^N\xac\xc8}:\xbak&\xc1\x7f\x01p\xc51C\xb0b\x1b@\x9a\xb6h\x9a-0\x98\xc0\\'"
 READ_BLOCKSIZE = 16384
@@ -39,7 +33,6 @@ def test_ppmd7_encoder2():
     assert result == encoded
 
 
-@needs_sync_api
 def test_ppmd7_decoder():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
     result = decoder.decode(encoded, 66, final=True)
@@ -47,7 +40,6 @@ def test_ppmd7_decoder():
     assert not decoder.needs_input
 
 
-@needs_sync_api
 def test_ppmd7_decoder2():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
     result = decoder.decode(encoded[:33], 33)
@@ -60,14 +52,12 @@ def test_ppmd7_decoder2():
     assert not decoder.needs_input
 
 
-@needs_sync_api
 def test_ppmd7_decoder_final_is_keyword_only():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
     with pytest.raises(TypeError):
         decoder.decode(encoded, 66, True)
 
 
-@needs_sync_api
 def test_ppmd7_decoder_first_call_needs_5bytes():
     decoder = pyppmd.Ppmd7Decoder(6, 16 << 20)
     with pytest.raises(ValueError):
@@ -75,7 +65,6 @@ def test_ppmd7_decoder_first_call_needs_5bytes():
 
 
 # test mem_size less than original file size as well
-@needs_sync_api
 @pytest.mark.parametrize("mem_size", [(16 << 20), (1 << 20)])
 def test_ppmd7_encode_decode(tmp_path, mem_size):
     length = 0
@@ -239,7 +228,6 @@ def constant(n):
         yield n
 
 
-@needs_sync_api
 def test_golden_manifest_is_complete():
     assert len(golden_streams) == 48
     assert {e["order"] for e in golden_streams} == {2, 6, 32, 64}
@@ -247,7 +235,6 @@ def test_golden_manifest_is_complete():
     assert {e["input"] for e in golden_streams} == {"empty", "one_byte", "text", "random64k", "mixed1m"}
 
 
-@needs_sync_api
 @golden_param
 def test_golden_one_call_final(entry):
     stream, plain = load_golden(entry)
@@ -255,7 +242,6 @@ def test_golden_one_call_final(entry):
     assert dec.decode(stream, len(plain), final=True) == plain
 
 
-@needs_sync_api
 @pytest.mark.parametrize("entry", [e for e in golden_streams if e["endmark"]], ids=golden_ids)
 def test_golden_one_call_final_unlimited(entry):
     """length=-1 with final=True is well defined only for streams with an end mark."""
@@ -265,7 +251,6 @@ def test_golden_one_call_final_unlimited(entry):
     assert dec.eof
 
 
-@needs_sync_api
 @pytest.mark.timeout(60)
 @pytest.mark.parametrize("entry", [e for e in golden_streams if not e["endmark"]], ids=golden_ids)
 def test_golden_no_endmark_unlimited_terminates(entry):
@@ -282,7 +267,6 @@ def test_golden_no_endmark_unlimited_terminates(entry):
     assert isinstance(out, bytes)
 
 
-@needs_sync_api
 @golden_param
 def test_golden_one_byte_at_a_time(entry):
     stream, plain = load_golden(entry)
@@ -306,7 +290,6 @@ def test_golden_one_byte_at_a_time(entry):
     assert b"".join(result) == plain
 
 
-@needs_sync_api
 @golden_param
 def test_golden_random_chunks(entry):
     stream, plain = load_golden(entry)
@@ -316,7 +299,6 @@ def test_golden_random_chunks(entry):
     assert feed(dec, stream, sizes, len(plain)) == plain
 
 
-@needs_sync_api
 @golden_nonempty_param
 def test_golden_length_limited_repeated_calls(entry):
     stream, plain = load_golden(entry)
@@ -333,7 +315,6 @@ def test_golden_length_limited_repeated_calls(entry):
     assert b"".join(result) == plain
 
 
-@needs_sync_api
 @golden_nonempty_param
 def test_golden_without_final_never_overruns(entry):
     """Without final=True the decoder holds back the tail of the input; it must not raise.
@@ -362,7 +343,6 @@ def test_golden_without_final_never_overruns(entry):
         assert out == plain
 
 
-@needs_sync_api
 @pytest.mark.parametrize("entry", [e for e in golden_streams if e["endmark"]], ids=golden_ids)
 def test_golden_endmark_sets_eof(entry):
     stream, plain = load_golden(entry)
@@ -375,7 +355,6 @@ def test_golden_endmark_sets_eof(entry):
     assert dec.decode(b"", -1, final=True) == b""
 
 
-@needs_sync_api
 @pytest.mark.timeout(120)
 @pytest.mark.parametrize("name", ["text.o6.m16", "random64k.o32.m1", "mixed1m.o6.m16"])
 def test_truncated_input_is_safe(name):
@@ -401,14 +380,12 @@ def test_truncated_input_is_safe(name):
     assert len(out) < 64 * 1024 * 1024
 
 
-@needs_sync_api
 def test_truncated_input_shorter_than_header():
     dec = pyppmd.Ppmd7Decoder(6, 16 << 20)
     with pytest.raises(ValueError):
         dec.decode(encoded[:3], 66, final=True)
 
 
-@needs_sync_api
 def test_corrupted_input_does_not_crash():
     rnd = random.Random(7)
     for _ in range(20):
