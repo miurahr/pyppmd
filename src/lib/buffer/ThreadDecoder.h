@@ -27,9 +27,6 @@ typedef struct ppmd_thread_control_s {
 
 Byte Ppmd_thread_Reader(const void *p);
 
-int Ppmd7T_decode(CPpmd7 *cPpmd7, CPpmd7z_RangeDec *rc, OutBuffer *out, int max_length, ppmd_info *threadInfo);
-void Ppmd7T_Free(CPpmd7 *cPpmd7, ppmd_info *args, IAllocPtr allocator);
-
 int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *threadInfo);
 void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *args, IAllocPtr allocator);
 

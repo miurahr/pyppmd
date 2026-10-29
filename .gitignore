@@ -8,6 +8,9 @@ cmake-build-debug
 dist
 *.egg-info
 __pycache__
+*.o
+*.dylib
 *.so
 *.pyd
 venv
+.venv

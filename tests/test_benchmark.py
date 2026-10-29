@@ -51,7 +51,10 @@ def test_benchmark_text_decompress(tmp_path, benchmark, name, var, max_order, me
                 remaining = src_size
                 data = src.read(READ_BLOCKSIZE)
                 while remaining > 0:
-                    out = decoder.decode(data, remaining)
+                    if var == 7:
+                        out = decoder.decode(data, remaining, final=len(data) < READ_BLOCKSIZE)
+                    else:
+                        out = decoder.decode(data, remaining)
                     if len(out) == 0:
                         break
                     target.write(out)

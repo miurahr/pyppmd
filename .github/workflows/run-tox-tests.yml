@@ -56,3 +56,25 @@ jobs:
       - name: Test project with tox
         run: |
           tox
+
+  asan:
+    runs-on: ubuntu-latest
+    name: ASan/UBSan tests of the Ppmd7 decoder
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 20
+      - name: Setup python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: |
+          pip install -U pip setuptools setuptools_scm[toml]
+          pip install "pytest<9.2" pytest-timeout hypothesis
+      - name: Run tests with ASan and UBSan
+        env:
+          PYTHON: python
+        run: |
+          utils/asan_test.sh
