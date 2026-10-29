@@ -337,6 +337,7 @@ PyDoc_STRVAR(Ppmd7Decoder_decode_doc, "decode(data, length=-1, *, final=False)\n
              "Arguments\n"
              "data:   compressed input. The first call needs at least 5 bytes.\n"
              "length: max number of bytes to produce, -1 for unlimited.\n"
+             "        Use `length` unless the stream has an end mark.\n"
              "final:  True when `data` is the last input of the stream. The decoder then decodes\n"
              "        symbols until the input is exhausted (a missing tail is treated as zero bytes).\n"
              "        When False, the decoder keeps a small unconsumed tail of input internally\n"

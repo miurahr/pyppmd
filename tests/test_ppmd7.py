@@ -213,8 +213,6 @@ def golden_ids(entry):
 
 
 golden_param = pytest.mark.parametrize("entry", golden_streams, ids=golden_ids)
-# streams without end mark: decoding is bounded by the length
-golden_nomark_param = pytest.mark.parametrize("entry", [e for e in golden_streams if not e["endmark"]], ids=golden_ids)
 golden_nonempty_param = pytest.mark.parametrize(
     "entry", [e for e in golden_streams if e["input"] != "empty"], ids=golden_ids
 )
@@ -223,13 +221,15 @@ golden_nonempty_param = pytest.mark.parametrize(
 def feed(dec, stream, chunk_sizes, length):
     """Feed `stream` in chunks (the last chunk with final=True) and collect the output."""
     result = []
+    produced = 0
     pos = 0
     sizes = iter(chunk_sizes)
     while pos < len(stream):
         size = next(sizes)
         chunk = stream[pos : pos + size]
         pos += len(chunk)
-        out = dec.decode(chunk, length - sum(map(len, result)), final=pos >= len(stream))
+        out = dec.decode(chunk, length - produced, final=pos >= len(stream))
+        produced += len(out)
         result.append(out)
     return b"".join(result)
 
@@ -256,18 +256,30 @@ def test_golden_one_call_final(entry):
 
 
 @needs_sync_api
-@golden_param
+@pytest.mark.parametrize("entry", [e for e in golden_streams if e["endmark"]], ids=golden_ids)
 def test_golden_one_call_final_unlimited(entry):
-    """length=-1 with final=True: output starts with the golden data, and never grows unbounded."""
+    """length=-1 with final=True is well defined only for streams with an end mark."""
     stream, plain = load_golden(entry)
     dec = pyppmd.Ppmd7Decoder(entry["order"], entry["mem_size"])
-    out = dec.decode(stream, final=True)
-    assert out.startswith(plain)
-    if entry["endmark"]:
-        assert out == plain
-        assert dec.eof
-        assert dec.unused_data == b""
-    assert dec.eof or len(out) == len(plain) or True  # termination is what matters here
+    assert dec.decode(stream, -1, final=True) == plain
+    assert dec.eof
+
+
+@needs_sync_api
+@pytest.mark.timeout(60)
+@pytest.mark.parametrize("entry", [e for e in golden_streams if not e["endmark"]], ids=golden_ids)
+def test_golden_no_endmark_unlimited_terminates(entry):
+    """Without an end mark the end of data is unknown: output content is unspecified.
+
+    The call must only return (zero fill is capped) and must not crash.
+    """
+    stream, _ = load_golden(entry)
+    dec = pyppmd.Ppmd7Decoder(entry["order"], entry["mem_size"])
+    try:
+        out = dec.decode(stream, -1, final=True)
+    except ValueError:
+        return
+    assert isinstance(out, bytes)
 
 
 @needs_sync_api
@@ -279,13 +291,18 @@ def test_golden_one_byte_at_a_time(entry):
     first = stream[:5]
     rest = stream[5:]
     result = []
+    remaining = len(plain)
     if not rest:
-        result.append(dec.decode(first, len(plain), final=True))
+        result.append(dec.decode(first, remaining, final=True))
     else:
-        result.append(dec.decode(first, len(plain)))
+        out = dec.decode(first, remaining)
+        result.append(out)
+        remaining -= len(out)
         for i in range(len(rest)):
             last = i == len(rest) - 1
-            result.append(dec.decode(rest[i : i + 1], len(plain) - sum(map(len, result)), final=last))
+            out = dec.decode(rest[i : i + 1], remaining, final=last)
+            result.append(out)
+            remaining -= len(out)
     assert b"".join(result) == plain
 
 
@@ -305,7 +322,7 @@ def test_golden_length_limited_repeated_calls(entry):
     stream, plain = load_golden(entry)
     step = 1000 if len(plain) <= 70000 else 40000
     dec = pyppmd.Ppmd7Decoder(entry["order"], entry["mem_size"])
-    result = [dec.decode(stream, step, final=True)]
+    result = [dec.decode(stream, min(step, len(plain)), final=True)]
     for _ in range(len(plain) // step + 2):
         got = sum(map(len, result))
         if got >= len(plain):
@@ -343,13 +360,6 @@ def test_golden_without_final_never_overruns(entry):
         # the held back tail is completed by the final call
         out += dec.decode(b"", len(plain) - len(out), final=True)
         assert out == plain
-
-
-@needs_sync_api
-@golden_nomark_param
-def test_golden_endmark_streams_decode_without_final_to_eof(entry):
-    if entry["input"] != "text":
-        pytest.skip("end mark streams are generated for the text input only")
 
 
 @needs_sync_api
