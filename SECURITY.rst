@@ -9,12 +9,12 @@ Only recent version of pyppmd are currently being supported with security update
 +---------+--------------------+
 | Version | Status             |
 +=========+====================+
-| 1.0.x   | Development        |
+| 1.3.x   | Maintenance        |
 +---------+--------------------+
-| < 1.0   | not supported      |
+| < 1.3   | not supported      |
 +---------+--------------------+
 
 Reporting a Vulnerability
 -------------------------
 
-Please disclose security vulnerabilities privately at miurahr@linux.com
+Please disclose vulnerabilities privately through GitHub Security Advisory.
