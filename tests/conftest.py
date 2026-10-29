@@ -10,6 +10,8 @@ settings.register_profile(
 )
 
 
+# optional: pytest-benchmark may not be installed (e.g. the ASan CI job)
+@pytest.hookimpl(optionalhook=True)
 def pytest_benchmark_update_json(config, benchmarks, output_json):
     """Calculate compression/decompression speed and add as extra_info"""
     for benchmark in output_json["benchmarks"]:
@@ -18,6 +20,8 @@ def pytest_benchmark_update_json(config, benchmarks, output_json):
             benchmark["extra_info"]["rate"] = rate
 
 
+# optional: pytest-benchmark may not be installed (e.g. the ASan CI job)
+@pytest.hookimpl(optionalhook=True)
 def pytest_benchmark_update_machine_info(config, machine_info):
     cpuinfo = pytest.importorskip("cpuinfo")
 
