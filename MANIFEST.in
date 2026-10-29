@@ -22,9 +22,10 @@ recursive-include tests *.json
 
 recursive-include utils *.py
 recursive-include utils *.txt
+recursive-include utils *.sh
 
 exclude .gitignore
 exclude .gitattributes
-exclude .woodpecker.yml
+prune .woodpecker
 prune ci
 prune issue_template
