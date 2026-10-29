@@ -7,6 +7,10 @@ All notable changes to this project will be documented in this file.
 `Unreleased`_
 =============
 
+Added
+-----
+* Add support for Python 3.15
+
 v1.3.1_
 =======
 
