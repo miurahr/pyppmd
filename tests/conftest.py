@@ -1,3 +1,14 @@
+import pytest
+from hypothesis import HealthCheck, settings
+
+# Long fuzzing run: pytest --hypothesis-profile=fuzz
+settings.register_profile(
+    "fuzz",
+    max_examples=20000,
+    deadline=None,
+    suppress_health_check=[HealthCheck.too_slow],
+)
+
 
 def pytest_benchmark_update_json(config, benchmarks, output_json):
     """Calculate compression/decompression speed and add as extra_info"""
