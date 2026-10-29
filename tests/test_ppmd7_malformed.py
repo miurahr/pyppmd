@@ -37,9 +37,7 @@ def split(data, stream):
     The first chunk usually holds at least the 5 byte header.
     """
     first = data.draw(st.sampled_from([min(5, len(stream)), 0]), label="first split point minimum")
-    points = data.draw(
-        st.lists(st.integers(min_value=first, max_value=len(stream)), max_size=8), label="split points"
-    )
+    points = data.draw(st.lists(st.integers(min_value=first, max_value=len(stream)), max_size=8), label="split points")
     bounds = [0] + sorted(points) + [len(stream)]
     return [stream[a:b] for a, b in zip(bounds, bounds[1:])]
 

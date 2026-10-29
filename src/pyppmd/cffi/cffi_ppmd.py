@@ -35,6 +35,7 @@ _SIZE_MAX = int(ffi.cast("size_t", -1))
 
 class PpmdError(Exception):
     "Call to the underlying PPMd library failed."
+
     pass
 
 

@@ -126,9 +126,7 @@ def main():
                     (HERE / "streams" / fname).write_bytes(stream)
                     legacy, padding = ("skipped", None)
                     if len(data) > 0:
-                        legacy, padding = legacy_check(
-                            HERE / "streams" / fname, HERE / "inputs" / f"{name}.bin", order, mem
-                        )
+                        legacy, padding = legacy_check(HERE / "streams" / fname, HERE / "inputs" / f"{name}.bin", order, mem)
                         print(fname, legacy, padding, flush=True)
                     manifest["streams"].append(
                         {
