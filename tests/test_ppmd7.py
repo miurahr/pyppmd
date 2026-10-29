@@ -3,6 +3,7 @@ import json
 import os
 import pathlib
 import random
+import threading
 
 import pytest
 
@@ -395,3 +396,82 @@ def test_corrupted_input_does_not_crash():
             dec.decode(junk, 100000, final=True)
         except ValueError:
             pass
+
+
+# ---------------------------------------------------------------------------
+# Threads.  These are cheap, so they run everywhere; they matter most on free-threaded
+# builds (sys._is_gil_enabled() is False), where the decoder's object lock is the only
+# thing that serialises calls on a shared decoder.
+# ---------------------------------------------------------------------------
+THREAD_COUNT = 8
+
+
+def run_threads(target, args_list):
+    barrier = threading.Barrier(len(args_list))
+    errors = []
+
+    def wrapper(*args):
+        try:
+            barrier.wait()
+            target(*args)
+        except BaseException as e:  # reported to the main thread
+            errors.append(e)
+
+    threads = [threading.Thread(target=wrapper, args=args) for args in args_list]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    if errors:
+        raise errors[0]
+
+
+def test_threads_own_decoders():
+    """Each thread decodes a different stream with its own decoder, in random chunks."""
+    entries = [e for e in golden_streams if e["input"] in ("text", "random64k")][:THREAD_COUNT]
+    assert len(entries) == THREAD_COUNT
+    results = {}
+
+    def work(entry):
+        stream, plain = load_golden(entry)
+        rnd = random.Random(entry["file"] + "-thread")
+        sizes = [max(5, rnd.randint(1, 512))] + [rnd.randint(1, 512) for _ in range(len(stream) + 1)]
+        dec = pyppmd.Ppmd7Decoder(entry["order"], entry["mem_size"])
+        results[entry["file"]] = feed(dec, stream, sizes, len(plain)) == plain
+
+    for entry in entries:
+        load_golden(entry)  # fill the cache before starting the threads
+    run_threads(work, [(e,) for e in entries])
+    assert results == {e["file"]: True for e in entries}
+
+
+def test_threads_shared_decoder():
+    """Several threads call one decoder concurrently.
+
+    The output is unspecified, because the order of the calls is; there must be no crash and
+    no memory error, and only the documented errors may be raised.
+    """
+    entry = next(e for e in golden_streams if e["file"] == "mixed1m.o6.m16.ppmd")
+    stream, plain = load_golden(entry)
+    dec = pyppmd.Ppmd7Decoder(entry["order"], entry["mem_size"])
+    dec.decode(stream[:5], 0)
+    chunks = [stream[i : i + 257] for i in range(5, len(stream), 257)]
+    next_chunk = threading.Lock()
+    produced = []
+
+    def work(seed):
+        rnd = random.Random(seed)
+        while True:
+            with next_chunk:
+                if not chunks:
+                    return
+                chunk = chunks.pop(0)
+            try:
+                out = dec.decode(chunk, rnd.choice([-1, 0, 1, 4096]), final=rnd.random() < 0.01)
+            except (ValueError, RuntimeError, pyppmd.PpmdError):
+                continue
+            assert isinstance(out, bytes)
+            produced.append(out)
+
+    run_threads(work, [(i,) for i in range(THREAD_COUNT)])
+    assert produced
