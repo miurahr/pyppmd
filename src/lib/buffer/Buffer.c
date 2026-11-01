@@ -4,7 +4,7 @@
 
 #include "Buffer.h"
 
-void Writer(const void *p, Byte b) {
+void Writer(IByteOutPtr p, Byte b) {
     BufferWriter *bufferWriter = (BufferWriter *)p;
     if (bufferWriter->outBuffer->size == bufferWriter->outBuffer->pos) {
         // FIXME: When out buffer is full

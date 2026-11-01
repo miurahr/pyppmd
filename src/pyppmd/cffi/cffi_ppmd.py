@@ -38,7 +38,7 @@ class PpmdError(Exception):
 
 
 @ffi.def_extern()
-def raw_alloc(size: int) -> object:
+def raw_alloc(p, size: int) -> object:
     if size == 0:
         return ffi.NULL
     block = ffi.new("char[]", size)
@@ -47,7 +47,7 @@ def raw_alloc(size: int) -> object:
 
 
 @ffi.def_extern()
-def raw_free(o: object) -> None:
+def raw_free(p, o: object) -> None:
     if o in _allocated:
         _allocated.remove(o)
 

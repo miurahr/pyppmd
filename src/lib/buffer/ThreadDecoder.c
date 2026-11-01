@@ -81,7 +81,7 @@ Byte Ppmd_thread_Reader(const void *p) {
     return *((const Byte *)inBuffer->src + inBuffer->pos++);
 }
 
-Bool Ppmd_thread_decode_init(ppmd_info *threadInfo, IAllocPtr allocator) {
+Bool Ppmd_thread_decode_init(ppmd_info *threadInfo, IszAllocPtr allocator) {
     threadInfo->t = IAlloc_Alloc(allocator, sizeof(ppmd_thread_control_t));
     if (threadInfo->t != NULL) {
         ppmd_thread_control_t *threadControl = (ppmd_thread_control_t *)threadInfo->t;
@@ -102,7 +102,6 @@ Ppmd7T_decode_run(void *p) {
     pthread_mutex_lock(&tc->mutex);
     tc->finished = False;
     CPpmd7 * cPpmd7 = (CPpmd7 *)(threadInfo->cPpmd);
-    CPpmd7z_RangeDec * rc = (CPpmd7z_RangeDec *)(threadInfo->rc);
     BufferReader *reader = (BufferReader *) rc->Stream;
     int max_length = threadInfo->max_length;
     pthread_mutex_unlock(&tc->mutex);
@@ -121,7 +120,7 @@ Ppmd7T_decode_run(void *p) {
         if (outbuf_full) {
             break;
         }
-        int c = Ppmd7_DecodeSymbol(cPpmd7, rc);
+        int c = Ppmd7z_DecodeSymbol(cPpmd7);
         if (c == PPMD_RESULT_EOF) {
             result = PPMD_RESULT_EOF;
             goto exit;
@@ -148,11 +147,10 @@ Ppmd7T_decode_run(void *p) {
     return NULL;
 }
 
-int Ppmd7T_decode(CPpmd7 *cPpmd7, CPpmd7z_RangeDec *rc, OutBuffer *out, int max_length, ppmd_info *threadInfo) {
+int Ppmd7T_decode(CPpmd7 *cPpmd7, OutBuffer *out, int max_length, ppmd_info *threadInfo) {
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
     pthread_mutex_lock(&tc->mutex);
     threadInfo->cPpmd = (void *) cPpmd7;
-    threadInfo->rc = (void *) rc;
     threadInfo->max_length = max_length;
     threadInfo->result = 0;
     Bool exited = tc->finished;
@@ -261,7 +259,6 @@ int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *thr
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
     pthread_mutex_lock(&tc->mutex);
     threadInfo->cPpmd = (void *) cPpmd8;
-    threadInfo->rc = NULL;  // unused
     threadInfo->max_length = max_length;
     threadInfo->result = 0;
     Bool exited = tc->finished;
@@ -299,7 +296,7 @@ inempty:
     return 0;
 }
 
-void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *threadInfo, IAllocPtr allocator) {
+void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *threadInfo, ISzAllocPtr allocator) {
     ppmd_thread_control_t *tc = (ppmd_thread_control_t *)threadInfo->t;
     if (tc && !(tc->finished)) {
         /* Wake worker if it's waiting for input, then cancel and join */

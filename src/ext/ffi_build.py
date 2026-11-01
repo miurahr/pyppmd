@@ -25,7 +25,7 @@ typedef int Int32;
 typedef unsigned int UInt32;
 typedef long long Int64;
 typedef unsigned long long UInt64;
-typedef int Bool;
+typedef int BoolInt;
 typedef struct IByteIn IByteIn;
 struct IByteIn
 {
@@ -36,12 +36,12 @@ struct IByteOut
 {
   void (*Write)(const IByteOut *p, Byte b);
 };
-struct IAlloc
+typedef struct ISzAlloc ISzAlloc;
+struct ISzAlloc
 {
-  void *(*Alloc)(size_t size);
-  void (*Free)(void *address); /* address can be NULL */
+  void *(*Alloc)(const ISzAlloc *p, size_t size);
+  void (*Free)(const ISzAlloc *p, void *address);
 };
-typedef struct IAlloc IAlloc;
 typedef struct InBuffer_s {
     const void* src;    /**< start of input buffer */
     size_t size;        /**< size of input buffer */

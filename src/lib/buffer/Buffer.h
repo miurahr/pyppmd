@@ -33,7 +33,7 @@ typedef struct ppmd_info_s {
 
 typedef struct {
     /* Inherits from IByteOut */
-    void (*Write)(void *p, Byte b);
+    void (*Write)(IByteOutPtr p, Byte b);
     OutBuffer *outBuffer;
     ppmd_info *t;
 } BufferWriter;
@@ -46,7 +46,7 @@ typedef struct {
 } BufferReader;
 
 
-void Writer(const void *p, Byte b);
+void Writer(IByteOutPtr p, Byte b);
 Byte Reader(const void *p);
 
 #endif //PYPPMD_BUFFER_H
