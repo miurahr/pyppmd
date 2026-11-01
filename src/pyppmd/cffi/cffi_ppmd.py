@@ -52,6 +52,15 @@ def raw_free(o: object) -> None:
         _allocated.remove(o)
 
 
+@ffi.def_extern(error=-1)
+def writer_grow(p) -> int:
+    # Called from Writer() when the output block is full.
+    writer = ffi.cast("BufferWriter *", p)
+    encoder = ffi.from_handle(writer.growArg)
+    encoder._out.grow(writer.outBuffer)
+    return 0
+
+
 class _BlocksOutputBuffer:
     KB = 1024
     MB = 1024 * 1024
@@ -185,6 +194,11 @@ class PpmdBaseEncoder:
         self.closed = False
         self.flushed = False
         self.writer = ffi.new("BufferWriter *")
+        self._handle = ffi.new_handle(self)
+        self.writer.Grow = lib.writer_grow
+        self.writer.growArg = self._handle
+        self.writer.error = 0
+        self._out = None
         self._allocator = ffi.new("IAlloc *")
         self._allocator.Alloc = lib.raw_alloc
         self._allocator.Free = lib.raw_free
@@ -209,7 +223,13 @@ class PpmdBaseEncoder:
 
         # Initialize output buffer
         out.initAndGrow(out_buf, -1)
+        self._out = out
+        self.writer.error = 0
         return (out, out_buf)
+
+    def _check_writer(self):
+        if self.writer.error:
+            raise MemoryError("Unable to grow output buffer.")
 
     def encode(self, data) -> bytes:
         return b""
@@ -382,14 +402,12 @@ class Ppmd7Encoder(PpmdBaseEncoder):
         self.lock.acquire()
         in_buf = self._setup_inBuffer(data)
         out, out_buf = self._setup_outBuffer()
-        while True:
-            if lib.ppmd7_compress(self.ppmd, self.rc, out_buf, in_buf) == 0:
-                break  # Finished
-            # Output buffer should be exhausted, grow the buffer.
-            if out_buf.pos == out_buf.size:
-                out.grow(out_buf)
-        self.lock.release()
-        return out.finish(out_buf)
+        try:
+            if lib.ppmd7_compress(self.ppmd, self.rc, out_buf, in_buf) < 0:
+                self._check_writer()
+            return out.finish(out_buf)
+        finally:
+            self.lock.release()
 
     def flush(self, *, endmark=False) -> bytes:
         if self.flushed:
@@ -398,6 +416,7 @@ class Ppmd7Encoder(PpmdBaseEncoder):
         self.flushed = True
         out, out_buf = self._setup_outBuffer()
         lib.ppmd7_compress_flush(self.ppmd, self.rc, endmark)
+        self._check_writer()
         res = out.finish(out_buf)
         lib.ppmd7_state_close(self.ppmd, self._allocator)
         ffi.release(self.ppmd)
@@ -505,11 +524,12 @@ class Ppmd8Encoder(PpmdBaseEncoder):
         self.lock.acquire()
         in_buf = self._setup_inBuffer(data)
         out, out_buf = self._setup_outBuffer()
-        while lib.ppmd8_compress(self.ppmd, out_buf, in_buf) > 0:
-            if out_buf.pos == out_buf.size:
-                out.grow(out_buf)
-        self.lock.release()
-        return out.finish(out_buf)
+        try:
+            if lib.ppmd8_compress(self.ppmd, out_buf, in_buf) < 0:
+                self._check_writer()
+            return out.finish(out_buf)
+        finally:
+            self.lock.release()
 
     def flush(self, endmark=True) -> bytes:
         self.lock.acquire()
@@ -521,6 +541,7 @@ class Ppmd8Encoder(PpmdBaseEncoder):
         if endmark:
             lib.Ppmd8_EncodeSymbol(self.ppmd, -1)
         lib.Ppmd8_RangeEnc_FlushData(self.ppmd)
+        self._check_writer()
         res = out.finish(out_buf)
         lib.Ppmd8_Free(self.ppmd, self._allocator)
         ffi.release(self.ppmd)

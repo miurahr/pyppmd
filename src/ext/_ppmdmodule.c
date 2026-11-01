@@ -26,6 +26,24 @@
 
 #include "blockoutput.h"
 
+/* Grow callback for BufferWriter. Calls Python C API, so the GIL must be held
+   while the encoder runs. */
+static int
+BufferWriter_Grow(void *p) {
+    BufferWriter *writer = (BufferWriter *)p;
+    return OutputBuffer_Grow((BlocksOutputBuffer *)writer->growArg, writer->outBuffer);
+}
+
+static inline void
+BufferWriter_Setup(BufferWriter *writer, OutBuffer *out, BlocksOutputBuffer *buffer) {
+    writer->Write = (void (*)(void *, Byte)) Writer;
+    writer->outBuffer = out;
+    writer->t = NULL;
+    writer->Grow = BufferWriter_Grow;
+    writer->growArg = buffer;
+    writer->error = 0;
+}
+
 static IAlloc allocator = {
         PyMem_Malloc,
         PyMem_Free
@@ -811,34 +829,29 @@ Ppmd7Encoder_encode(Ppmd7Encoder *self,  PyObject *args, PyObject *kwargs) {
         goto error;
     }
 
-    writer.Write = (void (*)(void *, Byte)) Writer;
-    writer.outBuffer = &out;
+    BufferWriter_Setup(&writer, &out, &buffer);
     self->rangeEnc->Stream = (IByteOut *) &writer;
 
-    Bool result = True;
-    for (UInt32 i = 0; i < data.len; i++){
-        Py_BEGIN_ALLOW_THREADS
+    /* The GIL is held for the whole loop: Writer() may grow the output
+       buffer, which calls the Python C API. */
+    for (Py_ssize_t i = 0; i < data.len; i++) {
         Ppmd7_EncodeSymbol(self->cPpmd7, self->rangeEnc, *((Byte *)data.buf + i));
-        Py_END_ALLOW_THREADS
-        if (out.size == out.pos) {
-            if (OutputBuffer_Grow(&buffer, &out) < 0) {
-                PyErr_SetString(PyExc_ValueError, "No memory.");
-                result = False;
-                break;
-            } else {
-                writer.outBuffer = &out;
-            }
+        if (writer.error) {
+            goto error;
         }
     }
-    if (!result)
-        goto error;
 
     ret = OutputBuffer_Finish(&buffer, &out);
+    PyBuffer_Release(&data);
     RELEASE_LOCK(self);
     return ret;
 
 error:
+    if (!PyErr_Occurred()) {
+        PyErr_SetString(PyExc_MemoryError, unable_allocate_msg);
+    }
     OutputBuffer_OnError(&buffer);
+    PyBuffer_Release(&data);
     RELEASE_LOCK(self);
     return NULL;
 }
@@ -875,14 +888,19 @@ Ppmd7Encoder_flush(Ppmd7Encoder *self, PyObject *args, PyObject *kwargs)
         goto error;
     }
 
-    writer.Write = (void (*)(void *, Byte)) Writer;
-    writer.outBuffer = &out;
+    BufferWriter_Setup(&writer, &out, &buffer);
     rc->Stream = (IByteOut *) &writer;
 
     if (endmark) {
         Ppmd7_EncodeSymbol(self->cPpmd7, rc, -1);
     }
     Ppmd7z_RangeEnc_FlushData(rc);
+    if (writer.error) {
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_MemoryError, unable_allocate_msg);
+        }
+        goto error;
+    }
 
     ret = OutputBuffer_Finish(&buffer, &out);
 
@@ -1537,34 +1555,29 @@ Ppmd8Encoder_encode(Ppmd8Encoder *self,  PyObject *args, PyObject *kwargs) {
         goto error;
     }
 
-    writer.Write = (void (*)(void *, Byte)) Writer;
-    writer.outBuffer = &out;
-    self->cPpmd8->Stream.Out = (IByteOut *)&writer;
+    BufferWriter_Setup(&writer, &out, &buffer);
+    self->cPpmd8->Stream.Out = (IByteOut *) &writer;
 
-    Bool result = True;
-    for (UInt32 i = 0; i < data.len; i++){
-        Py_BEGIN_ALLOW_THREADS
+    /* The GIL is held for the whole loop: Writer() may grow the output
+       buffer, which calls the Python C API. */
+    for (Py_ssize_t i = 0; i < data.len; i++) {
         Ppmd8_EncodeSymbol(self->cPpmd8, *((Byte *)data.buf + i));
-        Py_END_ALLOW_THREADS
-        if (out.size == out.pos) {
-            if (OutputBuffer_Grow(&buffer, &out) < 0) {
-                PyErr_SetString(PyExc_ValueError, "No memory.");
-                result = False;
-                break;
-            } else {
-                writer.outBuffer = &out;
-            }
+        if (writer.error) {
+            goto error;
         }
     }
-    if (!result)
-        goto error;
 
     ret = OutputBuffer_Finish(&buffer, &out);
+    PyBuffer_Release(&data);
     RELEASE_LOCK(self);
     return ret;
 
 error:
+    if (!PyErr_Occurred()) {
+        PyErr_SetString(PyExc_MemoryError, unable_allocate_msg);
+    }
     OutputBuffer_OnError(&buffer);
+    PyBuffer_Release(&data);
     RELEASE_LOCK(self);
     return NULL;
 }
@@ -1600,13 +1613,18 @@ Ppmd8Encoder_flush(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
         goto error;
     }
 
-    writer.Write = (void (*)(void *, Byte)) Writer;
-    writer.outBuffer = &out;
+    BufferWriter_Setup(&writer, &out, &buffer);
     self->cPpmd8->Stream.Out = (IByteOut *) &writer;
     if (endmark) {
         Ppmd8_EncodeSymbol(self->cPpmd8, -1);
     }
     Ppmd8_RangeEnc_FlushData(self->cPpmd8);
+    if (writer.error) {
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_MemoryError, unable_allocate_msg);
+        }
+        goto error;
+    }
     ret = OutputBuffer_Finish(&buffer, &out);
 
     RELEASE_LOCK(self);
