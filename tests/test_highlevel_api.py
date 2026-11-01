@@ -23,3 +23,11 @@ def test_decompress_str():
 
 def test_decompress():
     assert pyppmd.decompress(encoded, max_order=6, mem_size=8 << 20) == source.encode("UTF-8")
+
+
+def test_decompress_variant_h_endmark():
+    # one-shot decompress() has no length, so it needs a stream with an end mark
+    enc = pyppmd.Ppmd7Encoder(6, 8 << 20)
+    data = enc.encode(source.encode("UTF-8")) + enc.flush(endmark=True)
+    assert pyppmd.decompress(data, max_order=6, mem_size=8 << 20, variant="H") == source.encode("UTF-8")
+    assert pyppmd.decompress_str(data, max_order=6, mem_size=8 << 20, variant="H") == source

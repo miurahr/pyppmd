@@ -1,0 +1,554 @@
+{
+ "inputs": {
+  "empty": {
+   "size": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "one_byte": {
+   "size": 1,
+   "sha256": "559aead08264d5795d3909718cdd05abd49572e84fe55590eef31a88a08fdffd"
+  },
+  "text": {
+   "size": 65536,
+   "sha256": "311971d921f30a78ac1e087296cf20a9f8a2ac682de20efe6c99c89ba82c6b35"
+  },
+  "random64k": {
+   "size": 65536,
+   "sha256": "5ed72b76fa349dfb6c61441a1e0cad4d9895e25b38ffbb398a56ee94c3cc4d79"
+  },
+  "mixed1m": {
+   "size": 1048576,
+   "sha256": "7cb8878636ca7bba5b37c61133f4505e4cef5aefff550f1f5e4e42251b44f354"
+  }
+ },
+ "streams": [
+  {
+   "file": "empty.o2.m1.ppmd",
+   "input": "empty",
+   "order": 2,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 5,
+   "legacy_threaded_result": "skipped",
+   "legacy_padding_bytes": null,
+   "sha256": "8855508aade16ec573d21e6a485dfd0a7624085c1a14b5ecdd6485de0c6839a4"
+  },
+  {
+   "file": "empty.o2.m16.ppmd",
+   "input": "empty",
+   "order": 2,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 5,
+   "legacy_threaded_result": "skipped",
+   "legacy_padding_bytes": null,
+   "sha256": "8855508aade16ec573d21e6a485dfd0a7624085c1a14b5ecdd6485de0c6839a4"
+  },
+  {
+   "file": "empty.o6.m1.ppmd",
+   "input": "empty",
+   "order": 6,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 5,
+   "legacy_threaded_result": "skipped",
+   "legacy_padding_bytes": null,
+   "sha256": "8855508aade16ec573d21e6a485dfd0a7624085c1a14b5ecdd6485de0c6839a4"
+  },
+  {
+   "file": "empty.o6.m16.ppmd",
+   "input": "empty",
+   "order": 6,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 5,
+   "legacy_threaded_result": "skipped",
+   "legacy_padding_bytes": null,
+   "sha256": "8855508aade16ec573d21e6a485dfd0a7624085c1a14b5ecdd6485de0c6839a4"
+  },
+  {
+   "file": "empty.o32.m1.ppmd",
+   "input": "empty",
+   "order": 32,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 5,
+   "legacy_threaded_result": "skipped",
+   "legacy_padding_bytes": null,
+   "sha256": "8855508aade16ec573d21e6a485dfd0a7624085c1a14b5ecdd6485de0c6839a4"
+  },
+  {
+   "file": "empty.o32.m16.ppmd",
+   "input": "empty",
+   "order": 32,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 5,
+   "legacy_threaded_result": "skipped",
+   "legacy_padding_bytes": null,
+   "sha256": "8855508aade16ec573d21e6a485dfd0a7624085c1a14b5ecdd6485de0c6839a4"
+  },
+  {
+   "file": "empty.o64.m1.ppmd",
+   "input": "empty",
+   "order": 64,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 5,
+   "legacy_threaded_result": "skipped",
+   "legacy_padding_bytes": null,
+   "sha256": "8855508aade16ec573d21e6a485dfd0a7624085c1a14b5ecdd6485de0c6839a4"
+  },
+  {
+   "file": "empty.o64.m16.ppmd",
+   "input": "empty",
+   "order": 64,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 5,
+   "legacy_threaded_result": "skipped",
+   "legacy_padding_bytes": null,
+   "sha256": "8855508aade16ec573d21e6a485dfd0a7624085c1a14b5ecdd6485de0c6839a4"
+  },
+  {
+   "file": "one_byte.o2.m1.ppmd",
+   "input": "one_byte",
+   "order": 2,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 6,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "95f0979a03ee8a5db6000402f64c2e56af7b5cc7c1c4aa7e1041fb5cefcbf936"
+  },
+  {
+   "file": "one_byte.o2.m16.ppmd",
+   "input": "one_byte",
+   "order": 2,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 6,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "95f0979a03ee8a5db6000402f64c2e56af7b5cc7c1c4aa7e1041fb5cefcbf936"
+  },
+  {
+   "file": "one_byte.o6.m1.ppmd",
+   "input": "one_byte",
+   "order": 6,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 6,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "95f0979a03ee8a5db6000402f64c2e56af7b5cc7c1c4aa7e1041fb5cefcbf936"
+  },
+  {
+   "file": "one_byte.o6.m16.ppmd",
+   "input": "one_byte",
+   "order": 6,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 6,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "95f0979a03ee8a5db6000402f64c2e56af7b5cc7c1c4aa7e1041fb5cefcbf936"
+  },
+  {
+   "file": "one_byte.o32.m1.ppmd",
+   "input": "one_byte",
+   "order": 32,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 6,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "95f0979a03ee8a5db6000402f64c2e56af7b5cc7c1c4aa7e1041fb5cefcbf936"
+  },
+  {
+   "file": "one_byte.o32.m16.ppmd",
+   "input": "one_byte",
+   "order": 32,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 6,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "95f0979a03ee8a5db6000402f64c2e56af7b5cc7c1c4aa7e1041fb5cefcbf936"
+  },
+  {
+   "file": "one_byte.o64.m1.ppmd",
+   "input": "one_byte",
+   "order": 64,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 6,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "95f0979a03ee8a5db6000402f64c2e56af7b5cc7c1c4aa7e1041fb5cefcbf936"
+  },
+  {
+   "file": "one_byte.o64.m16.ppmd",
+   "input": "one_byte",
+   "order": 64,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 6,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "95f0979a03ee8a5db6000402f64c2e56af7b5cc7c1c4aa7e1041fb5cefcbf936"
+  },
+  {
+   "file": "text.o2.m1.ppmd",
+   "input": "text",
+   "order": 2,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 472,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 1,
+   "sha256": "ec7febc8bd2599ed0eaffc4189bf8f8005b11741b418b025df67da7d4be92c14"
+  },
+  {
+   "file": "text.o2.m1.endmark.ppmd",
+   "input": "text",
+   "order": 2,
+   "mem_size": 1048576,
+   "endmark": true,
+   "size": 475,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "8b5f18e66afe341b122be46d5b9dbbd91a453b2c08da80e4e3661d163df75574"
+  },
+  {
+   "file": "text.o2.m16.ppmd",
+   "input": "text",
+   "order": 2,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 472,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 1,
+   "sha256": "ec7febc8bd2599ed0eaffc4189bf8f8005b11741b418b025df67da7d4be92c14"
+  },
+  {
+   "file": "text.o2.m16.endmark.ppmd",
+   "input": "text",
+   "order": 2,
+   "mem_size": 16777216,
+   "endmark": true,
+   "size": 475,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "8b5f18e66afe341b122be46d5b9dbbd91a453b2c08da80e4e3661d163df75574"
+  },
+  {
+   "file": "text.o6.m1.ppmd",
+   "input": "text",
+   "order": 6,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 85,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 1,
+   "sha256": "d4452b7222ac816abc6150109269e8a9111f4cf224dcba4427807e129e7ddb55"
+  },
+  {
+   "file": "text.o6.m1.endmark.ppmd",
+   "input": "text",
+   "order": 6,
+   "mem_size": 1048576,
+   "endmark": true,
+   "size": 87,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "89c6096978f49735b8f3b1821b63d679cb9143a710d536780b04dd229454b93c"
+  },
+  {
+   "file": "text.o6.m16.ppmd",
+   "input": "text",
+   "order": 6,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 85,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 1,
+   "sha256": "d4452b7222ac816abc6150109269e8a9111f4cf224dcba4427807e129e7ddb55"
+  },
+  {
+   "file": "text.o6.m16.endmark.ppmd",
+   "input": "text",
+   "order": 6,
+   "mem_size": 16777216,
+   "endmark": true,
+   "size": 87,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "89c6096978f49735b8f3b1821b63d679cb9143a710d536780b04dd229454b93c"
+  },
+  {
+   "file": "text.o32.m1.ppmd",
+   "input": "text",
+   "order": 32,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 85,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 1,
+   "sha256": "d4452b7222ac816abc6150109269e8a9111f4cf224dcba4427807e129e7ddb55"
+  },
+  {
+   "file": "text.o32.m1.endmark.ppmd",
+   "input": "text",
+   "order": 32,
+   "mem_size": 1048576,
+   "endmark": true,
+   "size": 87,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "84d668d8728e17bbb45c0e829346e978cfd3d59a38a6f86a2508b582728a719d"
+  },
+  {
+   "file": "text.o32.m16.ppmd",
+   "input": "text",
+   "order": 32,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 85,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 1,
+   "sha256": "d4452b7222ac816abc6150109269e8a9111f4cf224dcba4427807e129e7ddb55"
+  },
+  {
+   "file": "text.o32.m16.endmark.ppmd",
+   "input": "text",
+   "order": 32,
+   "mem_size": 16777216,
+   "endmark": true,
+   "size": 87,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "84d668d8728e17bbb45c0e829346e978cfd3d59a38a6f86a2508b582728a719d"
+  },
+  {
+   "file": "text.o64.m1.ppmd",
+   "input": "text",
+   "order": 64,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 85,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 1,
+   "sha256": "d4452b7222ac816abc6150109269e8a9111f4cf224dcba4427807e129e7ddb55"
+  },
+  {
+   "file": "text.o64.m1.endmark.ppmd",
+   "input": "text",
+   "order": 64,
+   "mem_size": 1048576,
+   "endmark": true,
+   "size": 87,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "84d668d8728e17bbb45c0e829346e978cfd3d59a38a6f86a2508b582728a719d"
+  },
+  {
+   "file": "text.o64.m16.ppmd",
+   "input": "text",
+   "order": 64,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 85,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 1,
+   "sha256": "d4452b7222ac816abc6150109269e8a9111f4cf224dcba4427807e129e7ddb55"
+  },
+  {
+   "file": "text.o64.m16.endmark.ppmd",
+   "input": "text",
+   "order": 64,
+   "mem_size": 16777216,
+   "endmark": true,
+   "size": 87,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "84d668d8728e17bbb45c0e829346e978cfd3d59a38a6f86a2508b582728a719d"
+  },
+  {
+   "file": "random64k.o2.m1.ppmd",
+   "input": "random64k",
+   "order": 2,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 67014,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "b108acdef64c5edcf0b28e5f06e4f99b5d424ed2dd32b964f56f211c94576131"
+  },
+  {
+   "file": "random64k.o2.m16.ppmd",
+   "input": "random64k",
+   "order": 2,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 67096,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "75469383439506ff01436949c1cfc4fc8550dcbb9888b26c0efd9ed71f465313"
+  },
+  {
+   "file": "random64k.o6.m1.ppmd",
+   "input": "random64k",
+   "order": 6,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 67015,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "036b61f5c97ae8aef2766a952d674cef5c9685e0bd85bed3a7768ee906925f86"
+  },
+  {
+   "file": "random64k.o6.m16.ppmd",
+   "input": "random64k",
+   "order": 6,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 67111,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "7c2b68f9835e11a71afd9962d854748e259e070fca95a2aa7814b3bb108ed076"
+  },
+  {
+   "file": "random64k.o32.m1.ppmd",
+   "input": "random64k",
+   "order": 32,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 67015,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "036b61f5c97ae8aef2766a952d674cef5c9685e0bd85bed3a7768ee906925f86"
+  },
+  {
+   "file": "random64k.o32.m16.ppmd",
+   "input": "random64k",
+   "order": 32,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 67111,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "7c2b68f9835e11a71afd9962d854748e259e070fca95a2aa7814b3bb108ed076"
+  },
+  {
+   "file": "random64k.o64.m1.ppmd",
+   "input": "random64k",
+   "order": 64,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 67015,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "036b61f5c97ae8aef2766a952d674cef5c9685e0bd85bed3a7768ee906925f86"
+  },
+  {
+   "file": "random64k.o64.m16.ppmd",
+   "input": "random64k",
+   "order": 64,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 67111,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "7c2b68f9835e11a71afd9962d854748e259e070fca95a2aa7814b3bb108ed076"
+  },
+  {
+   "file": "mixed1m.o2.m1.ppmd",
+   "input": "mixed1m",
+   "order": 2,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 407261,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "1eeaf5821749fdb73d85995699eeb9271b30234e7a911559a1daebe80c3cfe43"
+  },
+  {
+   "file": "mixed1m.o2.m16.ppmd",
+   "input": "mixed1m",
+   "order": 2,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 410440,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "2e497b9d6c848df9077506ee23a608d97470028b556fdbd5008250c611aa23a4"
+  },
+  {
+   "file": "mixed1m.o6.m1.ppmd",
+   "input": "mixed1m",
+   "order": 6,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 377333,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "694eed9d4ea5f63f7ee7b8a0432754db6cae0ca20d6bd4a303c95b88441b3ef0"
+  },
+  {
+   "file": "mixed1m.o6.m16.ppmd",
+   "input": "mixed1m",
+   "order": 6,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 376495,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 1,
+   "sha256": "d8d4cdc46dd8b8f82f47644da4f544b3dc7abe170e97a40c85af68b2de5452ed"
+  },
+  {
+   "file": "mixed1m.o32.m1.ppmd",
+   "input": "mixed1m",
+   "order": 32,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 389727,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "a3fb3a00def39396af1a49ade0bc5791a43a1ceb733f74ac14cf0dde0deef39d"
+  },
+  {
+   "file": "mixed1m.o32.m16.ppmd",
+   "input": "mixed1m",
+   "order": 32,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 381606,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 1,
+   "sha256": "8c8e36d5485219c2dd393610aa6d3eadd2d55d9ed54fe138aabf1032096a1a3e"
+  },
+  {
+   "file": "mixed1m.o64.m1.ppmd",
+   "input": "mixed1m",
+   "order": 64,
+   "mem_size": 1048576,
+   "endmark": false,
+   "size": 390498,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "0a0b51729b372b85850fcaf74c9170b0764cdc788f8f5d4e62b583a4d47450c4"
+  },
+  {
+   "file": "mixed1m.o64.m16.ppmd",
+   "input": "mixed1m",
+   "order": 64,
+   "mem_size": 16777216,
+   "endmark": false,
+   "size": 381761,
+   "legacy_threaded_result": "ok",
+   "legacy_padding_bytes": 0,
+   "sha256": "7c16a48a92cf4834366e9a61867d639ddb7984d110f8c91120987a4729552bfa"
+  }
+ ]
+}

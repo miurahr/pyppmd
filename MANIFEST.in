@@ -17,12 +17,15 @@ recursive-include src py.typed
 recursive-include tests *.csv
 recursive-include tests *.ppmd
 recursive-include tests *.py
+recursive-include tests *.bin
+recursive-include tests *.json
 
 recursive-include utils *.py
 recursive-include utils *.txt
+recursive-include utils *.sh
 
 exclude .gitignore
 exclude .gitattributes
-exclude .woodpecker.yml
+prune .woodpecker
 prune ci
 prune issue_template

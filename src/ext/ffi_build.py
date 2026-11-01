@@ -1,12 +1,15 @@
 import sys
+
 try:
     from cffi import FFI  # type: ignore  # noqa
 except ImportError:
     # PyPy includes cffi by default
-    msg = ('To build the CFFI implementation of pyzstd module, need to '
-           'install cffi module like this: "sudo python3 -m pip install '
-           'cffi". On CPython, CFFI implementation is slower than C '
-           'implementation.')
+    msg = (
+        "To build the CFFI implementation of pyzstd module, need to "
+        'install cffi module like this: "sudo python3 -m pip install '
+        'cffi". On CPython, CFFI implementation is slower than C '
+        "implementation."
+    )
     raise ImportError(msg)
 
 
@@ -177,37 +180,6 @@ typedef struct
 } CPpmd8;
 """
 
-if sys.platform.startswith("win32"):
-    defs += r"""
-typedef struct _pthread_cleanup _pthread_cleanup;
-struct _pthread_cleanup
-{
-    void (*func)(void *);
-    void *arg;
-    _pthread_cleanup *next;
-};
-struct _pthread_v
-{
-    void *ret_arg;
-    void *(* func)(void *);
-    _pthread_cleanup *clean;
-    HANDLE h;
-    int cancelled;
-    unsigned p_state;
-    int keymax;
-    void **keyval;
-    // hide it
-    // jmp_buf jb;
-};
-typedef struct _pthread_v *pthread_t;
-    """
-elif sys.platform.startswith("darwin"):
-    defs += "typedef void* pthread_t;\n"
-elif sys.platform.startswith("linux"):
-    defs += "typedef unsigned long int pthread_t;\n"
-else:
-    pass
-
 defs += r"""
 typedef struct ppmd_info_s {
     void *cPpmd;
@@ -218,12 +190,60 @@ typedef struct ppmd_info_s {
     int result;
     void *t;
 } ppmd_info;
+"""
 
-Byte Ppmd_thread_Reader(const void *p);
-int Ppmd7T_decode(CPpmd7 *cPpmd7, CPpmd7z_RangeDec *rc, OutBuffer *out, int max_length, ppmd_info *args);
-void Ppmd7T_Free(CPpmd7 *cPpmd7, ppmd_info *args, IAlloc *allocator);
-int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *args);
-void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *args, IAlloc *allocator);
+# Ppmd7Decoder.h
+defs += r"""
+typedef struct {
+    IByteIn vt;
+    const Byte *src;
+    size_t size;
+    size_t pos;
+    size_t overrun;
+} Ppmd7Reader;
+
+void Ppmd7Reader_Init(Ppmd7Reader *r);
+void Ppmd7Reader_Set(Ppmd7Reader *r, const void *src, size_t size);
+
+typedef enum {
+    PPMD7_DEC_LENGTH = 0,
+    PPMD7_DEC_OUT_FULL,
+    PPMD7_DEC_NEED_INPUT,
+    PPMD7_DEC_EOF,
+    PPMD7_DEC_ERROR_DATA,
+    PPMD7_DEC_ERROR_OVERRUN
+} Ppmd7DecStatus;
+
+Ppmd7DecStatus Ppmd7_DecodeBlock(CPpmd7 *p, CPpmd7z_RangeDec *rc, Ppmd7Reader *in,
+                                 OutBuffer *out, size_t limit, Bool final, size_t *produced);
+"""
+
+# Ppmd8Decoder.h
+defs += r"""
+#define PPMD8_RANGE_DEC_INIT_SIZE 4
+
+typedef struct {
+    IByteIn vt;
+    const Byte *src;
+    size_t size;
+    size_t pos;
+    size_t overrun;
+} Ppmd8Reader;
+
+void Ppmd8Reader_Init(Ppmd8Reader *r);
+void Ppmd8Reader_Set(Ppmd8Reader *r, const void *src, size_t size);
+
+typedef enum {
+    PPMD8_DEC_LENGTH = 0,
+    PPMD8_DEC_OUT_FULL,
+    PPMD8_DEC_NEED_INPUT,
+    PPMD8_DEC_EOF,
+    PPMD8_DEC_ERROR_DATA,
+    PPMD8_DEC_ERROR_OVERRUN
+} Ppmd8DecStatus;
+
+Ppmd8DecStatus Ppmd8_DecodeBlock(CPpmd8 *p, Ppmd8Reader *in, OutBuffer *out, size_t limit,
+                                 Bool final, size_t *produced);
 """
 
 # ----------- python binding API ---------------------
@@ -252,15 +272,15 @@ void ppmd7_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize,
 void ppmd7_state_close(CPpmd7 *ppmd, IAlloc *allocator);
 
 void ppmd7_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *write);
-int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader, ppmd_info *info, IAlloc *allocator);
+void ppmd7_decompress_init(CPpmd7z_RangeDec *rc, Ppmd7Reader *reader);
 
 int ppmd7_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, OutBuffer *out_buf, InBuffer *in_buf);
 void ppmd7_compress_flush(CPpmd7 *p, CPpmd7z_RangeEnc *rc, Bool endmark);
-int ppmd7_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc, OutBuffer *out_buf, InBuffer *in_buf, size_t length, ppmd_info *info);
 
 void Ppmd7_Construct(CPpmd7 *p);
 void Ppmd7_Init(CPpmd7 *p, unsigned maxOrder);
 int Ppmd7_DecodeSymbol(CPpmd7 *p, CPpmd7z_RangeDec *rc);
+Bool Ppmd7z_RangeDec_Init(CPpmd7z_RangeDec *p);
 
 void Ppmd7z_RangeEnc_Init(CPpmd7z_RangeEnc *p);
 void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
@@ -268,8 +288,7 @@ void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
 
 void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer);
 int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf);
-void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader, ppmd_info *threadInfo, IAlloc *allocator);
-int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd_info *threadInfo);
+void ppmd8_decompress_init(CPpmd8 *ppmd, Ppmd8Reader *reader);
 
 void Ppmd8_Construct(CPpmd8 *ppmd);
 Bool Ppmd8_Alloc(CPpmd8 *p, UInt32 size, IAlloc *alloc);
@@ -286,18 +305,11 @@ source = r"""
 #include "Ppmd7.h"
 #include "Ppmd8.h"
 #include "Buffer.h"
-#include "ThreadDecoder.h"
+#include "Ppmd7Decoder.h"
+#include "Ppmd8Decoder.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#ifdef _WIN32
-#include "win_pthreads.h"
-#define getc_unlocked fgetc
-#define putc_unlocked fputc
-#else
-#include <pthread.h>
-#endif
 
 void ppmd7_state_init(CPpmd7 *p, unsigned int maxOrder, unsigned int memSize, IAlloc *allocator)
 {
@@ -318,17 +330,10 @@ void ppmd7_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *writer)
     Ppmd7z_RangeEnc_Init(rc);
 }
 
-int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader, ppmd_info *info, IAllocPtr allocator)
+void ppmd7_decompress_init(CPpmd7z_RangeDec *rc, Ppmd7Reader *reader)
 {
-    /* Use threaded reader and initialize thread control BEFORE range init,
-       since RangeDec_Init will read from the stream immediately. */
-    reader->Read = (Byte (*)(void *)) Ppmd_thread_Reader;
-    reader->t = info;
-    info->in = reader->inBuffer;
-    Ppmd_thread_decode_init(info, allocator);
-    rc->Stream = (IByteIn *) reader;
-    Bool res = Ppmd7z_RangeDec_Init(rc);
-    return res;
+    Ppmd7Reader_Init(reader);
+    rc->Stream = &reader->vt;
 }
 
 int ppmd7_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, OutBuffer *out_buf, InBuffer *in_buf) {
@@ -351,12 +356,6 @@ void ppmd7_compress_flush(CPpmd7 *p, CPpmd7z_RangeEnc *rc, Bool endmark){
     Ppmd7z_RangeEnc_FlushData(rc);
 }
 
-int ppmd7_decompress(CPpmd7 *ppmd, CPpmd7z_RangeDec *rc, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd_info *info) {
-    info->in = in_buf;
-    info->out = out_buf;
-    return Ppmd7T_decode(ppmd, rc, out_buf, length, info);
-}
-
 void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer)
 {
     writer->Write = (void (*)(void *, Byte)) Writer;
@@ -377,18 +376,10 @@ int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf) {
     return in_buf->size - in_buf->pos;
 }
 
-void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader, ppmd_info *info, IAllocPtr allocator)
+void ppmd8_decompress_init(CPpmd8 *ppmd, Ppmd8Reader *reader)
 {
-    reader->Read = (Byte (*)(void *)) Ppmd_thread_Reader;
-    ppmd->Stream.In = (IByteIn *) reader;
-    reader->t = info;
-    info->in = reader->inBuffer;
-    Ppmd_thread_decode_init(info, allocator);
-}
-
-int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd_info *info) {
-    info->in = in_buf;
-    return Ppmd8T_decode(ppmd, out_buf, length, info);
+    Ppmd8Reader_Init(reader);
+    ppmd->Stream.In = &reader->vt;
 }
 """
 
@@ -416,7 +407,8 @@ if __name__ == "__main__":
             "src/lib/ppmd/Ppmd8Enc.c",
             "src/lib/ppmd/Ppmd7Dec.c",
             "src/lib/buffer/Buffer.c",
-            "src/lib/buffer/ThreadDecoder.c",
+            "src/lib/buffer/Ppmd7Decoder.c",
+            "src/lib/buffer/Ppmd8Decoder.c",
         ],
         "define_macros": [],
         "module_name": "pyppmd.cffi._cffi_ppmd",

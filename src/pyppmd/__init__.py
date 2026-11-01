@@ -79,7 +79,7 @@ class PpmdCompressor:
         self.eof = False
 
     def compress(self, data_or_str: Union[bytes, bytearray, memoryview, str]):
-        if type(data_or_str) == str:
+        if type(data_or_str) is str:
             data = data_or_str.encode("UTF-8")
         elif _is_bytelike(data_or_str):
             data = data_or_str
@@ -112,15 +112,23 @@ class PpmdDecompressor:
         self.eof = False
         self.need_input = True
 
-    def decompress(self, data: Union[bytes, memoryview]):
+    def decompress(self, data: Union[bytes, memoryview], *, final: bool = False):
+        """Decompress `data` and return the decompressed bytes.
+
+        Pass final=True with the last input of the stream; until then the decoder keeps a
+        small unconsumed tail of the input internally.
+        """
         if self.decoder.eof:
             self.eof = True
             return b""
-        if self.decoder.needs_input and len(data) == 0:
+        if self.decoder.needs_input and len(data) == 0 and not final:
             raise PpmdError("No enough data is provided for decompression.")
         elif not self.decoder.needs_input and len(data) > 0:
             raise PpmdError("Unused data is given.")
-        return self.decoder.decode(data)
+        result = self.decoder.decode(data, final=final)
+        if self.decoder.eof:
+            self.eof = True
+        return result
 
 
 def compress(
@@ -141,7 +149,7 @@ def compress(
     """
     if variant not in ["H", "I", "h", "i"]:
         raise ValueError("Unsupported PPMd variant")
-    if type(data_or_str) == str:
+    if type(data_or_str) is str:
         data = data_or_str.encode("UTF-8")
     elif _is_bytelike(data_or_str):
         data = data_or_str
@@ -209,13 +217,13 @@ def decompress(
 
 def _decompress7(data: Union[bytes, bytearray, memoryview], max_order: int, mem_size: int):
     decomp = Ppmd7Decoder(max_order, mem_size)
-    res = decomp.decode(data)
+    res = decomp.decode(data, final=True)
     return res
 
 
 def _decompress8(data: Union[bytes, bytearray, memoryview], max_order: int, mem_size: int):
     decomp = Ppmd8Decoder(max_order, mem_size)
-    res = decomp.decode(data)
+    res = decomp.decode(data, final=True)
     return res
 
 
