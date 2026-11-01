@@ -11,6 +11,13 @@ Added
 -----
 * Add support for Python 3.15
 
+Fixed
+-----
+* Fix encoders silently dropping output bytes when the output buffer became full
+  in the middle of a symbol, which produced corrupted streams (Ppmd7Encoder and
+  Ppmd8Encoder, C extension and CFFI). The output buffer now grows on demand. (#139)
+* Release the input buffer in Ppmd7Encoder.encode() and Ppmd8Encoder.encode().
+
 v1.3.1_
 =======
 

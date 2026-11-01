@@ -230,6 +230,7 @@ void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *args, IAlloc *allocator);
 defs += r"""
 extern "Python" void *raw_alloc(size_t);
 extern "Python" void raw_free(void *);
+extern "Python" int writer_grow(void *);
 
 void Writer(const void *p, Byte b);
 Byte Reader(const void *p);
@@ -239,6 +240,9 @@ typedef struct {
     void (*Write)(void *p, Byte b);
     OutBuffer *outBuffer;
     ppmd_info *t;
+    int (*Grow)(void *p);
+    void *growArg;
+    int error;
 } BufferWriter;
 
 typedef struct {
@@ -334,14 +338,16 @@ int ppmd7_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader, ppmd_info 
 int ppmd7_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, OutBuffer *out_buf, InBuffer *in_buf) {
     Byte* c = (Byte *) in_buf->src + in_buf->pos;
     const Byte* in_end = (Byte *)in_buf->src + in_buf->size;
+    BufferWriter *writer = (BufferWriter *) rc->Stream;
     while (c < in_end) {
         Ppmd7_EncodeSymbol(p, rc, *c++);
-        if (out_buf->pos >= out_buf->size) {
-            break;
+        if (writer->error) {
+            in_buf->pos = c - (Byte *)in_buf->src;
+            return -1;
         }
     }
     in_buf->pos = c - (Byte *)in_buf->src;
-    return in_buf->size - in_buf->pos;
+    return 0;
 }
 
 void ppmd7_compress_flush(CPpmd7 *p, CPpmd7z_RangeEnc *rc, Bool endmark){
@@ -366,15 +372,17 @@ void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer)
 int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf) {
     Byte* pos = (Byte *) in_buf->src + in_buf->pos;
     const Byte* in_end = (Byte *)in_buf->src + in_buf->size;
+    BufferWriter *writer = (BufferWriter *) ppmd->Stream.Out;
     while (pos < in_end) {
         Byte c = *pos++;
         Ppmd8_EncodeSymbol(ppmd, c);
-        if (out_buf->pos >= out_buf->size) {
-            break;
+        if (writer->error) {
+            in_buf->pos = pos - (Byte *)in_buf->src;
+            return -1;
         }
     }
     in_buf->pos = pos - (Byte *)in_buf->src;
-    return in_buf->size - in_buf->pos;
+    return 0;
 }
 
 void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader, ppmd_info *info, IAllocPtr allocator)
