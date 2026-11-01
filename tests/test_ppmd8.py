@@ -118,3 +118,36 @@ def test_ppmddecompress():
     decomp = pyppmd.PpmdDecompressor(6, 8 << 20, restore_method=pyppmd.PPMD8_RESTORE_METHOD_RESTART, variant="I")
     result = decomp.decompress(encoded)
     assert result == source
+
+
+@pytest.mark.parametrize("restore_method", [-1, 2, 3, 255])
+def test_ppmd8_invalid_restore_method(restore_method):
+    with pytest.raises(ValueError):
+        pyppmd.Ppmd8Encoder(6, 8 << 20, restore_method)
+    with pytest.raises(ValueError):
+        pyppmd.Ppmd8Decoder(6, 8 << 20, restore_method)
+
+
+@pytest.mark.parametrize("max_order", [0, 1, 17, 64])
+def test_ppmd8_out_of_range_order(max_order):
+    # Orders outside 2..16 must either be rejected (CFFI) or clamped into range (C),
+    # never handed to the PPMd var.I model as-is (cf. CVE-2023-31102).
+    try:
+        encoder = pyppmd.Ppmd8Encoder(max_order, 8 << 20)
+    except ValueError:
+        with pytest.raises(ValueError):
+            pyppmd.Ppmd8Decoder(max_order, 8 << 20)
+        return
+    data = source * 100
+    encoded_data = encoder.encode(data) + encoder.flush()
+    decoder = pyppmd.Ppmd8Decoder(max_order, 8 << 20)
+    assert decoder.decode(encoded_data, len(data)) == data
+
+
+def test_ppmd8_cffi_param_validation():
+    cffi_ppmd = pytest.importorskip("pyppmd.cffi.cffi_ppmd")
+    for args in [(0, 8 << 20, 0), (1, 8 << 20, 0), (17, 8 << 20, 0), (6, 1024, 0), (6, 8 << 20, 2)]:
+        with pytest.raises(ValueError):
+            cffi_ppmd.Ppmd8Encoder(*args)
+        with pytest.raises(ValueError):
+            cffi_ppmd.Ppmd8Decoder(*args)
