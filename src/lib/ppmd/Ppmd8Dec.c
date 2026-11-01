@@ -22,7 +22,13 @@ Bool Ppmd8_RangeDec_Init(CPpmd8 *p)
 
 static UInt32 RangeDec_GetThreshold(CPpmd8 *p, UInt32 total)
 {
-  return p->Code / (p->Range /= total);
+  /* pyppmd: the carryless range coder only guarantees Range >= kBot (2^15) after
+     normalization, so Range / total can be 0 on corrupted input, and Code / 0 would
+     raise SIGFPE.  Returning 0xFFFFFFFF makes every caller take its
+     `count >= total` error path (return -2). */
+  if (total == 0 || (p->Range /= total) == 0)
+    return 0xFFFFFFFF;
+  return p->Code / p->Range;
 }
 
 static void RangeDec_Decode(CPpmd8 *p, UInt32 start, UInt32 size)

@@ -180,37 +180,6 @@ typedef struct
 } CPpmd8;
 """
 
-if sys.platform.startswith("win32"):
-    defs += r"""
-typedef struct _pthread_cleanup _pthread_cleanup;
-struct _pthread_cleanup
-{
-    void (*func)(void *);
-    void *arg;
-    _pthread_cleanup *next;
-};
-struct _pthread_v
-{
-    void *ret_arg;
-    void *(* func)(void *);
-    _pthread_cleanup *clean;
-    HANDLE h;
-    int cancelled;
-    unsigned p_state;
-    int keymax;
-    void **keyval;
-    // hide it
-    // jmp_buf jb;
-};
-typedef struct _pthread_v *pthread_t;
-    """
-elif sys.platform.startswith("darwin"):
-    defs += "typedef void* pthread_t;\n"
-elif sys.platform.startswith("linux"):
-    defs += "typedef unsigned long int pthread_t;\n"
-else:
-    pass
-
 defs += r"""
 typedef struct ppmd_info_s {
     void *cPpmd;
@@ -221,10 +190,6 @@ typedef struct ppmd_info_s {
     int result;
     void *t;
 } ppmd_info;
-
-Byte Ppmd_thread_Reader(const void *p);
-int Ppmd8T_decode(CPpmd8 *cPpmd8, OutBuffer *out, int max_length, ppmd_info *args);
-void Ppmd8T_Free(CPpmd8 *cPpmd8, ppmd_info *args, IAlloc *allocator);
 """
 
 # Ppmd7Decoder.h
@@ -251,6 +216,34 @@ typedef enum {
 
 Ppmd7DecStatus Ppmd7_DecodeBlock(CPpmd7 *p, CPpmd7z_RangeDec *rc, Ppmd7Reader *in,
                                  OutBuffer *out, size_t limit, Bool final, size_t *produced);
+"""
+
+# Ppmd8Decoder.h
+defs += r"""
+#define PPMD8_RANGE_DEC_INIT_SIZE 4
+
+typedef struct {
+    IByteIn vt;
+    const Byte *src;
+    size_t size;
+    size_t pos;
+    size_t overrun;
+} Ppmd8Reader;
+
+void Ppmd8Reader_Init(Ppmd8Reader *r);
+void Ppmd8Reader_Set(Ppmd8Reader *r, const void *src, size_t size);
+
+typedef enum {
+    PPMD8_DEC_LENGTH = 0,
+    PPMD8_DEC_OUT_FULL,
+    PPMD8_DEC_NEED_INPUT,
+    PPMD8_DEC_EOF,
+    PPMD8_DEC_ERROR_DATA,
+    PPMD8_DEC_ERROR_OVERRUN
+} Ppmd8DecStatus;
+
+Ppmd8DecStatus Ppmd8_DecodeBlock(CPpmd8 *p, Ppmd8Reader *in, OutBuffer *out, size_t limit,
+                                 Bool final, size_t *produced);
 """
 
 # ----------- python binding API ---------------------
@@ -295,8 +288,7 @@ void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
 
 void ppmd8_compress_init(CPpmd8 *ppmd, BufferWriter *writer);
 int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf);
-void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader, ppmd_info *threadInfo, IAlloc *allocator);
-int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd_info *threadInfo);
+void ppmd8_decompress_init(CPpmd8 *ppmd, Ppmd8Reader *reader);
 
 void Ppmd8_Construct(CPpmd8 *ppmd);
 Bool Ppmd8_Alloc(CPpmd8 *p, UInt32 size, IAlloc *alloc);
@@ -314,18 +306,10 @@ source = r"""
 #include "Ppmd8.h"
 #include "Buffer.h"
 #include "Ppmd7Decoder.h"
-#include "ThreadDecoder.h"
+#include "Ppmd8Decoder.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#ifdef _WIN32
-#include "win_pthreads.h"
-#define getc_unlocked fgetc
-#define putc_unlocked fputc
-#else
-#include <pthread.h>
-#endif
 
 void ppmd7_state_init(CPpmd7 *p, unsigned int maxOrder, unsigned int memSize, IAlloc *allocator)
 {
@@ -392,18 +376,10 @@ int ppmd8_compress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf) {
     return in_buf->size - in_buf->pos;
 }
 
-void ppmd8_decompress_init(CPpmd8 *ppmd, BufferReader *reader, ppmd_info *info, IAllocPtr allocator)
+void ppmd8_decompress_init(CPpmd8 *ppmd, Ppmd8Reader *reader)
 {
-    reader->Read = (Byte (*)(void *)) Ppmd_thread_Reader;
-    ppmd->Stream.In = (IByteIn *) reader;
-    reader->t = info;
-    info->in = reader->inBuffer;
-    Ppmd_thread_decode_init(info, allocator);
-}
-
-int ppmd8_decompress(CPpmd8 *ppmd, OutBuffer *out_buf, InBuffer *in_buf, int length, ppmd_info *info) {
-    info->in = in_buf;
-    return Ppmd8T_decode(ppmd, out_buf, length, info);
+    Ppmd8Reader_Init(reader);
+    ppmd->Stream.In = &reader->vt;
 }
 """
 
@@ -432,7 +408,7 @@ if __name__ == "__main__":
             "src/lib/ppmd/Ppmd7Dec.c",
             "src/lib/buffer/Buffer.c",
             "src/lib/buffer/Ppmd7Decoder.c",
-            "src/lib/buffer/ThreadDecoder.c",
+            "src/lib/buffer/Ppmd8Decoder.c",
         ],
         "define_macros": [],
         "module_name": "pyppmd.cffi._cffi_ppmd",

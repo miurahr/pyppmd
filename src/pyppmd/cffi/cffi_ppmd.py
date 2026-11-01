@@ -582,74 +582,88 @@ class Ppmd8Encoder(PpmdBaseEncoder):
 
 class Ppmd8Decoder(PpmdBaseDecoder):
     def __init__(self, max_order: int, mem_size: int, restore_method=PPMD8_RESTORE_METHOD_RESTART):
+        if mem_size > sys.maxsize:
+            raise ValueError("Mem_size exceed to platform limit.")
         self._init_common()
         self.ppmd = ffi.new("CPpmd8 *")
-        self.threadInfo = ffi.new("ppmd_info *")
-        lib.Ppmd8_Construct(self.ppmd)
-        lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator)
-        lib.Ppmd8_Init(self.ppmd, max_order, restore_method)
-        self._inited = False
+        self._reader8 = ffi.new("Ppmd8Reader *")
+        self._produced = ffi.new("size_t *")
         self._eof = False
-        self._needs_input = True
         self._finished = False
+        self._needs_input = True
+        lib.Ppmd8_Construct(self.ppmd)
+        if not lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator):
+            raise MemoryError
+        lib.Ppmd8_Init(self.ppmd, max_order, restore_method)
+        lib.ppmd8_decompress_init(self.ppmd, self._reader8)
 
-    def _init2(self):
-        lib.ppmd8_decompress_init(self.ppmd, self.reader, self.threadInfo, self._allocator)
-        lib.Ppmd8_RangeDec_Init(self.ppmd)
+    def decode(self, data: Union[bytes, bytearray, memoryview], length: int = -1, *, final: bool = False) -> bytes:
+        """Decode PPMd8 compressed data and return the decompressed bytes.
 
-    def decode(self, data: Union[bytes, bytearray, memoryview], length: int = -1):
+        Arguments
+        data:   compressed input. The first call needs at least 4 bytes.
+        length: max number of bytes to produce, -1 for unlimited.
+                Use `length` unless the stream has an end mark.
+        final:  True when `data` is the last input of the stream. The decoder then decodes
+                symbols until the input is exhausted (a missing tail is treated as zero bytes).
+                When False, the decoder keeps a small unconsumed tail of input internally
+                and `needs_input` becomes True when it needs more input.
+        """
         if not isinstance(length, int):
-            raise PpmdError("Wrong length argument is specified.")
-        self.lock.acquire()
-        # If EOF already reached in a previous call, subsequent decode calls
-        # should be no-ops and return empty bytes without touching freed/native state.
-        if getattr(self, "_eof", False):
-            self.lock.release()
-            return b""
-        in_buf, use_input_buffer = self._setup_inBuffer(data)
-        out, out_buf = self._setup_outBuffer()
-        self.threadInfo.out = out_buf
-        if not self._inited:
-            self._inited = True
-            self._init2()
-        if length < 0:
-            length = 0x7FFFFFFF
-        while True:
-            if out_buf.pos == length:
-                break
-            if out_buf.pos == out_buf.size:
-                out.grow(out_buf)
-            self.lock.release()
-            size = lib.ppmd8_decompress(self.ppmd, out_buf, in_buf, length, self.threadInfo)
-            self.lock.acquire()
-            if size == -1:
+            raise TypeError("length should be an integer.")
+        if not self.inited and len(data) < lib.PPMD8_RANGE_DEC_INIT_SIZE:
+            raise ValueError("Not enough data for starting decompression.")
+        with self.lock:
+            if self._finished:
+                raise ValueError("Decoder is already closed.")
+            if self._eof:
+                # Already at end of stream: nothing more to produce.
+                return b""
+            try:
+                return self._decode(data, length, bool(final))
+            except BaseException:
                 self._eof = True
                 self._needs_input = False
-                res = out.finish(out_buf)
-                self.lock.release()
-                return res
-            elif size == -2:
-                raise ValueError("Corrupted archive data.")
-            if in_buf.pos == in_buf.size:
-                break
-        self._unconsumed_in(in_buf, use_input_buffer)
-        if self._eof:
-            self._needs_input = False
-        elif self._input_buffer_size == 0 or (self._in_begin == self._in_end):
-            self._needs_input = True
-        else:
-            self._needs_input = False
-        res = out.finish(out_buf)
-        self.lock.release()
-        return res
+                self._in_begin = 0
+                self._in_end = 0
+                raise
 
-    def _free(self):
-        if self._finished:
-            return
-        self._finished = True
-        lib.Ppmd8T_Free(self.ppmd, self.threadInfo, self._allocator)
-        ffi.release(self.ppmd)
-        self._release()
+    def _decode(self, data, length: int, final: bool) -> bytes:
+        reader = self._reader8
+        if not final:
+            # Without `final`, the reader must never run dry within this call.
+            reader.overrun = 0
+        in_buf, use_input_buffer = self._setup_inBuffer(data)
+        lib.Ppmd8Reader_Set(reader, in_buf.src, in_buf.size)
+        if not self.inited:
+            # first time initialized.
+            if not lib.Ppmd8_RangeDec_Init(self.ppmd):
+                raise ValueError("Corrupted input data.")
+            self.inited = True
+        out_buf = _new_nonzero("OutBuffer *")
+        if out_buf == ffi.NULL:
+            raise MemoryError
+        out = _BlocksOutputBuffer()
+        out.initAndGrow(out_buf, length)
+        remains = length if length >= 0 else _SIZE_MAX
+        while True:
+            status = lib.Ppmd8_DecodeBlock(self.ppmd, reader, out_buf, remains, final, self._produced)
+            if length >= 0:
+                remains -= self._produced[0]
+            if status != lib.PPMD8_DEC_OUT_FULL:
+                break
+            out.grow(out_buf)
+        if status == lib.PPMD8_DEC_EOF:
+            self._eof = True
+        elif status == lib.PPMD8_DEC_ERROR_DATA:
+            raise ValueError("Corrupted input data.")
+        elif status == lib.PPMD8_DEC_ERROR_OVERRUN:
+            raise RuntimeError("Internal error: input reader overrun.")
+        self._needs_input = status == lib.PPMD8_DEC_NEED_INPUT
+        res = out.finish(out_buf)
+        in_buf.pos = reader.pos
+        self._unconsumed_in(in_buf, use_input_buffer)
+        return res
 
     @property
     def needs_input(self):
@@ -659,8 +673,22 @@ class Ppmd8Decoder(PpmdBaseDecoder):
     def eof(self):
         return self._eof
 
+    def _free(self):
+        if self._finished:
+            return
+        self._finished = True
+        lib.Ppmd8_Free(self.ppmd, self._allocator)
+        ffi.release(self.ppmd)
+        ffi.release(self._reader8)
+        self._release()
+        self._needs_input = False
+
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._free()
+
+    def __del__(self):
+        if hasattr(self, "_finished"):
+            self._free()
