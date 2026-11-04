@@ -50,7 +50,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          pip install -U pip tox wheel setuptools setuptools_scm[toml]
+          pip install -U tox setuptools setuptools_scm[toml]
       - name: Test project with tox
         run: |
           tox -e "${{ matrix.python-version }}"
