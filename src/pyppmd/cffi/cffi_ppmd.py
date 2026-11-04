@@ -34,6 +34,7 @@ _new_nonzero = ffi.new_allocator(should_clear_after_alloc=False)
 
 class PpmdError(Exception):
     "Call to the underlying PPMd library failed."
+
     pass
 
 

@@ -11,6 +11,10 @@ Added
 -----
 * Add support for Python 3.15
 
+Changed
+-------
+* Use ruff as linter instead of flake8, isort an black
+
 v1.3.1_
 =======
 
