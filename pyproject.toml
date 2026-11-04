@@ -30,7 +30,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
-      "pytest<9.2.0",
+      "pytest<9.3.0",
       "pytest-benchmark",
       "pytest-cov",
       "pytest-timeout",
