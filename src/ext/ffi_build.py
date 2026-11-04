@@ -1,12 +1,15 @@
 import sys
+
 try:
     from cffi import FFI  # type: ignore  # noqa
 except ImportError:
     # PyPy includes cffi by default
-    msg = ('To build the CFFI implementation of pyzstd module, need to '
-           'install cffi module like this: "sudo python3 -m pip install '
-           'cffi". On CPython, CFFI implementation is slower than C '
-           'implementation.')
+    msg = (
+        "To build the CFFI implementation of pyzstd module, need to "
+        'install cffi module like this: "sudo python3 -m pip install '
+        'cffi". On CPython, CFFI implementation is slower than C '
+        "implementation."
+    )
     raise ImportError(msg)
 
 
