@@ -28,6 +28,9 @@ _PPMD8_MIN_ORDER = 2
 _PPMD8_MAX_ORDER = 16
 
 _PPMD8_MIN_MEM_SIZE = 1 << 11
+# RestoreModel() repeats CutOff() until the used memory is at most 3 * (Size >> 2),
+# but the root context always occupies 1548 bytes, so a smaller Size never terminates.
+_PPMD8_MIN_MEM_SIZE_CUT_OFF = 2064
 _PPMD8_MAX_MEM_SIZE = 0xFFFFFFFF - 12 * 3
 
 _BLOCK_SIZE = 16384
@@ -500,9 +503,10 @@ def _check_ppmd8_params(max_order: int, mem_size: int, restore_method: int) -> N
     # fixed-size arrays sized by PPMD8_MAX_ORDER.
     if mem_size > sys.maxsize:
         raise ValueError("Mem_size exceed to platform limit.")
+    min_mem_size = _PPMD8_MIN_MEM_SIZE_CUT_OFF if restore_method == PPMD8_RESTORE_METHOD_CUT_OFF else _PPMD8_MIN_MEM_SIZE
     if not (
         _PPMD8_MIN_ORDER <= max_order <= _PPMD8_MAX_ORDER
-        and _PPMD8_MIN_MEM_SIZE <= mem_size <= _PPMD8_MAX_MEM_SIZE
+        and min_mem_size <= mem_size <= _PPMD8_MAX_MEM_SIZE
         and restore_method in (PPMD8_RESTORE_METHOD_RESTART, PPMD8_RESTORE_METHOD_CUT_OFF)
     ):
         raise ValueError("PPMd wrong parameters.")

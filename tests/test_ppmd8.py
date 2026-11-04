@@ -1,6 +1,7 @@
 import hashlib
 import os
 import pathlib
+import random
 
 import pytest
 
@@ -146,8 +147,25 @@ def test_ppmd8_out_of_range_order(max_order):
 
 def test_ppmd8_cffi_param_validation():
     cffi_ppmd = pytest.importorskip("pyppmd.cffi.cffi_ppmd")
-    for args in [(0, 8 << 20, 0), (1, 8 << 20, 0), (17, 8 << 20, 0), (6, 1024, 0), (6, 8 << 20, 2)]:
+    for args in [(0, 8 << 20, 0), (1, 8 << 20, 0), (17, 8 << 20, 0), (6, 1024, 0), (6, 2063, 1), (6, 8 << 20, 2)]:
         with pytest.raises(ValueError):
             cffi_ppmd.Ppmd8Encoder(*args)
         with pytest.raises(ValueError):
             cffi_ppmd.Ppmd8Decoder(*args)
+
+
+@pytest.mark.parametrize(
+    "mem_size, restore_method",
+    [
+        (2048, pyppmd.PPMD8_RESTORE_METHOD_RESTART),
+        (2064, pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF),
+    ],
+)
+@pytest.mark.timeout(20)
+def test_ppmd8_cffi_min_mem_size(mem_size, restore_method):
+    # Random data exhausts the model memory, so the restore path has to run and terminate.
+    cffi_ppmd = pytest.importorskip("pyppmd.cffi.cffi_ppmd")
+    encoder = cffi_ppmd.Ppmd8Encoder(6, mem_size, restore_method)
+    assert len(encoder.encode(random.Random(1).randbytes(1 << 16)) + encoder.flush()) > 0
+    decoder = cffi_ppmd.Ppmd8Decoder(6, mem_size, restore_method)
+    decoder._free()
