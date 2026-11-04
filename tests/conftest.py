@@ -1,5 +1,6 @@
 import pytest
 
+
 def pytest_benchmark_update_json(config, benchmarks, output_json):
     """Calculate compression/decompression speed and add as extra_info"""
     for benchmark in output_json["benchmarks"]:

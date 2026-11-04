@@ -76,10 +76,15 @@ indent-width = 4
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F"]
+select = ["E", "F", "I"]
 ignore = ["E203", "F841"]
 fixable = ["ALL"]
 unfixable = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["pyppmd", "_ppmd"]
+known-third-party = ["docutils", "flake8", "pyannotate_runtime", "pytest", "pytz", "setuptools", "sphinx", "yaml"]
+split-on-trailing-comma = false
 
 [tool.ruff.format]
 quote-style = "double"
