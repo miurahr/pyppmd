@@ -1003,6 +1003,13 @@ Ppmd8Decoder_init(Ppmd8Decoder *self, PyObject *args, PyObject *kwargs)
         return -1;
     }
 
+    if (restore_method != PPMD8_RESTORE_METHOD_RESTART &&
+        restore_method != PPMD8_RESTORE_METHOD_CUT_OFF) {
+        PyErr_SetString(PyExc_ValueError,
+                        "restore_method should be 0 (restart) or 1 (cut off).");
+        return -1;
+    }
+
     /* Only called once */
     if (self->inited) {
         PyErr_SetString(PyExc_RuntimeError, init_twice_msg);
@@ -1458,6 +1465,13 @@ Ppmd8Encoder_init(Ppmd8Encoder *self, PyObject *args, PyObject *kwargs)
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "OO|i:Ppmd8Encoder.__init__", kwlist,
                                      &max_order, &mem_size, &restore_method)) {
+        goto error;
+    }
+
+    if (restore_method != PPMD8_RESTORE_METHOD_RESTART &&
+        restore_method != PPMD8_RESTORE_METHOD_CUT_OFF) {
+        PyErr_SetString(PyExc_ValueError,
+                        "restore_method should be 0 (restart) or 1 (cut off).");
         goto error;
     }
 

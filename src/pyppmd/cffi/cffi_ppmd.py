@@ -24,6 +24,15 @@ _PPMD7_MAX_ORDER = 64
 _PPMD7_MIN_MEM_SIZE = 1 << 11
 _PPMD7_MAX_MEM_SIZE = 0xFFFFFFFF - 12 * 3
 
+_PPMD8_MIN_ORDER = 2
+_PPMD8_MAX_ORDER = 16
+
+_PPMD8_MIN_MEM_SIZE = 1 << 11
+# RestoreModel() repeats CutOff() until the used memory is at most 3 * (Size >> 2),
+# but the root context always occupies 1548 bytes, so a smaller Size never terminates.
+_PPMD8_MIN_MEM_SIZE_CUT_OFF = 2064
+_PPMD8_MAX_MEM_SIZE = 0xFFFFFFFF - 12 * 3
+
 _BLOCK_SIZE = 16384
 _allocated = []
 
@@ -488,16 +497,31 @@ class Ppmd7Decoder(PpmdBaseDecoder):
         self.lock.release()
 
 
+def _check_ppmd8_params(max_order: int, mem_size: int, restore_method: int) -> None:
+    # Reject parameters the PPMd var.I code cannot handle safely.
+    # max_order < 2 is the CVE-2023-31102 vector, max_order > 16 overruns
+    # fixed-size arrays sized by PPMD8_MAX_ORDER.
+    if mem_size > sys.maxsize:
+        raise ValueError("Mem_size exceed to platform limit.")
+    min_mem_size = _PPMD8_MIN_MEM_SIZE_CUT_OFF if restore_method == PPMD8_RESTORE_METHOD_CUT_OFF else _PPMD8_MIN_MEM_SIZE
+    if not (
+        _PPMD8_MIN_ORDER <= max_order <= _PPMD8_MAX_ORDER
+        and min_mem_size <= mem_size <= _PPMD8_MAX_MEM_SIZE
+        and restore_method in (PPMD8_RESTORE_METHOD_RESTART, PPMD8_RESTORE_METHOD_CUT_OFF)
+    ):
+        raise ValueError("PPMd wrong parameters.")
+
+
 class Ppmd8Encoder(PpmdBaseEncoder):
     def __init__(self, max_order, mem_size, restore_method=PPMD8_RESTORE_METHOD_RESTART):
+        _check_ppmd8_params(max_order, mem_size, restore_method)
         self.lock = Lock()
-        if mem_size > sys.maxsize:
-            raise ValueError("Mem_size exceed to platform limit.")
         self._init_common()
         self.ppmd = ffi.new("CPpmd8 *")
         lib.ppmd8_compress_init(self.ppmd, self.writer)
         lib.Ppmd8_Construct(self.ppmd)
-        lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator)
+        if not lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator):
+            raise MemoryError("Ppmd8Encoder: failed to allocate model memory.")
         lib.Ppmd8_RangeEnc_Init(self.ppmd)
         lib.Ppmd8_Init(self.ppmd, max_order, restore_method)
 
@@ -538,11 +562,13 @@ class Ppmd8Encoder(PpmdBaseEncoder):
 
 class Ppmd8Decoder(PpmdBaseDecoder):
     def __init__(self, max_order: int, mem_size: int, restore_method=PPMD8_RESTORE_METHOD_RESTART):
+        _check_ppmd8_params(max_order, mem_size, restore_method)
         self._init_common()
         self.ppmd = ffi.new("CPpmd8 *")
         self.threadInfo = ffi.new("ppmd_info *")
         lib.Ppmd8_Construct(self.ppmd)
-        lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator)
+        if not lib.Ppmd8_Alloc(self.ppmd, mem_size, self._allocator):
+            raise MemoryError("Ppmd8Decoder: failed to allocate model memory.")
         lib.Ppmd8_Init(self.ppmd, max_order, restore_method)
         self._inited = False
         self._eof = False
