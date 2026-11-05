@@ -531,6 +531,12 @@ Ppmd7Decoder_decode(Ppmd7Decoder *self,  PyObject *args, PyObject *kwargs) {
             break;
         }
         if (out->pos == out->size) {
+            /* Already reached max_length for this call; stop instead of
+               growing (avoids rest<=0 assert in OutputBuffer_Grow) */
+            if (self->blocksOutputBuffer->max_length >= 0 &&
+                self->blocksOutputBuffer->allocated >= self->blocksOutputBuffer->max_length) {
+                break;
+            }
             if (OutputBuffer_Grow(self->blocksOutputBuffer, out) < 0) {
                 PyErr_SetString(PyExc_ValueError, "No Memory.");
                 goto error;
@@ -1276,6 +1282,11 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
              break;  // filled expected
         }
         if (out->pos == out->size) {
+            /* Same guard as for Ppmd7Decoder_decode() above */
+            if (self->blocksOutputBuffer->max_length >= 0 &&
+                self->blocksOutputBuffer->allocated >= self->blocksOutputBuffer->max_length) {
+                break;
+            }
             if (OutputBuffer_Grow(self->blocksOutputBuffer, out) < 0) {
                 PyErr_SetString(PyExc_ValueError, "L1586: Unknown status");
                 goto error;
@@ -1302,6 +1313,11 @@ Ppmd8Decoder_decode(Ppmd8Decoder *self,  PyObject *args, PyObject *kwargs) {
             /* Clear input_buffer */
             self->in_begin = 0;
             self->in_end = 0;
+        }
+        if (self->eof) {
+            self->needs_input = False;
+        } else {
+            self->needs_input = True;
         }
     } else {
         const size_t data_size = in->size - in->pos;
