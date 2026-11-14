@@ -6,11 +6,17 @@
 
 void Writer(const void *p, Byte b) {
     BufferWriter *bufferWriter = (BufferWriter *)p;
-    if (bufferWriter->outBuffer->size == bufferWriter->outBuffer->pos) {
-        // FIXME: When out buffer is full
-        return;
+    OutBuffer *out = bufferWriter->outBuffer;
+    if (out->pos == out->size) {
+        /* The range encoder can emit several bytes for a single symbol, so the
+           buffer has to grow here; dropping the byte corrupts the stream. */
+        if (bufferWriter->error || bufferWriter->Grow == NULL
+            || bufferWriter->Grow(bufferWriter) != 0 || out->pos == out->size) {
+            bufferWriter->error = 1;
+            return;
+        }
     }
-    *((Byte *)bufferWriter->outBuffer->dst + bufferWriter->outBuffer->pos++) = b;
+    *((Byte *)out->dst + out->pos++) = b;
 }
 
 Byte Reader(const void *p) {

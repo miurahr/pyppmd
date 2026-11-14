@@ -36,6 +36,14 @@ typedef struct {
     void (*Write)(void *p, Byte b);
     OutBuffer *outBuffer;
     ppmd_info *t;
+    /* Called by Writer() when outBuffer is full. It must give outBuffer a new
+       block (dst/size/pos updated in place) and return 0, or return non-zero
+       on failure. NULL means the buffer cannot grow. */
+    int (*Grow)(void *p);
+    void *growArg;
+    /* Set to non-zero when a byte could not be written. The caller must check
+       it after each encoder call; the output is unusable once it is set. */
+    int error;
 } BufferWriter;
 
 typedef struct {
