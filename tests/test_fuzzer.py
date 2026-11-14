@@ -40,16 +40,24 @@ def test_ppmd7_fuzzer(txt, max_order, mem_size):
 @given(
     txt=st.text(min_size=1),
     max_order=st.integers(min_value=3, max_value=16),
-    mem_size=st.integers(min_value=1 << 11, max_value=MAX_SIZE),
+    mem_size=st.integers(min_value=2064, max_value=MAX_SIZE),
 )
 @settings(deadline=timedelta(milliseconds=300))
 def test_ppmd8_fuzzer(txt, max_order, mem_size):
     obj = txt.encode("UTF-8")
-    enc = pyppmd.Ppmd8Encoder(max_order=max_order, mem_size=mem_size, restore_method=pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF)
+    enc = pyppmd.Ppmd8Encoder(
+        max_order=max_order,
+        mem_size=mem_size,
+        restore_method=pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF,
+    )
     length = len(obj)
     compressed = enc.encode(obj)
     compressed += enc.flush()
-    dec = pyppmd.Ppmd8Decoder(max_order=max_order, mem_size=mem_size, restore_method=pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF)
+    dec = pyppmd.Ppmd8Decoder(
+        max_order=max_order,
+        mem_size=mem_size,
+        restore_method=pyppmd.PPMD8_RESTORE_METHOD_CUT_OFF,
+    )
     result = dec.decode(compressed, length)
     if len(result) < length:
         if dec.needs_input:

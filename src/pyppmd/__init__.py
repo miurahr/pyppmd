@@ -27,7 +27,7 @@ except ImportError:
             PpmdError,
         )
     except ImportError:
-        msg = "pyppmd module: Neither C implementation nor CFFI " "implementation can be imported."
+        msg = "pyppmd module: Neither C implementation nor CFFI implementation can be imported."
         raise ImportError(msg)
 
 __all__ = (
@@ -79,7 +79,7 @@ class PpmdCompressor:
         self.eof = False
 
     def compress(self, data_or_str: Union[bytes, bytearray, memoryview, str]):
-        if type(data_or_str) == str:
+        if type(data_or_str) is str:
             data = data_or_str.encode("UTF-8")
         elif _is_bytelike(data_or_str):
             data = data_or_str
@@ -141,7 +141,7 @@ def compress(
     """
     if variant not in ["H", "I", "h", "i"]:
         raise ValueError("Unsupported PPMd variant")
-    if type(data_or_str) == str:
+    if type(data_or_str) is str:
         data = data_or_str.encode("UTF-8")
     elif _is_bytelike(data_or_str):
         data = data_or_str

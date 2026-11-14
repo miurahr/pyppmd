@@ -18,6 +18,10 @@ Fixed
   Ppmd8Encoder, C extension and CFFI). The output buffer now grows on demand. (#139)
 * Release the input buffer in Ppmd7Encoder.encode() and Ppmd8Encoder.encode().
 
+Changed
+-------
+* Use ruff as linter instead of flake8, isort an black
+
 v1.3.1_
 =======
 
