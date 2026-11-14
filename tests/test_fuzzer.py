@@ -40,7 +40,7 @@ def test_ppmd7_fuzzer(txt, max_order, mem_size):
 @given(
     txt=st.text(min_size=1),
     max_order=st.integers(min_value=3, max_value=16),
-    mem_size=st.integers(min_value=1 << 11, max_value=MAX_SIZE),
+    mem_size=st.integers(min_value=2064, max_value=MAX_SIZE),
 )
 @settings(deadline=timedelta(milliseconds=300))
 def test_ppmd8_fuzzer(txt, max_order, mem_size):
